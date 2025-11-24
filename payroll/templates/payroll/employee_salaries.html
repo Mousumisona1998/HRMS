@@ -1,0 +1,334 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Employee Salaries - HRMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h3 mb-0">Employee Salaries</h1>
+                <p class="text-muted mb-0">Manage employee salary structures</p>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'add_employee_salary' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Add Salary Structure
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filters Row -->
+    <div class="card mb-3">
+        <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+
+            <!-- Entries -->
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <label class="form-label mb-0 fw-semibold">Show:</label>
+                <select id="entriesPerPage" class="form-select form-select-sm" style="width: 80px;">
+                    <option value="5">5</option>
+                    <option value="10" selected>10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+
+            <!-- Middle: Date Filter -->
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <label class="text-muted small mb-0">From</label>
+                <input type="text" id="fromDate" class="form-control datepicker" style="width: 140px;" placeholder="dd-mm-yyyy">
+                <label class="text-muted small mb-0">To</label>
+                <input type="text" id="toDate" class="form-control datepicker" style="width: 140px;" placeholder="dd-mm-yyyy">
+                <button id="filterDateBtn" class="btn btn-sm btn-outline-primary">Filter</button>
+                <button id="resetDateBtn" class="btn btn-sm btn-outline-secondary">Reset</button>
+            </div>
+
+            <!-- Search -->
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <input type="text" id="searchInput" class="form-control form-control-sm"
+                    placeholder="Search employee, ID, dept..." style="max-width: 220px;">
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Salaries Table -->
+    <div class="custom-card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Salary Structures</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="salaryTable" class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Employee ID</th>
+                            <th>Department</th>
+                            <th>Basic Salary</th>
+                            <th>Gross Salary</th>
+                            <th>Net Salary</th>
+                            <th>Effective Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for salary in salaries %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if salary.employee.profile_picture %}
+                                    <img src="{{ salary.employee.profile_picture.url }}" alt="{{ salary.employee.first_name }}" 
+                                         class="rounded-circle me-2" width="32" height="32">
+                                    {% else %}
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" 
+                                         style="width: 32px; height: 32px; font-size: 12px;">
+                                        {{ salary.employee.first_name|first }}{{ salary.employee.last_name|first }}
+                                    </div>
+                                    {% endif %}
+                                    <div>
+                                        <div class="fw-bold">{{ salary.employee.first_name }} {{ salary.employee.last_name }}</div>
+                                        <small class="text-muted">{{ salary.employee.designation }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ salary.employee.employee_id }}</td>
+                            <td>{{ salary.employee.department }}</td>
+                            <td class="fw-bold">₹{{ salary.basic_salary }}</td>
+                            <td class="fw-bold text-success">₹{{ salary.gross_salary }}</td>
+                            <td class="fw-bold text-primary">₹{{ salary.net_salary }}</td>
+                            <td>{{ salary.effective_date|date:"d-m-Y" }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'view_employee_salary' salary.id %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'edit_employee_salary' salary.id %}" class="btn btn-outline-secondary btn-sm">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <i class="fas fa-money-bill-wave fa-2x text-muted mb-3"></i>
+                                <h5 class="text-muted">No Salary Structures</h5>
+                                <p class="text-muted">Get started by creating your first salary structure.</p>
+                                <a href="{% url 'add_employee_salary' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>Add Salary Structure
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination Info -->
+    <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap">
+        <small id="tableInfo" class="text-muted"></small>
+        <ul id="pagination" class="pagination pagination-sm mb-0"></ul>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const table = document.querySelector("table");
+    const rows = Array.from(table.querySelectorAll("tbody tr"));
+    const fromDateInput = document.getElementById("fromDate");
+    const toDateInput = document.getElementById("toDate");
+    const searchInput = document.getElementById("searchInput");
+    const entriesSelect = document.getElementById("entriesPerPage");
+    const pagination = document.getElementById("pagination");
+    const tableInfo = document.getElementById("tableInfo");
+    const filterDateBtn = document.getElementById("filterDateBtn");
+    const resetDateBtn = document.getElementById("resetDateBtn");
+
+    let currentPage = 1;
+    let rowsPerPage = parseInt(entriesSelect.value);
+    let filteredRows = [...rows];
+
+    // Set default dates to current date in dd-mm-yyyy format
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const yyyy = today.getFullYear();
+    const formattedToday = `${dd}-${mm}-${yyyy}`;
+    
+    fromDateInput.value = formattedToday;
+    toDateInput.value = formattedToday;
+
+    // Parse date in dd-mm-yyyy format to Date object
+    function parseDate(dateStr) {
+        if (!dateStr) return null;
+        
+        // Handle dd-mm-yyyy or dd/mm/yyyy format
+        let parts = dateStr.includes("-") ? dateStr.split("-") : dateStr.split("/");
+        
+        if (parts.length !== 3) return null;
+        
+        // Assuming dd-mm-yyyy format
+        const day = parseInt(parts[0]);
+        const month = parseInt(parts[1]) - 1; // Month is 0-indexed
+        const year = parseInt(parts[2]);
+        
+        if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+        
+        return new Date(year, month, day);
+    }
+
+    // Filter logic
+    function filterTable() {
+        const query = searchInput.value.toLowerCase();
+        const fromDate = parseDate(fromDateInput.value);
+        const toDate = parseDate(toDateInput.value);
+
+        filteredRows = rows.filter(row => {
+            // Skip empty rows
+            if (row.cells.length < 7) return false;
+            
+            const rowText = row.textContent.toLowerCase();
+            const cellDateText = row.cells[6]?.textContent.trim(); // Effective Date column
+            const cellDate = parseDate(cellDateText);
+
+            // Search filter
+            const matchSearch = rowText.includes(query);
+            
+            // Date filter
+            let matchDate = true;
+            if (fromDate && toDate && cellDate) {
+                if (fromDate.getTime() === toDate.getTime()) {
+                    // Same date - exact match
+                    matchDate = cellDate.getTime() === fromDate.getTime();
+                } else {
+                    // Date range
+                    matchDate = cellDate >= fromDate && cellDate <= toDate;
+                }
+            } else if (fromDate && cellDate) {
+                matchDate = cellDate >= fromDate;
+            } else if (toDate && cellDate) {
+                matchDate = cellDate <= toDate;
+            } else if ((fromDate || toDate) && !cellDate) {
+                // If date filter is set but cell has no valid date, exclude it
+                matchDate = false;
+            }
+
+            return matchSearch && matchDate;
+        });
+
+        currentPage = 1;
+        renderTable();
+    }
+
+    // Render table with pagination
+    function renderTable() {
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+
+        rows.forEach(row => (row.style.display = "none"));
+        filteredRows.slice(start, end).forEach(row => (row.style.display = ""));
+
+        renderPagination();
+        updateInfo();
+    }
+
+    // Render pagination buttons
+    function renderPagination() {
+        pagination.innerHTML = "";
+        const pageCount = Math.ceil(filteredRows.length / rowsPerPage);
+
+        if (pageCount <= 1) return;
+
+        for (let i = 1; i <= pageCount; i++) {
+            const li = document.createElement("li");
+            li.className = `page-item ${i === currentPage ? "active" : ""}`;
+            li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+            li.addEventListener("click", e => {
+                e.preventDefault();
+                currentPage = i;
+                renderTable();
+            });
+            pagination.appendChild(li);
+        }
+    }
+
+    // Update info text
+    function updateInfo() {
+        const total = filteredRows.length;
+        const start = (currentPage - 1) * rowsPerPage + 1;
+        const end = Math.min(currentPage * rowsPerPage, total);
+        tableInfo.textContent = total > 0
+            ? `Showing ${start}–${end} of ${total} entries`
+            : "No results found";
+    }
+
+    // Validate and format date input on blur
+    [fromDateInput, toDateInput].forEach(input => {
+        input.addEventListener("blur", function () {
+            let val = this.value.trim();
+            if (!val) return;
+            
+            // Match dd-mm-yyyy or dd/mm/yyyy
+            const match = val.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+            if (match) {
+                let d = match[1].padStart(2, "0");
+                let m = match[2].padStart(2, "0");
+                let y = match[3].length === 2 ? "20" + match[3] : match[3];
+                this.value = `${d}-${m}-${y}`;
+            } else {
+                alert("Please enter date in dd-mm-yyyy format");
+                this.value = "";
+            }
+        });
+    });
+
+    // Event listeners
+    searchInput.addEventListener("input", filterTable);
+    entriesSelect.addEventListener("change", function() {
+        rowsPerPage = parseInt(this.value);
+        currentPage = 1;
+        renderTable();
+    });
+
+    filterDateBtn.addEventListener("click", filterTable);
+    
+    resetDateBtn.addEventListener("click", function() {
+        fromDateInput.value = formattedToday;
+        toDateInput.value = formattedToday;
+        searchInput.value = "";
+        filterTable();
+    });
+
+    // Also filter on Enter key in date inputs
+    [fromDateInput, toDateInput].forEach(input => {
+        input.addEventListener("keypress", function(e) {
+            if (e.key === "Enter") {
+                filterTable();
+            }
+        });
+    });
+
+    // Initial render
+    filterTable();
+});
+</script>
+
+<style>
+@media (max-width: 768px) {
+    .card-body.d-flex { flex-direction: column; align-items: flex-start; }
+    .card-body.d-flex > div { width: 100%; }
+    #searchInput { width: 100% !important; }
+}
+.page-item.active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+.page-link { color: #007bff; }
+.page-link:hover { background-color: #e9ecef; }
+</style>
+{% endblock %}

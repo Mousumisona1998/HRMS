@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+    <h4 class="fw-bold mb-3 text-warning">
+        <i class="fas fa-exclamation-triangle me-2"></i> Add Employee Warning
+    </h4>
+
+    <div class="card p-4 shadow-sm rounded-3">
+        <form method="POST" action="">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Select Employee</label>
+                {{ form.employee }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Warning Date</label>
+                {{ form.warning_date }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Subject</label>
+                {{ form.subject }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Description</label>
+                {{ form.description }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Issued By</label>
+                {{ form.issued_by }}
+            </div>
+            <button type="submit" class="btn btn-warning text-dark fw-semibold">
+                Submit Warning
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

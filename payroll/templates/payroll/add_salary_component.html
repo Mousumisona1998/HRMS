@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Salary Component - HRMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h3 mb-0">Add Salary Component</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'salary_components' %}">Salary Components</a></li>
+                        <li class="breadcrumb-item active">Add Component</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'salary_components' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Components
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="custom-card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Component Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Component Name</label>
+                                <input type="text" class="form-control" name="name" placeholder="e.g., House Rent Allowance" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Component Type</label>
+                                <select class="form-select" name="component_type" required>
+                                    <option value="">Select Type</option>
+                                    <option value="earning">Earning</option>
+                                    <option value="deduction">Deduction</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Calculation Type</label>
+                                <select class="form-select" name="calculation_type" id="calcType" required>
+                                    <option value="">Select Type</option>
+                                    <option value="fixed">Fixed Amount</option>
+                                    <option value="percentage">Percentage</option>
+                                    <option value="formula">Formula Based</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Value</label>
+                                <input type="number" class="form-control" name="value" value="0" step="0.01" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3" id="formulaField" style="display: none;">
+                            <label class="form-label">Formula</label>
+                            <input type="text" class="form-control" name="formula" placeholder="e.g., basic_salary * 0.4">
+                            <div class="form-text">Use variables like basic_salary, gross_salary in your formula</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_taxable" id="taxable" checked>
+                                <label class="form-check-label" for="taxable">
+                                    This component is taxable
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Component
+                            </button>
+                            <a href="{% url 'salary_components' %}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('calcType').addEventListener('change', function() {
+        document.getElementById('formulaField').style.display = 
+            this.value === 'formula' ? 'block' : 'none';
+    });
+</script>
+{% endblock %}

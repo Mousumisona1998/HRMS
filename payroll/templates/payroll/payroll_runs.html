@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payroll Runs - HRMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h3 mb-0">Payroll Runs</h1>
+                <p class="text-muted mb-0">Manage payroll processing and runs</p>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'create_payroll_run' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Create Payroll Run
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payroll Runs List -->
+    <div class="custom-card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Payroll Runs</h5>
+        </div>
+        <div class="card-body">
+            {% if payroll_runs %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Run Name</th>
+                            <th>Period</th>
+                            <th>Status</th>
+                            <th>Employees</th>
+                            <th>Total Amount</th>
+                            <th>Processed By</th>
+                            <th>Processed At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for run in payroll_runs %}
+                        <tr>
+                            <td class="fw-bold">{{ run.name }}</td>
+                            <td>{{ run.get_month_name }} {{ run.payroll_year }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if run.status == 'draft' %}bg-secondary
+                                    {% elif run.status == 'processing' %}bg-warning
+                                    {% elif run.status == 'completed' %}bg-success
+                                    {% else %}bg-danger{% endif %}">
+                                    {{ run.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ run.total_employees }}</td>
+                            <td class="fw-bold text-success">₹{{ run.total_amount }}</td>
+                            <td>{{ run.processed_by|default:"-" }}</td>
+                            <td>
+                                {% if run.processed_at %}
+                                {{ run.processed_at|date:"d M Y H:i" }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'view_payroll_run' run.id %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if run.status == 'draft' %}
+                                    <a href="{% url 'process_payroll_run' run.id %}" class="btn btn-outline-success btn-sm" 
+                                       onclick="return confirm('Process this payroll run?')">
+                                        <i class="fas fa-play"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if run.status == 'draft' %}
+                                    <form method="post" action="{% url 'delete_payroll_run' run.id %}" class="d-inline" 
+                                          onsubmit="return confirm('Delete this payroll run?')">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-cogs fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Payroll Runs</h4>
+                <p class="text-muted">Get started by creating your first payroll run.</p>
+                <a href="{% url 'create_payroll_run' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Create First Payroll Run
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

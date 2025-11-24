@@ -1,0 +1,447 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  Exit Interview - HR System
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-lg-12">
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="row align-items-center">
+            <div class="col">
+              <h1 class="h2 mb-0"> EXIT INTERVIEW</h1>
+              <p class="text-muted mb-0">Exit interview form for {{ resignation.employee.first_name }} {{ resignation.employee.last_name }}</p>
+            </div>
+            <div class="col-auto">
+              <a href="{% url 'resignation:resignation_detail' resignation.id %}" class="btn btn-outline-secondary me-2"><i class="fas fa-arrow-left me-2"></i>Back to Details</a>
+              {% if exit_interview.is_completed %}
+                <a href="{% url 'resignation:download_exit_interview' resignation.id %}" class="btn btn-primary" target="_blank"><i class="fas fa-download me-2"></i>Download PDF</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Employee Information -->
+        <div class="custom-card mb-4">
+          <div class="card-header">
+            <h5 class="card-title mb-0">Employee Information</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-3">
+                <strong>Name of the employee:</strong><br />
+                {{ resignation.employee.first_name }} {{ resignation.employee.last_name }}
+              </div>
+              <div class="col-md-3">
+                <strong>Employee ID:</strong><br />
+                {{ resignation.employee.employee_id }}
+              </div>
+              <div class="col-md-3">
+                <strong>Department:</strong><br />
+                {{ resignation.employee.department }}
+              </div>
+              <div class="col-md-3">
+                <strong>Region:</strong><br />
+                {{ resignation.employee.location }}
+              </div>
+            </div>
+            {% if exit_interview.interview_date %}
+              <div class="row mt-2">
+                <div class="col-md-6">
+                  <strong>Interview Date:</strong> {{ exit_interview.interview_date }}
+                </div>
+                <div class="col-md-6">
+                  <strong>Conducted By:</strong>
+                  {% if exit_interview.conducted_by %}
+                    {{ exit_interview.conducted_by.first_name }} {{ exit_interview.conducted_by.last_name }}
+                  {% endif %}
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Exit Interview Form -->
+        <form method="POST" id="exitInterviewForm">
+          {% csrf_token %}
+
+          <div class="custom-card mb-4">
+            <div class="card-header">
+              <h5 class="card-title mb-0">Reasons for Leaving</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label fw-bold">1. Why have you decided to leave the company?</label>
+                <textarea class="form-control" name="reason_for_leaving" rows="3" placeholder="Please provide detailed reasons...">{{ exit_interview.reason_for_leaving|default:'' }}</textarea>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-bold">2. Have you shared your concerns with anyone in the company prior to deciding to leave?</label>
+                <textarea class="form-control" name="concerns_shared_prior" rows="3">{{ exit_interview.concerns_shared_prior|default:'' }}</textarea>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-bold">3. Was a single event responsible for your decision to leave?</label>
+                <textarea class="form-control" name="single_event_responsible" rows="3">{{ exit_interview.single_event_responsible|default:'' }}</textarea>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-bold">4. What does your new company offer that encouraged you to accept their offer and leave this company?</label>
+                <textarea class="form-control" name="new_company_offer" rows="3">{{ exit_interview.new_company_offer|default:'' }}</textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Company Feedback -->
+          <div class="custom-card mb-4">
+            <div class="card-header">
+              <h5 class="card-title mb-0">Company Feedback</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label fw-bold">5. What do you value about the company?</label>
+                <textarea class="form-control" name="valued_about_company" rows="3">{{ exit_interview.valued_about_company|default:'' }}</textarea>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-bold">6. What did you dislike about the company?</label>
+                <textarea class="form-control" name="disliked_about_company" rows="3">{{ exit_interview.disliked_about_company|default:'' }}</textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Management Feedback -->
+          <div class="custom-card mb-4">
+            <div class="card-header">
+              <h5 class="card-title mb-0">Management Feedback</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label fw-bold">7. The quality of supervision is important to most people at work. How was your relationship with your manager?</label>
+                <textarea class="form-control" name="relationship_with_manager" rows="3">{{ exit_interview.relationship_with_manager|default:'' }}</textarea>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-bold">8. What could your supervisor do to improve his/her management style and skill?</label>
+                <textarea class="form-control" name="supervisor_improvement" rows="3">{{ exit_interview.supervisor_improvement|default:'' }}</textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Job Feedback -->
+          <div class="custom-card mb-4">
+            <div class="card-header">
+              <h5 class="card-title mb-0">Job Feedback</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label fw-bold">9. What did you like most about your job?</label>
+                <textarea class="form-control" name="liked_about_job" rows="3">{{ exit_interview.liked_about_job|default:'' }}</textarea>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-bold">10. What did you dislike about your job? What would you change in that?</label>
+                <textarea class="form-control" name="disliked_about_job" rows="3">{{ exit_interview.disliked_about_job|default:'' }}</textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Resources and Support -->
+          <div class="custom-card mb-4">
+            <div class="card-header">
+              <h5 class="card-title mb-0">Resources and Support</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label fw-bold">11. Do you feel you had the resources and support necessary to accomplish your job? If not, what was missing?</label>
+                <textarea class="form-control" name="resources_support" rows="3">{{ exit_interview.resources_support|default:'' }}</textarea>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-bold">12. We try to be an employee-oriented company in which employees experience positive morale and motivation. What is your experience of employee morale and motivation in the company?</label>
+                <textarea class="form-control" name="employee_morale" rows="3">{{ exit_interview.employee_morale|default:'' }}</textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Performance and Goals -->
+          <div class="custom-card mb-4">
+            <div class="card-header">
+              <h5 class="card-title mb-0">Performance and Goals</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label fw-bold">13. Did you have clear goals and know what was expected of you in your job?</label>
+                <textarea class="form-control" name="clear_goals" rows="3">{{ exit_interview.clear_goals|default:'' }}</textarea>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-bold">14. Did you receive adequate feedback about your performance day-to-day and in the performance development planning process?</label>
+                <textarea class="form-control" name="performance_feedback" rows="3">{{ exit_interview.performance_feedback|default:'' }}</textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Company Commitment -->
+          <div class="custom-card mb-4">
+            <div class="card-header">
+              <h5 class="card-title mb-0">Company Commitment</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label fw-bold">15. Describe your experience of the company's commitment to quality and customer service.</label>
+                <textarea class="form-control" name="quality_commitment" rows="3">{{ exit_interview.quality_commitment|default:'' }}</textarea>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-bold">16. Did the management of the company care about and help you accomplish your personal and professional development and career goals?</label>
+                <textarea class="form-control" name="career_development" rows="3">{{ exit_interview.career_development|default:'' }}</textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recommendations -->
+          <div class="custom-card mb-4">
+            <div class="card-header">
+              <h5 class="card-title mb-0">Recommendations</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label fw-bold">17. What would you recommend to help us create a better workplace?</label>
+                <textarea class="form-control" name="workplace_recommendations" rows="3">{{ exit_interview.workplace_recommendations|default:'' }}</textarea>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-bold">18. Do the policies and procedures of the company help to create a well-managed, consistent and fair workplace in which expectations are clearly defined?</label>
+                <textarea class="form-control" name="policies_fairness" rows="3">{{ exit_interview.policies_fairness|default:'' }}</textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Success Qualities -->
+          <div class="custom-card mb-4">
+            <div class="card-header">
+              <h5 class="card-title mb-0">Success Qualities</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label fw-bold">19. Describe the qualities and characteristics of the person who is most likely to succeed in this company.</label>
+                <textarea class="form-control" name="success_qualities" rows="3">{{ exit_interview.success_qualities|default:'' }}</textarea>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-bold">20. What are the key qualities and skills we should seek in your replacement?</label>
+                <textarea class="form-control" name="replacement_qualities" rows="3">{{ exit_interview.replacement_qualities|default:'' }}</textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Compensation and Future -->
+          <div class="custom-card mb-4">
+            <div class="card-header">
+              <h5 class="card-title mb-0">Compensation and Future Considerations</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label fw-bold">21. Do you have any recommendations regarding our compensation, benefits and other reward recognition efforts?</label>
+                <textarea class="form-control" name="compensation_feedback" rows="3">{{ exit_interview.compensation_feedback|default:'' }}</textarea>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-bold">22. What would make you consider working for this company again in the future? Would you recommend the company as a good place to work to your friends and family?</label>
+                <textarea class="form-control" name="future_considerations" rows="3">{{ exit_interview.future_considerations|default:'' }}</textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Additional Comments -->
+          <div class="custom-card mb-4">
+            <div class="card-header">
+              <h5 class="card-title mb-0">Additional Comments</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label fw-bold">23. Can you offer any other comments that will enable us to understand why you are leaving? How can we improve and what we can do to become a better company?</label>
+                <textarea class="form-control" name="additional_comments" rows="4">{{ exit_interview.additional_comments|default:'' }}</textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Save Button -->
+          <div class="custom-card mb-4">
+            <div class="card-body text-center">
+              <button type="submit" name="action" value="save_interview" class="btn btn-primary btn-lg"><i class="fas fa-save me-2"></i>Save All Responses</button>
+            </div>
+          </div>
+        </form>
+
+        <!-- Digital Signature Section -->
+        <div class="row">
+          <!-- Employee Signature -->
+          {% if user_role == 'EMPLOYEE' and resignation.employee.email == request.session.user_email and not exit_interview.employee_signature %}
+            <div class="col-md-6">
+              <div class="custom-card">
+                <div class="card-header">
+                  <h5 class="card-title mb-0">
+ Employee Digital Signature</h5>
+                </div>
+                <div class="card-body">
+                  <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                      <label class="form-label">Draw your signature below:</label>
+                      <div id="signature-pad" class="border rounded" style="height: 200px; background: white;">
+                        <canvas id="signature-canvas" width="400" height="200" style="border: 1px solid #ddd;"></canvas>
+                      </div>
+                      <div class="mt-2">
+                        <button type="button" id="clear-signature" class="btn btn-sm btn-outline-secondary"><i class="fas fa-eraser me-1"></i>Clear</button>
+                      </div>
+                      <input type="hidden" name="signature_data" id="signature-data" />
+                    </div>
+                    <button type="submit" name="action" value="employee_sign" class="btn btn-success w-100"><i class="fas fa-check me-2"></i>Submit Digital Signature</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- HR Signature -->
+          {% if user_role in 'HR,ADMIN,SUPER ADMIN' and not exit_interview.hr_signature %}
+            <div class="col-md-6">
+              <div class="custom-card">
+                <div class="card-header">
+                  <h5 class="card-title mb-0"><� HR Digital Signature</h5>
+                </div>
+                <div class="card-body">
+                  <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                      <label class="form-label">HR Digital Signature:</label>
+                      <div id="hr-signature-pad" class="border rounded" style="height: 200px; background: white;">
+                        <canvas id="hr-signature-canvas" width="400" height="200" style="border: 1px solid #ddd;"></canvas>
+                      </div>
+                      <div class="mt-2">
+                        <button type="button" id="clear-hr-signature" class="btn btn-sm btn-outline-secondary"><i class="fas fa-eraser me-1"></i>Clear</button>
+                      </div>
+                      <input type="hidden" name="hr_signature_data" id="hr-signature-data" />
+                    </div>
+                    <button type="submit" name="action" value="hr_sign" class="btn btn-success w-100"><i class="fas fa-stamp me-2"></i>Complete & Sign Interview</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Signature Preview -->
+        {% if exit_interview.employee_signature or exit_interview.hr_signature %}
+          <div class="custom-card mt-4">
+            <div class="card-header">
+              <h5 class="card-title mb-0"> Signed Signatures</h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                {% if exit_interview.employee_signature %}
+                  <div class="col-md-6 text-center">
+                    <h6>Employee Signature</h6>
+                    <div class="signature-preview mb-2">
+                      <img src="{{ exit_interview.employee_signature }}" alt="Employee Signature" class="img-fluid" style="max-height: 80px;" />
+                    </div>
+                    <p class="text-muted">Signed on: {{ exit_interview.employee_signed_at|date:'M d, Y H:i' }}</p>
+                  </div>
+                {% endif %}
+
+                {% if exit_interview.hr_signature %}
+                  <div class="col-md-6 text-center">
+                    <h6>HR Signature</h6>
+                    <div class="signature-preview mb-2">
+                      <img src="{{ exit_interview.hr_signature }}" alt="HR Signature" class="img-fluid" style="max-height: 80px;" />
+                    </div>
+                    <p class="text-muted">Signed on: {{ exit_interview.hr_signed_at|date:'M d, Y H:i' }}</p>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Initialize signature pads
+      let signaturePad = null
+      let hrSignaturePad = null
+    
+      // Employee signature pad
+      const canvas = document.getElementById('signature-canvas')
+      if (canvas) {
+        signaturePad = new SignaturePad(canvas)
+    
+        document.getElementById('clear-signature').addEventListener('click', function () {
+          signaturePad.clear()
+        })
+    
+        const form = canvas.closest('form')
+        if (form) {
+          form.addEventListener('submit', function () {
+            if (!signaturePad.isEmpty()) {
+              document.getElementById('signature-data').value = signaturePad.toDataURL()
+            }
+          })
+        }
+      }
+    
+      // HR signature pad
+      const hrCanvas = document.getElementById('hr-signature-canvas')
+      if (hrCanvas) {
+        hrSignaturePad = new SignaturePad(hrCanvas)
+    
+        document.getElementById('clear-hr-signature').addEventListener('click', function () {
+          hrSignaturePad.clear()
+        })
+    
+        const hrForm = hrCanvas.closest('form')
+        if (hrForm) {
+          hrForm.addEventListener('submit', function () {
+            if (!hrSignaturePad.isEmpty()) {
+              document.getElementById('hr-signature-data').value = hrSignaturePad.toDataURL()
+            }
+          })
+        }
+      }
+    
+      // Auto-save functionality
+      const form = document.getElementById('exitInterviewForm')
+      if (form) {
+        const textareas = form.querySelectorAll('textarea')
+        textareas.forEach((textarea) => {
+          textarea.addEventListener('blur', function () {
+            // You can add auto-save functionality here if needed
+          })
+        })
+      }
+    })
+  </script>
+
+  <style>
+    .form-label.fw-bold {
+      color: #2c3e50;
+      font-size: 1rem;
+    }
+    .signature-preview {
+      border: 1px dashed #ccc;
+      padding: 10px;
+      background: white;
+      display: inline-block;
+    }
+  </style>
+{% endblock %}

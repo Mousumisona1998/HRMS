@@ -1,0 +1,773 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  Resignation Details - HR System
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-lg-8">
+        <!-- Status Timeline -->
+        {% if status_timeline %}
+          <div class="custom-card mb-4">
+            <div class="card-header">
+              <h4 class="card-title mb-0"> Resignation Status Timeline</h4>
+            </div>
+            <div class="card-body">
+              <div class="status-timeline">
+                {% for step in status_timeline %}
+                  <div class="timeline-step {% if step.completed %}
+                      
+                      completed
+
+                    {% elif step.active %}
+                      
+                      active
+
+                    {% else %}
+                      
+                      pending
+
+                    {% endif %}">
+                    <div class="step-marker">
+                      <i class="{{ step.icon }}"></i>
+                    </div>
+                    <div class="step-content">
+                      <h6 class="step-title">{{ step.label }}</h6>
+                      {% if step.date %}
+                        <small class="text-muted">{{ step.date }}</small>
+                      {% endif %}
+                      {% if step.progress %}
+                        <div class="progress mt-2" style="height: 8px;">
+                          <div class="progress-bar bg-success" role="progressbar" style="width: {{ step.progress.completion_percentage|floatformat:0 }}%"></div>
+                        </div>
+                        <small class="text-muted">{{ step.progress.days_completed }}/{{ step.progress.total_days }} days completed ({{ step.progress.days_remaining }} days left)</small>
+                      {% endif %}
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+
+        <!-- Real-time Status Tracking -->
+        <div class="custom-card mb-4">
+          <div class="card-header">
+            <h4 class="card-title mb-0"> Real-time Status Tracking</h4>
+          </div>
+          <div class="card-body">
+            <!-- Notice Period Countdown -->
+            {% if notice_progress %}
+              <div class="row mb-4">
+                <div class="col-12">
+                  <h6> Notice Period Progress</h6>
+                  <div class="progress mb-2" style="height: 25px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: {{ notice_progress.completion_percentage|floatformat:0 }}%" aria-valuenow="{{ notice_progress.completion_percentage|floatformat:0 }}" aria-valuemin="0" aria-valuemax="100">{{ notice_progress.completion_percentage|floatformat:0 }}%</div>
+                  </div>
+                  <div class="row text-center">
+                    <div class="col-md-3">
+                      <div class="border rounded p-2 bg-light">
+                        <div class="h5 mb-1 text-primary">{{ notice_progress.days_completed }}</div>
+                        <small>Days Completed</small>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="border rounded p-2 bg-light">
+                        <div class="h5 mb-1 text-warning">{{ notice_progress.days_remaining }}</div>
+                        <small>Days Remaining</small>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="border rounded p-2 bg-light">
+                        <div class="h5 mb-1 text-info">{{ notice_progress.total_days }}</div>
+                        <small>Total Days</small>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="border rounded p-2 bg-light">
+                        <div class="h5 mb-1 text-success">{{ notice_progress.end_date }}</div>
+                        <small>Last Working Day</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+
+            <!-- Exit Process Status -->
+            {% if exit_status %}
+              <div class="row">
+                <div class="col-12">
+                  <h6> Exit Process Status</h6>
+                  <div class="row">
+                    <div class="col-md-4 mb-2">
+                      <div class="d-flex justify-content-between align-items-center p-2 border rounded {% if exit_status.no_due_certificate %}
+                          
+                          bg-success text-white
+
+                        {% else %}
+                          
+                          bg-warning
+
+                        {% endif %}">
+                        <span>No Due Certificate</span>
+                        <span class="badge {% if exit_status.no_due_certificate %}
+                            
+                            bg-light text-dark
+
+                          {% else %}
+                            
+                            bg-dark
+
+                          {% endif %}">
+                          {% if exit_status.no_due_certificate %}
+                             Done
+                          {% else %}
+                             Pending
+                          {% endif %}
+                        </span>
+                      </div>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                      <div class="d-flex justify-content-between align-items-center p-2 border rounded {% if exit_status.exit_interview %}
+                          
+                          bg-success text-white
+
+                        {% else %}
+                          
+                          bg-warning
+
+                        {% endif %}">
+                        <span>Exit Interview</span>
+                        <span class="badge {% if exit_status.exit_interview %}
+                            
+                            bg-light text-dark
+
+                          {% else %}
+                            
+                            bg-dark
+
+                          {% endif %}">
+                          {% if exit_status.exit_interview %}
+                             Done
+                          {% else %}
+                             Pending
+                          {% endif %}
+                        </span>
+                      </div>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                      <div class="d-flex justify-content-between align-items-center p-2 border rounded {% if exit_status.final_settlement %}
+                          
+                          bg-success text-white
+
+                        {% else %}
+                          
+                          bg-warning
+
+                        {% endif %}">
+                        <span>Final Settlement</span>
+                        <span class="badge {% if exit_status.final_settlement %}
+                            
+                            bg-light text-dark
+
+                          {% else %}
+                            
+                            bg-dark
+
+                          {% endif %}">
+                          {% if exit_status.final_settlement %}
+                             Done
+                          {% else %}
+                             Pending
+                          {% endif %}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Checklist Progress -->
+                  <div class="mt-3">
+                    <div class="d-flex justify-content-between mb-1">
+                      <span>Checklist Progress ({{ exit_status.checklist_completed }}/{{ exit_status.checklist_total }})</span>
+                      <span>{{ exit_status.checklist_progress|floatformat:0 }}%</span>
+                    </div>
+                    <div class="progress" style="height: 20px;">
+                      <div class="progress-bar bg-info" role="progressbar" style="width: {{ exit_status.checklist_progress }}%"></div>
+                    </div>
+                    {% if exit_status.days_until_exit > 0 %}
+                      <small class="text-muted">
+                        {{ exit_status.days_until_exit }} days until exit "{% if exit_status.is_on_track %}
+                          <span class="text-success"> On track</span>
+                        {% else %}
+                          <span class="text-warning"> Needs attention</span>
+                        {% endif %}
+                      </small>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Resignation Details -->
+        <div class="custom-card">
+          <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+              <h4 class="card-title mb-0">Resignation Details</h4>
+              <div>
+                <span class="badge bg-{% if resignation.status == 'accepted' %}
+                    
+                    success
+
+                  {% elif resignation.status == 'rejected' %}
+                    
+                    danger
+
+                  {% elif resignation.status == 'applied' %}
+                    
+                    warning
+
+                  {% elif resignation.status == 'withdrawn' %}
+                    
+                    secondary
+
+                  {% else %}
+                    
+                    info
+
+                  {% endif %} fs-6">
+                  {{ resignation.get_status_display }}
+                </span>
+                <span class="badge bg-secondary fs-6 ms-2">{{ resignation.get_exit_status_display }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <h6 class="border-bottom pb-2">Employee Information</h6>
+                <div class="d-flex align-items-center mb-3">
+                  {% if resignation.employee.profile_picture %}
+                    <img src="{{ resignation.employee.profile_picture.url }}" alt="{{ resignation.employee.first_name }}" class="rounded-circle me-3" width="60" height="60" />
+                  {% else %}
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px; font-size: 1.2rem;">{{ resignation.employee.first_name|slice:':1' }}{{ resignation.employee.last_name|slice:':1' }}</div>
+                  {% endif %}
+                  <div>
+                    <h5 class="mb-1">{{ resignation.employee.first_name }} {{ resignation.employee.last_name }}</h5>
+                    <p class="text-muted mb-0">{{ resignation.employee.designation }} " {{ resignation.employee.department }}</p>
+                    <small class="text-muted">ID: {{ resignation.employee.employee_id }}</small>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-6">
+                    <small class="text-muted">Email</small>
+                    <p class="mb-2">{{ resignation.employee.email }}</p>
+                  </div>
+                  <div class="col-6">
+                    <small class="text-muted">Phone</small>
+                    <p class="mb-2">{{ resignation.employee.phone }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <h6 class="border-bottom pb-2">Resignation Timeline</h6>
+                <div class="timeline">
+                  <div class="timeline-item">
+                    <div class="timeline-marker bg-primary"></div>
+                    <div class="timeline-content">
+                      <strong>Resignation Date</strong>
+                      <p class="mb-1">{{ resignation.resignation_date }}</p>
+                    </div>
+                  </div>
+                  <div class="timeline-item">
+                    <div class="timeline-marker bg-success"></div>
+                    <div class="timeline-content">
+                      <strong>Last Working Date</strong>
+                      <p class="mb-1">{{ resignation.last_working_date }}</p>
+                    </div>
+                  </div>
+                  <div class="timeline-item">
+                    <div class="timeline-marker bg-info"></div>
+                    <div class="timeline-content">
+                      <strong>Notice Period</strong>
+                      <p class="mb-1">{{ resignation.actual_notice_days }} days</p>
+                    </div>
+                  </div>
+                  {% if resignation.approved_date %}
+                    <div class="timeline-item">
+                      <div class="timeline-marker bg-warning"></div>
+                      <div class="timeline-content">
+                        <strong>Approved Date</strong>
+                        <p class="mb-1">{{ resignation.approved_date }}</p>
+                      </div>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Reason Section -->
+            <div class="row mt-4">
+              <div class="col-12">
+                <h6 class="border-bottom pb-2">Reason for Resignation</h6>
+                <div class="alert alert-light">{{ resignation.reason }}</div>
+              </div>
+            </div>
+
+            <!-- Manager Actions -->
+            {% if user_role in 'ADMIN,HR,SUPER ADMIN' and resignation.status == 'applied' %}
+              <div class="row mt-4">
+                <div class="col-12">
+                  <div class="alert alert-info">
+                    <h6><i class="fas fa-tasks me-2"></i>Manager Actions</h6>
+                    <div class="btn-group">
+                      <a href="{% url 'resignation:approve_resignation' resignation.id %}" class="btn btn-success"><i class="fas fa-check me-1"></i>Review & Approve/Reject</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+
+            <!-- Withdrawal Section -->
+            <!-- {% if resignation.status == 'applied' or resignation.status == 'under_review' and user_role == 'EMPLOYEE' and resignation.employee.email == request.session.user_email %}
+              <div class="row mt-4">
+                <div class="col-12">
+                  <div class="alert alert-warning">
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Want to withdraw your resignation?</h6>
+                    <p class="mb-2">You can withdraw your resignation as it's still under review.</p>
+                    <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#withdrawModal"><i class="fas fa-undo me-1"></i>Withdraw Resignation</button>
+                  </div>
+                </div>
+              </div>
+            {% endif %} -->
+
+            <!-- Action Buttons -->
+            <div class="row mt-4">
+              <div class="col-12">
+                <div class="d-flex gap-2 flex-wrap">
+                  {% if resignation.status == 'accepted' %}
+                    <a href="{% url 'resignation:no_due_certificate' resignation.id %}" class="btn btn-warning"><i class="fas fa-file-certificate me-1"></i> No Due Certificate</a>
+                    <a href="{% url 'resignation:exit_interview' resignation.id %}" class="btn btn-info"><i class="fas fa-comments me-1"></i> Exit Interview</a>
+                  {% endif %}
+
+                  {% if resignation.withdrawal_requested %}
+                    <button class="btn btn-secondary" disabled><i class="fas fa-undo me-1"></i> Withdrawal Requested</button>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Approval Information -->
+            {% if resignation.applied_to or resignation.approved_by %}
+              <div class="row mt-4">
+                <div class="col-12">
+                  <h6 class="border-bottom pb-2">Approval Information</h6>
+                  <div class="row">
+                    {% if resignation.applied_to %}
+                      <div class="col-md-6">
+                        <small class="text-muted">Applied To</small>
+                        <p class="mb-2">{{ resignation.applied_to.first_name }} {{ resignation.applied_to.last_name }}</p>
+                      </div>
+                    {% endif %}
+                    {% if resignation.approved_by %}
+                      <div class="col-md-6">
+                        <small class="text-muted">Approved By</small>
+                        <p class="mb-2">{{ resignation.approved_by.first_name }} {{ resignation.approved_by.last_name }}</p>
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+
+            <!-- Feedback -->
+            {% if resignation.feedback %}
+              <div class="row mt-4">
+                <div class="col-12">
+                  <h6 class="border-bottom pb-2">Feedback</h6>
+                  <div class="alert alert-info">
+                    <i class="fas fa-comment me-2"></i>
+                    {{ resignation.feedback }}
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Exit Checklist -->
+        {% if resignation.status == 'accepted' %}
+          <div class="custom-card mt-4">
+            <div class="card-header">
+              <h4 class="card-title mb-0"> Exit Checklist</h4>
+              <div>
+                <span class="badge bg-success">{{ exit_status.checklist_completed }}/{{ exit_status.checklist_total }} completed</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th width="50">#</th>
+                      <th>Task</th>
+                      <th>Department</th>
+                      <th>Assigned To</th>
+                      <th>Due Date</th>
+                      <th>Status</th>
+                      <th>Remarks</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for item in checklist %}
+                      <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ item.task_name }}</td>
+                        <td>
+                          <span class="badge bg-secondary">{{ item.department }}</span>
+                        </td>
+                        <td>
+                          {% if item.assigned_to %}
+                            {{ item.assigned_to.first_name }} {{ item.assigned_to.last_name }}
+                          {% else %}
+                            <span class="text-muted">Not assigned</span>
+                          {% endif %}
+                        </td>
+                        <td>{{ item.due_date }}</td>
+                        <td>
+                          {% if item.completed %}
+                            <span class="badge bg-success">Completed</span>
+                          {% else %}
+                            <span class="badge bg-warning">Pending</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if item.remarks %}
+                            <small class="text-muted">{{ item.remarks|truncatewords:10 }}</small>
+                          {% else %}
+                            <span class="text-muted">-</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if user_role in 'ADMIN,HR,SUPER ADMIN' and not item.completed %}
+                            <button class="btn btn-sm btn-success" onclick="updateChecklist({{ item.id }}, true)"><i class="fas fa-check"></i></button>
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% empty %}
+                      <tr>
+                        <td colspan="8" class="text-center py-4">
+                          <i class="fas fa-clipboard-list fa-2x text-muted mb-2"></i>
+                          <p class="text-muted">No checklist items found</p>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Sidebar Actions -->
+      <div class="col-lg-4">
+        <!-- Quick Actions Card -->
+        <div class="custom-card mb-4">
+          <div class="card-header">
+            <h5 class="card-title mb-0"> Quick Actions</h5>
+          </div>
+          <div class="card-body">
+            <div class="d-grid gap-2">
+              <a href="{% url 'resignation:dashboard' %}" class="btn btn-outline-primary"><i class="fas fa-arrow-left me-2"></i>Back to Dashboard</a>
+
+              {% if user_role == 'EMPLOYEE' and resignation.employee.email == request.session.user_email %}
+                {% if resignation.status == 'applied' or resignation.status == 'under_review' %}
+                  <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#withdrawModal"><i class="fas fa-undo me-2"></i>Withdraw Resignation</button>
+                {% endif %}
+
+                <a href="{% url 'resignation:resignation_history' %}" class="btn btn-outline-info"><i class="fas fa-history me-2"></i>View History</a>
+              {% endif %}
+
+              {% if user_role in 'ADMIN,HR,SUPER ADMIN' %}
+                {% if resignation.status == 'applied' %}
+                  <a href="{% url 'resignation:approve_resignation' resignation.id %}" class="btn btn-success"><i class="fas fa-check me-2"></i>Review & Approve</a>
+                {% endif %}
+
+                <a href="{% url 'resignation:all_resignations' %}" class="btn btn-outline-secondary"><i class="fas fa-list me-2"></i>All Resignations</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Status Summary -->
+        <div class="custom-card">
+          <div class="card-header">
+            <h5 class="card-title mb-0"> Status Summary</h5>
+          </div>
+          <div class="card-body">
+            <div class="status-summary">
+              <div class="status-item">
+                <span class="status-label">Current Status</span>
+                <span class="status-value badge bg-{% if resignation.status == 'accepted' %}
+                    
+                    success
+
+                  {% elif resignation.status == 'rejected' %}
+                    
+                    danger
+
+                  {% elif resignation.status == 'applied' %}
+                    
+                    warning
+
+                  {% else %}
+                    
+                    info
+
+                  {% endif %}">
+                  {{ resignation.get_status_display }}
+                </span>
+              </div>
+
+              {% if notice_progress %}
+                <div class="status-item">
+                  <span class="status-label">Notice Progress</span>
+                  <span class="status-value">{{ notice_progress.completion_percentage|floatformat:0 }}%</span>
+                </div>
+              {% endif %}
+
+              {% if exit_status %}
+                <div class="status-item">
+                  <span class="status-label">Exit Progress</span>
+                  <span class="status-value">{{ exit_status.checklist_progress|floatformat:0 }}%</span>
+                </div>
+              {% endif %}
+
+              <div class="status-item">
+                <span class="status-label">Days Remaining</span>
+                <span class="status-value">
+                  {% if notice_progress %}
+                    {{ notice_progress.days_remaining }}
+                  {% else %}
+                    -
+                  {% endif %}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Withdrawal Modal -->
+  <!-- <div class="modal fade" id="withdrawModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Withdraw Resignation</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form method="POST" action="{% url 'resignation:withdraw_resignation' resignation.id %}">
+          {% csrf_token %}
+          <div class="modal-body">
+            <div class="alert alert-warning">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              Are you sure you want to withdraw your resignation? This action cannot be undone.
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Reason for Withdrawal</label>
+              <textarea class="form-control" name="withdrawal_reason" rows="3" placeholder="Please provide reason for withdrawal..." required></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-danger">Withdraw Resignation</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div> -->
+  <!-- Documents Section -->
+  <div class="custom-card mt-4">
+    <div class="card-header">
+      <h5 class="card-title mb-0"> Uploaded Forms</h5>
+      <a href="{% url 'resignation:upload_document' resignation.id %}" class="btn btn-sm btn-primary"><i class="fas fa-upload me-1"></i>Upload Form</a>
+    </div>
+    <div class="card-body">
+      {% if documents %}
+        <div class="row">
+          {% for doc in documents %}
+            <div class="col-md-6 mb-3">
+              <div class="card">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <h6 class="card-title">
+                        {% if doc.document_type == 'exit_interview' %}
+                          = Exit Interview
+                        {% else %}
+                          = No Due Certificate
+                        {% endif %}
+                      </h6>
+                      <p class="text-muted small mb-1">Uploaded: {{ doc.uploaded_at|date:'M d, Y' }}</p>
+                      {% if doc.description %}
+                        <p class="small text-muted">{{ doc.description }}</p>
+                      {% endif %}
+                    </div>
+                    <div class="btn-group">
+                      <a href="{{ doc.document_file.url }}" class="btn btn-sm btn-outline-primary" target="_blank"><i class="fas fa-download"></i></a>
+                      {% if user_role in 'HR,ADMIN' or doc.uploaded_by.email == request.session.user_email %}
+                        <a href="{% url 'resignation:delete_document' doc.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this document?')"><i class="fas fa-trash"></i></a>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-center py-4">
+          <i class="fas fa-file-pdf fa-3x text-muted mb-3"></i>
+          <h6 class="text-muted">No forms uploaded yet</h6>
+          <p class="text-muted small">Upload Exit Interview or No Due Certificate forms</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+  <style>
+    .status-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .timeline-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 15px;
+    }
+    .step-marker {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .timeline-step.completed .step-marker {
+      background: #28a745;
+      color: white;
+    }
+    .timeline-step.active .step-marker {
+      background: #007bff;
+      color: white;
+      animation: pulse 2s infinite;
+    }
+    .timeline-step.pending .step-marker {
+      background: #6c757d;
+      color: white;
+    }
+    .step-content {
+      flex: 1;
+    }
+    .step-title {
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    .status-summary {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .status-item:last-child {
+      border-bottom: none;
+    }
+    .status-label {
+      font-weight: 500;
+    }
+    .status-value {
+      font-weight: bold;
+    }
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.05);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+    .bg-warning {
+      margin-left: 10px;
+    }
+  </style>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    function updateChecklist(checklistId, completed) {
+      if (confirm('Are you sure you want to mark this task as completed?')) {
+        fetch(`/resignation/checklist/${checklistId}/update/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+          },
+          body: `completed=${completed}&remarks=Marked as completed by {{ user_name }}`
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              location.reload()
+            } else {
+              alert('Error updating checklist: ' + data.error)
+            }
+          })
+          .catch((error) => {
+            alert('Error updating checklist')
+            console.error('Error:', error)
+          })
+      }
+    }
+    
+    // Auto-refresh status every 30 seconds
+    function refreshStatus() {
+      const progressBars = document.querySelectorAll('.progress-bar')
+      progressBars.forEach((bar) => {
+        const currentWidth = bar.style.width
+        bar.style.width = '0%'
+        setTimeout(() => {
+          bar.style.width = currentWidth
+        }, 100)
+      })
+    }
+    
+    // Refresh every 30 seconds
+    setInterval(refreshStatus, 30000)
+    
+    // Initial refresh after page load
+    document.addEventListener('DOMContentLoaded', function () {
+      setTimeout(refreshStatus, 2000)
+    })
+  </script>
+{% endblock %}

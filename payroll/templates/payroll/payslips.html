@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payslips - HRMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h3 mb-0">Payslips</h1>
+                <p class="text-muted mb-0">View and download employee payslips</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payslips List -->
+    <div class="custom-card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+            <!-- Left: Entries Selector -->
+            <div class="d-flex align-items-center small text-muted gap-2">
+                Show
+                <select id="entriesPerPage" class="form-select form-select-sm" style="width: 70px;">
+                    <option value="5">5</option>
+                    <option value="10" selected>10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                </select>
+                entries
+            </div>
+
+            <!-- Middle: Date Filter -->
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <label class="text-muted small mb-0">From</label>
+                <input type="text" id="fromDate" class="form-control datepicker" style="width: 140px;" placeholder="dd-mm-yy">
+                <label class="text-muted small mb-0">To</label>
+                <input type="text" id="toDate" class="form-control datepicker" style="width: 140px;" placeholder="dd-mm-yy">
+                <button id="filterDateBtn" class="btn btn-sm btn-outline-primary">Filter</button>
+                <button id="resetDateBtn" class="btn btn-sm btn-outline-secondary">Reset</button>
+            </div>
+
+            <!-- Right: Search Box -->
+            <div class="search-box ms-auto">
+                <input type="text" id="tableSearch" class="form-control form-control-sm" placeholder="Search payslips..." style="max-width: 250px;">
+            </div>
+        </div>
+
+        <div class="card-body">
+            {% if payslips %}
+            <div class="table-responsive">
+                <table id="payslipTable" class="table table-hover">
+                    <thead>
+                        <tr>
+                            {% if user_role != 'EMPLOYEE' %}
+                            <th>Employee</th>
+                            {% endif %}
+                            <th>Payslip No</th>
+                            <th>Payroll Period</th>
+                            <th>Basic Salary</th>
+                            <th>Net Salary</th>
+                            <th>Status</th>
+                            <th>Generated On</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payslip in payslips %}
+                        <tr>
+                            {% if user_role != 'EMPLOYEE' %}
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if payslip.employee.profile_picture %}
+                                    <img src="{{ payslip.employee.profile_picture.url }}" alt="{{ payslip.employee.first_name }}" 
+                                         class="rounded-circle me-2" width="32" height="32">
+                                    {% else %}
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" 
+                                         style="width: 32px; height: 32px; font-size: 12px;">
+                                        {{ payslip.employee.first_name|first }}{{ payslip.employee.last_name|first }}
+                                    </div>
+                                    {% endif %}
+                                    <div>
+                                        <div class="fw-bold">{{ payslip.employee.first_name }} {{ payslip.employee.last_name }}</div>
+                                        <small class="text-muted">{{ payslip.employee.designation }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            {% endif %}
+                            <td class="fw-bold">{{ payslip.payslip_number }}</td>
+                            <td>{{ payslip.payroll_run.payroll_month }}/{{ payslip.payroll_run.payroll_year }}</td>
+                            <td>₹{{ payslip.basic_salary }}</td>
+                            <td class="fw-bold text-success">₹{{ payslip.net_salary }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if payslip.status == 'generated' %}bg-warning
+                                    {% elif payslip.status == 'approved' %}bg-success
+                                    {% elif payslip.status == 'paid' %}bg-info
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ payslip.get_status_display }}
+                                </span>
+                            </td>
+                            <td data-date="{{ payslip.generated_at|date:'Y-m-d' }}">
+                                {{ payslip.generated_at|date:"d-m-Y" }}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'view_payslip' payslip.id %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'download_payslip' payslip.id %}" class="btn btn-outline-success btn-sm">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination Info -->
+            <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap">
+                <small id="tableInfo" class="text-muted"></small>
+                <ul id="pagination" class="pagination pagination-sm mb-0"></ul>
+            </div>
+
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-file-invoice-dollar fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Payslips Found</h4>
+                <p class="text-muted">
+                    {% if user_role == 'EMPLOYEE' %}
+                    You don't have any payslips yet.
+                    {% else %}
+                    No payslips have been generated yet.
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- JQuery + Datepicker -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
+<script>
+$(function () {
+    // Initialize datepicker with dd-mm-yy format
+    $("#fromDate, #toDate").datepicker({
+        dateFormat: "dd-mm-yy"
+    });
+
+    const table = document.getElementById("payslipTable");
+    const rows = Array.from(table.querySelectorAll("tbody tr"));
+    const searchInput = document.getElementById("tableSearch");
+    const pagination = document.getElementById("pagination");
+    const tableInfo = document.getElementById("tableInfo");
+    const entriesSelect = document.getElementById("entriesPerPage");
+    const fromDate = document.getElementById("fromDate");
+    const toDate = document.getElementById("toDate");
+    const filterBtn = document.getElementById("filterDateBtn");
+    const resetBtn = document.getElementById("resetDateBtn");
+
+    let rowsPerPage = parseInt(entriesSelect.value);
+    let currentPage = 1;
+    let filteredRows = [...rows];
+
+    function parseDMY(dateStr) {
+        const [d, m, y] = dateStr.split("-");
+        return new Date(`${y}-${m}-${d}`);
+    }
+
+    function formatDate(date) {
+        const d = String(date.getDate()).padStart(2, '0');
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const y = date.getFullYear();
+        return `${d}-${m}-${y}`;
+    }
+
+    // Apply Filters
+    function applyFilters() {
+        const query = searchInput.value.toLowerCase();
+        const from = fromDate.value ? parseDMY(fromDate.value) : null;
+        const to = toDate.value ? parseDMY(toDate.value) : null;
+
+        filteredRows = rows.filter(row => {
+            const textMatch = row.textContent.toLowerCase().includes(query);
+            const dateCell = row.querySelector("td[data-date]");
+            if (!dateCell) return textMatch;
+            const rowDate = new Date(dateCell.dataset.date);
+            const inRange =
+                (!from || rowDate >= from) && (!to || rowDate <= to);
+            return textMatch && inRange;
+        });
+
+        currentPage = 1;
+        renderTable();
+    }
+
+    // Render Table
+    function renderTable() {
+        rows.forEach(r => (r.style.display = "none"));
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        filteredRows.slice(start, end).forEach(r => (r.style.display = ""));
+        renderPagination();
+        updateInfo();
+    }
+
+    // Pagination
+    function renderPagination() {
+        pagination.innerHTML = "";
+        const pageCount = Math.ceil(filteredRows.length / rowsPerPage);
+        for (let i = 1; i <= pageCount; i++) {
+            const li = document.createElement("li");
+            li.className = `page-item ${i === currentPage ? "active" : ""}`;
+            li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+            li.addEventListener("click", e => {
+                e.preventDefault();
+                currentPage = i;
+                renderTable();
+            });
+            pagination.appendChild(li);
+        }
+    }
+
+    // Table Info
+    function updateInfo() {
+        const total = filteredRows.length;
+        const start = (currentPage - 1) * rowsPerPage + 1;
+        const end = Math.min(currentPage * rowsPerPage, total);
+        tableInfo.textContent = total > 0
+            ? `Showing ${start}–${end} of ${total} payslips`
+            : "No payslips found";
+    }
+
+    // Events
+    searchInput.addEventListener("keyup", applyFilters);
+    entriesSelect.addEventListener("change", () => {
+        rowsPerPage = parseInt(entriesSelect.value);
+        currentPage = 1;
+        renderTable();
+    });
+    filterBtn.addEventListener("click", applyFilters);
+    resetBtn.addEventListener("click", () => {
+        fromDate.value = "";
+        toDate.value = "";
+        applyFilters();
+    });
+
+    // ✅ Set default date filter to today's date
+    const today = new Date();
+    const todayFormatted = formatDate(today);
+    fromDate.value = todayFormatted;
+    toDate.value = todayFormatted;
+
+    // Apply current date filter automatically
+    applyFilters();
+});
+</script>
+
+
+<style>
+.card-header {
+    background: #f8f9fa;
+}
+@media (max-width: 992px) {
+    .card-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .search-box {
+        width: 100%;
+    }
+}
+.page-item.active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+.page-link {
+    color: #007bff;
+}
+.page-link:hover {
+    background-color: #e9ecef;
+}
+</style>
+{% endblock %}

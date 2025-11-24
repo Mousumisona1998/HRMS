@@ -1,0 +1,340 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Resignation Analytics - HR System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h2 mb-0"> Resignation Analytics</h1>
+                <p class="text-muted mb-0">Comprehensive insights and trends analysis</p>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'resignation:dashboard' %}" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+                <button class="btn btn-primary" onclick="exportAnalytics()">
+                    <i class="fas fa-download me-2"></i>Export Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="custom-card text-center">
+                <div class="card-icon bg-primary mx-auto mb-3">
+                    <i class="fas fa-door-open"></i>
+                </div>
+                <div class="metric-large" id="thisMonthCount">{{ monthly_data.0 }}</div>
+                <small class="text-muted">This Month</small>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="custom-card text-center">
+                <div class="card-icon bg-success mx-auto mb-3">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="metric-large" id="thisYearCount">0</div>
+                <small class="text-muted">This Year</small>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="custom-card text-center">
+                <div class="card-icon bg-warning mx-auto mb-3">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div class="metric-large">{{ dept_data|length }}</div>
+                <small class="text-muted">Departments</small>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="custom-card text-center">
+                <div class="card-icon bg-info mx-auto mb-3">
+                    <i class="fas fa-list"></i>
+                </div>
+                <div class="metric-large">{{ reasons|length }}</div>
+                <small class="text-muted">Top Reasons</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row">
+        <!-- Monthly Trends -->
+        <div class="col-lg-8 mb-4">
+            <div class="custom-card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"> Monthly Resignation Trends</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Department Distribution -->
+        <div class="col-lg-4 mb-4">
+            <div class="custom-card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">< Department Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="departmentChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reasons Analysis -->
+    <div class="row">
+        <div class="col-12">
+            <div class="custom-card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">< Top Resignation Reasons</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Reason</th>
+                                    <th>Count</th>
+                                    <th>Percentage</th>
+                                    <th>Trend</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for reason in reasons %}
+                                <tr>
+                                    <td>
+                                        <div class="reason-text">
+                                            {{ reason.reason|truncatewords:10 }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ reason.count }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar" role="progressbar" 
+                                                 style="width: {% widthratio reason.count total_reasons 100 %}%">
+                                                {% widthratio reason.count total_reasons 100 %}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-arrow-up text-success"></i>
+                                        <small class="text-muted">+12%</small>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4">
+                                        <i class="fas fa-chart-pie fa-2x text-muted mb-2"></i>
+                                        <p class="text-muted">No data available for analysis</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Department Details -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="custom-card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"> Department-wise Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for dept in dept_data %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card department-card">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ dept.department }}</h6>
+                                    <div class="metric-large text-primary">{{ dept.count }}</div>
+                                    <small class="text-muted">Total Resignations</small>
+                                    <div class="mt-2">
+                                        <small class="text-success">
+                                            <i class="fas fa-arrow-up me-1"></i>
+                                            {% widthratio dept.count total_dept_count 100 %}% of total
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Retention Insights -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="custom-card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"> Retention Insights</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Top Concerns</h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                    Career growth opportunities
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                    Work-life balance
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                    Compensation and benefits
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Recommendations</h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-lightbulb text-success me-2"></i>
+                                    Enhance career development programs
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-lightbulb text-success me-2"></i>
+                                    Implement flexible work arrangements
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-lightbulb text-success me-2"></i>
+                                    Review compensation structure
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.department-card {
+    transition: transform 0.2s;
+    border: 1px solid #e0e0e0;
+}
+.department-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.reason-text {
+    max-width: 300px;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Calculate total for the year
+    const monthlyData = {{ monthly_data|safe }};
+    const yearlyTotal = monthlyData.reduce((a, b) => a + b, 0);
+    document.getElementById('thisYearCount').textContent = yearlyTotal;
+
+    // Monthly Trends Chart
+    const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+    const monthlyChart = new Chart(monthlyCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [{
+                label: 'Resignations',
+                data: monthlyData,
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+
+    // Department Chart
+    const deptData = {{ dept_data|safe }};
+    const deptCtx = document.getElementById('departmentChart').getContext('2d');
+    const deptChart = new Chart(deptCtx, {
+        type: 'doughnut',
+        data: {
+            labels: deptData.map(dept => dept.department),
+            datasets: [{
+                data: deptData.map(dept => dept.count),
+                backgroundColor: [
+                    '#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6',
+                    '#1abc9c', '#34495e', '#d35400', '#c0392b', '#16a085'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+});
+
+function exportAnalytics() {
+    const monthlyData = {{ monthly_data|safe }};
+    const deptData = {{ dept_data|safe }};
+    const reasonsData = {{ reasons|safe }};
+    
+    const data = {
+        monthly_data: monthlyData,
+        department_data: deptData,
+        reasons: reasonsData,
+        generated_at: new Date().toISOString()
+    };
+    
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", "resignation_analytics_" + new Date().toISOString().split('T')[0] + ".json");
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    
+    alert('Analytics data exported successfully!');
+}
+</script>
+{% endblock %}

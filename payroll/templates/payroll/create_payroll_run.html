@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Payroll Run - HRMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h3 mb-0">Create Payroll Run</h1>
+                <p class="text-muted mb-0">Select employees and create a new payroll run</p>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'payroll_runs' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Payroll Runs
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payroll Run Form -->
+    <div class="custom-card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Payroll Run Details</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" id="payrollRunForm">
+                {% csrf_token %}
+                
+                <!-- Basic Information -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="name" class="form-label">Payroll Run Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   placeholder="enter payroll run name" required>
+                            <small class="form-text text-muted">Use descriptive names like "Regular Payroll", "Missing Employees", "New Hires"</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="payroll_year" class="form-label">Year *</label>
+                            <select class="form-control" id="payroll_year" name="payroll_year" required>
+                                <option value="">Select Year</option>
+                                {% for year in years %}
+                                    <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>
+                                        {{ year }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="payroll_month" class="form-label">Month *</label>
+                            <select class="form-control" id="payroll_month" name="payroll_month" required>
+                                <option value="">Select Month</option>
+                                {% for month_num, month_name in months %}
+                                    <option value="{{ month_num }}" {% if month_num == current_month %}selected{% endif %}>
+                                        {{ month_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Employee Selection -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="form-group">
+                            <label class="form-label">Select Employees *</label>
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Multiple Payroll Runs Per Month Allowed</strong><br>
+                                You can create multiple payroll runs for the same month (e.g., "Regular Payroll", "Missing Employees", "New Hires"). 
+                                Each employee can only be paid once per month.
+                            </div>
+                            
+                            {% if available_employees %}
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <strong>Available Employees: {{ available_employees|length }}</strong>
+                                    <span class="text-muted ms-2">(Employees not yet paid for {{ selected_month }}/{{ selected_year }})</span>
+                                </div>
+                                <div class="form-check">
+                                    <input type="checkbox" id="selectAll" class="form-check-input">
+                                    <label for="selectAll" class="form-check-label">Select All</label>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th width="50">
+                                                <input type="checkbox" id="selectAllCheckbox">
+                                            </th>
+                                            <th>Employee ID</th>
+                                            <th>Name</th>
+                                            <th>Department</th>
+                                            <th>Designation</th>
+                                            <th>Basic Salary</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for employee in available_employees %}
+                                        <tr>
+                                            <td>
+                                                <input type="checkbox" name="employees" 
+                                                       value="{{ employee.id }}" class="employee-checkbox">
+                                            </td>
+                                            <td class="fw-bold">{{ employee.employee_id }}</td>
+                                            <td>{{ employee.first_name }} {{ employee.last_name }}</td>
+                                            <td>{{ employee.department }}</td>
+                                            <td>{{ employee.designation }}</td>
+                                            <td class="fw-bold text-success">
+                                                ₹{{ employee.employeesalary_set.first.basic_salary|default:"0" }}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="mt-3 p-3 bg-light rounded">
+                                <strong>Selected: </strong>
+                                <span id="selectedCount" class="fw-bold text-primary">0</span> employees
+                                <span id="totalAmount" class="ms-3"></span>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                <h4 class="text-muted">No Available Employees</h4>
+                                <p class="text-muted">
+                                    All employees with salary structures have already been processed for {{ selected_month }}/{{ selected_year }}, 
+                                    or no employees have active salary structures.
+                                </p>
+                                <div class="mt-3">
+                                    <a href="{% url 'employee_salaries' %}" class="btn btn-primary me-2">
+                                        <i class="fas fa-money-bill me-2"></i>Manage Employee Salaries
+                                    </a>
+                                    <a href="{% url 'payroll_runs' %}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i>Back to Payroll Runs
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                {% if available_employees %}
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'payroll_runs' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="createBtn" disabled>
+                                <i class="fas fa-plus me-2"></i>Create Payroll Run
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Select all functionality
+    $('#selectAll, #selectAllCheckbox').change(function() {
+        const isChecked = $(this).is(':checked');
+        $('.employee-checkbox').prop('checked', isChecked);
+        updateSelectedCount();
+    });
+    
+    // Update selected count and total amount
+    $('.employee-checkbox').change(function() {
+        updateSelectedCount();
+        const allChecked = $('.employee-checkbox:checked').length === $('.employee-checkbox').length;
+        $('#selectAll').prop('checked', allChecked);
+        $('#selectAllCheckbox').prop('checked', allChecked);
+    });
+    
+    function updateSelectedCount() {
+        const selectedCount = $('.employee-checkbox:checked').length;
+        $('#selectedCount').text(selectedCount);
+        
+        // Enable/disable create button
+        $('#createBtn').prop('disabled', selectedCount === 0);
+        
+        if (selectedCount === 0) {
+            $('#totalAmount').text('');
+        } else {
+            $('#totalAmount').text('| Ready to create payroll run');
+        }
+    }
+    
+    // Form validation
+    $('#payrollRunForm').submit(function(e) {
+        const selectedCount = $('.employee-checkbox:checked').length;
+        if (selectedCount === 0) {
+            e.preventDefault();
+            alert('Please select at least one employee.');
+            return false;
+        }
+        
+        const runName = $('#name').val();
+        if (!runName) {
+            e.preventDefault();
+            alert('Please enter a payroll run name.');
+            return false;
+        }
+    });
+    
+    // Update available employees when month/year changes
+    $('#payroll_year, #payroll_month').change(function() {
+        const year = $('#payroll_year').val();
+        const month = $('#payroll_month').val();
+        if (year && month) {
+            window.location.href = `{% url 'create_payroll_run' %}?year=${year}&month=${month}`;
+        }
+    });
+    
+    // Initialize count
+    updateSelectedCount();
+});
+</script>
+{% endblock %}

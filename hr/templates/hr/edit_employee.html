@@ -1,0 +1,1728 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Employee - HR System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center page-header">
+        <div>
+            <h1 class="h2">Edit Employee</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'employee_page' %}">Employees</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'employee_detail' employee.id %}">{{ employee.first_name }} {{ employee.last_name }}</a></li>
+                    <li class="breadcrumb-item active">Edit</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a href="{% url 'employee_detail' employee.id %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Profile
+            </a>
+        </div>
+    </div>
+
+    <!-- Edit Employee Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user-edit me-2"></i>Edit Employee Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="editEmployeeForm">
+                        {% csrf_token %}
+                       
+                        {% if messages %}
+                        <div class="messages">
+                            {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Personal Information Section -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 mb-3 text-primary">
+                                    <i class="fas fa-user me-2"></i>Personal Information
+                                </h6>
+                            </div>
+                           
+                            <div class="col-md-4">
+                                <label class="form-label required">Employee ID</label>
+                                <input type="text" name="employee_id" class="form-control" value="{{ employee.employee_id }}" required>
+                                <div class="form-text">Unique identifier for the employee</div>
+                            </div>
+                           
+                            <div class="col-md-4">
+                                <label class="form-label required">First Name</label>
+                                <input type="text" name="first_name" class="form-control" value="{{ employee.first_name }}" required>
+                            </div>
+                           
+                            <div class="col-md-4">
+                                <label class="form-label">Middle Name</label>
+                                <input type="text" name="middle_name" class="form-control" value="{{ employee.middle_name|default_if_none:'' }}">
+                            </div>
+                           
+                            <div class="col-md-4">
+                                <label class="form-label required">Last Name</label>
+                                <input type="text" name="last_name" class="form-control" value="{{ employee.last_name }}" required>
+                            </div>
+                           
+                            <div class="col-md-4">
+                                <label class="form-label required">Email</label>
+                                <input type="email" name="email" class="form-control" value="{{ employee.email }}" required>
+                            </div>
+                           
+                            <div class="col-md-4">
+                                <label class="form-label">Gender</label>
+                                <select name="gender" class="form-control">
+                                    <option value="">Select Gender</option>
+                                    {% for value, label in gender_choices %}
+                                    <option value="{{ value }}" {% if employee.gender == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Date of Birth</label>
+                                <input type="text" name="date_of_birth" class="form-control datepicker" value="{{ employee.date_of_birth|date:'d-m-Y' }}" placeholder="DD-MM-YYYY">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Marital Status</label>
+                                <select name="marital_status" class="form-control">
+                                    <option value="">Select Marital Status</option>
+                                    {% for value, label in marital_status_choices %}
+                                    <option value="{{ value }}" {% if employee.marital_status == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Marriage Date</label>
+                                <input type="text" name="marriage_date" class="form-control datepicker" value="{{ employee.marriage_date|date:'d-m-Y' }}" placeholder="DD-MM-YYYY">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Blood Group</label>
+                                <select name="blood_group" class="form-control">
+                                    <option value="">Select Blood Group</option>
+                                    {% for value, label in blood_group_choices %}
+                                    <option value="{{ value }}" {% if employee.blood_group == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Nationality</label>
+                                <input type="text" name="nationality" class="form-control" value="{{ employee.nationality|default_if_none:'Indian' }}">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Physically Handicapped</label>
+                                <div class="form-check mt-2">
+                                    <input type="checkbox" name="physically_handicapped" class="form-check-input"
+                                           id="physically_handicapped" {% if employee.physically_handicapped %}checked{% endif %}>
+                                    <label class="form-check-label" for="physically_handicapped">
+                                        Yes, physically handicapped
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information Section -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 mb-3 text-primary">
+                                    <i class="fas fa-phone me-2"></i>Contact Information
+                                </h6>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label required">Dial Code</label>
+                                <select name="dial_code" class="form-control" required>
+                                    <option value="+91" {% if employee.dial_code == "+91" %}selected{% endif %}>+91 (India)</option>
+                                    <option value="+1" {% if employee.dial_code == "+1" %}selected{% endif %}>+1 (USA/Canada)</option>
+                                    <option value="+44" {% if employee.dial_code == "+44" %}selected{% endif %}>+44 (UK)</option>
+                                    <option value="+61" {% if employee.dial_code == "+61" %}selected{% endif %}>+61 (Australia)</option>
+                                    <option value="+65" {% if employee.dial_code == "+65" %}selected{% endif %}>+65 (Singapore)</option>
+                                    <option value="+971" {% if employee.dial_code == "+971" %}selected{% endif %}>+971 (UAE)</option>
+                                    <option value="+86" {% if employee.dial_code == "+86" %}selected{% endif %}>+86 (China)</option>
+                                    <option value="+81" {% if employee.dial_code == "+81" %}selected{% endif %}>+81 (Japan)</option>
+                                    <option value="+49" {% if employee.dial_code == "+49" %}selected{% endif %}>+49 (Germany)</option>
+                                    <option value="+33" {% if employee.dial_code == "+33" %}selected{% endif %}>+33 (France)</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label required">Phone Number</label>
+                                <input type="tel" name="phone" class="form-control" value="{{ employee.phone }}" required>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label">Alternate Phone</label>
+                                <input type="tel" name="alternate_phone" class="form-control" value="{{ employee.alternate_phone|default_if_none:'' }}">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label">Residence Number</label>
+                                <input type="tel" name="residence_number" class="form-control" value="{{ employee.residence_number|default_if_none:'' }}">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Present Address</label>
+                                <textarea name="present_address" class="form-control" rows="3" placeholder="Enter employee present address">{{ employee.present_address|default_if_none:'' }}</textarea>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Permanent Address</label>
+                                <textarea name="address" class="form-control" rows="3" placeholder="Enter employee address">{{ employee.address|default_if_none:'' }}</textarea>
+                            </div>                            
+                        </div>
+
+                        <!-- Family Information Section -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 mb-3 text-primary">
+                                    <i class="fas fa-users me-2"></i>Family Information
+                                </h6>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Father's Name</label>
+                                <input type="text" name="father_name" class="form-control" value="{{ employee.father_name|default_if_none:'' }}">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Mother's Name</label>
+                                <input type="text" name="mother_name" class="form-control" value="{{ employee.mother_name|default_if_none:'' }}">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Spouse Name</label>
+                                <input type="text" name="spouse_name" class="form-control" value="{{ employee.spouse_name|default_if_none:'' }}">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Spouse Gender</label>
+                                <select name="spouse_gender" class="form-control">
+                                    <option value="">Select Gender</option>
+                                    {% for value, label in gender_choices %}
+                                    <option value="{{ value }}" {% if employee.spouse_gender == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Employment Information Section -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 mb-3 text-primary">
+                                    <i class="fas fa-briefcase me-2"></i>Employment Information
+                                </h6>
+                            </div>
+
+                            <div class="col-md-6">
+    <label class="form-label">Department</label>
+    <select name="department" class="form-control" id="departmentSelect">
+        <option value="">Select Department</option>
+        {% for department in departments %}
+        <option value="{{ department.id }}"
+                data-department-name="{{ department.name }}"
+                {% if employee.department_id == department.id or employee.department == department.name %}selected{% endif %}>
+            {{ department.name }}
+        </option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="col-md-6">
+    <label class="form-label">Designation</label>
+    <select name="designation" class="form-control" id="designationSelect">
+        <option value="">Select Designation</option>
+        {% for designation in designations %}
+        <option value="{{ designation.id }}"
+                data-designation-title="{{ designation.title }}"
+                data-designation-level="{{ designation.level|default:'' }}"
+                data-department-id="{{ designation.department_id }}"
+                {% if employee.designation_id == designation.id or employee.designation == designation.title %}selected{% endif %}>
+            {{ designation.title }} {% if designation.level %}(Level {{ designation.level }}){% endif %}
+        </option>
+        {% endfor %}
+    </select>
+</div>
+
+                            <div class="col-md-6">
+                                <label class="form-label required">Location</label>
+                                <select name="location" class="form-control" required id="locationSelect">
+                                    <option value="">Select Location</option>
+                                    {% for location in locations %}
+                                    <option value="{{ location.id }}"
+                                            data-location-name="{{ location.name }}"
+                                            {% if employee.location_id == location.id|stringformat:"i" or employee.location == location.name %}selected{% endif %}>
+                                        {{ location.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 position-relative">
+    <label class="form-label">Reporting Manager</label>
+    <!-- Search Input -->
+    <input
+        type="text"
+        class="form-control"
+        id="reportingManagerSearch"
+        name="reporting_manager"
+        placeholder="Search Reporting Manager"
+        value="{{ employee.reporting_manager|default_if_none:'' }}"
+    >
+   
+    <!-- Suggestion Dropdown -->
+    <div id="managerSuggestions" class="dropdown-menu w-100" style="display: none;"></div>
+
+    <!-- Hidden field for Manager ID -->
+    <input
+        type="hidden"
+        name="reporting_manager_id"
+        id="reportingManagerId"
+        value="{{ employee.reporting_manager_id|default_if_none:'' }}"
+    >
+</div>
+
+<!-- Show selected manager (optional visual confirmation) -->
+<div class="row mt-3" id="selectedManagerSection" {% if not employee.reporting_manager_id %}style="display:none"{% endif %}>
+    <div class="col-12">
+        <div class="alert alert-info py-2">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>Selected Manager:</strong>
+                    <span id="selectedManagerName" class="ms-2">{{ employee.reporting_manager }}</span>
+                    <span id="selectedManagerId" class="text-muted ms-2">
+                        {% if employee.reporting_manager_id %}({{ employee.reporting_manager_id }}){% endif %}
+                    </span>
+                </div>
+                <button type="button" class="btn-close" id="clearManagerSelection"></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+                            <div class="col-md-4">
+                                <label class="form-label required">Role</label>
+                                <select name="role" class="form-control" required>
+                                    <option value="">Select Role</option>
+                                    {% for role in roles %}
+                                    <option value="{{ role.name }}"
+                                            data-role-name="{{ role.name }}"
+                                            {% if employee.role == role.name %}selected{% endif %}>
+                                        {{ role.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Worker Type</label>
+                                <select name="worker_type" class="form-control">
+                                    <option value="">Select Worker Type</option>
+                                    {% for value, label in worker_type_choices %}
+                                    <option value="{{ value }}" {% if employee.worker_type == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label required">Status</label>
+                                <select name="status" class="form-control" required>
+                                    <option value="active" {% if employee.status == "active" %}selected{% endif %}>Active</option>
+                                    <option value="inactive" {% if employee.status == "inactive" %}selected{% endif %}>Inactive</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Date of Joining</label>
+                                <input type="text" name="date_of_joining" class="form-control datepicker" value="{{ employee.date_of_joining|date:'d-m-Y' }}" placeholder="DD-MM-YYYY">
+                            </div>
+                            <!-- Add this in the Employment Information section -->
+                            <div class="col-md-6">
+                                <label class="form-label required">Probation Period (Days)</label>
+                                <input type="number" name="probation_period_days" class="form-control"
+                                    value="{{ employee.probation_period_days|default:'90' }}"
+                                    min="30" max="365"
+                                    placeholder="Enter probation days">
+                                <div class="form-text">Individual probation period for this employee</div>
+                            </div>
+                            <!-- Notice Period Field -->
+                            <div class="col-md-6">
+                                <label class="form-label">Notice Period (Days)</label>
+                                <input type="number" name="notice_period_days" class="form-control"
+                                    value="{{ employee.notice_period_days|default:'60' }}"
+                                    min="15" max="180">
+                                <div class="form-text">Default notice period in days (15-180)</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Contract End Date</label>
+                                <input type="text" name="contract_end_date" class="form-control datepicker" value="{{ employee.contract_end_date|date:'d-m-Y' }}" placeholder="DD-MM-YYYY">
+                                <div class="form-text">Format: DD-MM-YYYY</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Legal Entity</label>
+                                <input type="text" name="legal_entity" class="form-control" value="{{ employee.legal_entity|default_if_none:'' }}">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Profile Picture</label>
+                                <input type="file" name="profile_picture" class="form-control" accept="image/*">
+                                {% if employee.profile_picture %}
+                                    <small class="text-muted">Current:
+                                        <a href="{{ employee.profile_picture.url }}" target="_blank">View</a>
+                                    </small>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Bank & Salary Information Section -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 mb-3 text-primary">
+                                    <i class="fas fa-university me-2"></i>Bank & Salary Information
+                                </h6>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Bank Name</label>
+                                <input type="text" name="bank_name" class="form-control" value="{{ employee.bank_name|default_if_none:'' }}">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Account Number</label>
+                                <input type="text" name="account_number" class="form-control" value="{{ employee.account_number|default_if_none:'' }}">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">IFSC Code</label>
+                                <input type="text" name="ifsc_code" class="form-control" value="{{ employee.ifsc_code|default_if_none:'' }}">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Name on Bank Account</label>
+                                <input type="text" name="name_on_bank_account" class="form-control" value="{{ employee.name_on_bank_account|default_if_none:'' }}">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Salary Payment Mode</label>
+                                <select name="salary_payment_mode" class="form-control">
+                                    <option value="">Select Payment Mode</option>
+                                    {% for value, label in salary_payment_mode_choices %}
+                                    <option value="{{ value }}" {% if employee.salary_payment_mode == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Basic Salary</label>
+                                <input type="number" name="basic_salary" class="form-control" value="{{ employee.basic_salary|default_if_none:'' }}" step="0.01">
+                            </div>
+                        </div>
+
+                        <!-- PF (Provident Fund) Details Section -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <h6 class="border-bottom pb-2 mb-3 text-primary">
+            <i class="fas fa-file-invoice-dollar me-2"></i>PF (Provident Fund) Details
+        </h6>
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label required">PF Details Available</label>
+        <select name="pf_details_available" class="form-control" id="pfDetailsAvailable">
+            <option value="">Select</option>
+            {% for value, label in pf_details_choices %}
+            <option value="{{ value }}" {% if employee.pf_details_available == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<!-- PF Fields (Conditional) -->
+<div class="pf-fields" style="display: {% if employee.pf_details_available == 'Yes' %}block{% else %}none{% endif %};">
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label class="form-label required">PF Establishment ID</label>
+            <input type="text" name="pf_establishment_id" class="form-control"
+                   value="{{ employee.pf_establishment_id|default_if_none:'' }}"
+                   placeholder="Enter PF establishment ID"
+                   {% if employee.pf_details_available == 'Yes' %}required{% endif %}>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label required">PF Joining Date</label>
+            <input type="text" name="pf_joining_date" class="form-control datepicker"
+                   value="{{ employee.pf_joining_date|date:'d-m-Y' }}"
+                   placeholder="DD-MM-YYYY"
+                   {% if employee.pf_details_available == 'Yes' %}required{% endif %}>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label required">Name on PF Account</label>
+            <input type="text" name="name_on_pf_account" class="form-control"
+                   value="{{ employee.name_on_pf_account|default_if_none:'' }}"
+                   placeholder="Enter name as in PF account"
+                   {% if employee.pf_details_available == 'Yes' %}required{% endif %}>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label required">UAN</label>
+            <input type="text" name="uan" class="form-control"
+                   value="{{ employee.uan|default_if_none:'' }}"
+                   placeholder="Enter Universal Account Number"
+                   {% if employee.pf_details_available == 'Yes' %}required{% endif %}>
+        </div>
+    </div>
+</div>
+
+                        <!-- ESI & Professional Tax Details Section -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <h6 class="border-bottom pb-2 mb-3 text-primary">
+            <i class="fas fa-file-medical me-2"></i>ESI & Professional Tax Details
+        </h6>
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label required">ESI Eligible</label>
+        <select name="esi_eligible" class="form-control" id="esiEligible">
+            <option value="">Select</option>
+            {% for value, label in esi_eligible_choices %}
+            <option value="{{ value }}" {% if employee.esi_eligible == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<!-- ESI Fields (Conditional) -->
+<div class="esi-fields" style="display: {% if employee.esi_eligible == 'Yes' %}block{% else %}none{% endif %};">
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label class="form-label required">ESI Details Available</label>
+            <select name="esi_details_available" class="form-control" {% if employee.esi_eligible == 'Yes' %}required{% endif %}>
+                <option value="">Select</option>
+                {% for value, label in esi_eligible_choices %}
+                <option value="{{ value }}" {% if employee.esi_details_available == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label required">Employer ESI Number</label>
+            <input type="text" name="employer_esi_number" class="form-control"
+                   value="{{ employee.employer_esi_number|default_if_none:'' }}"
+                   placeholder="Enter employer ESI number"
+                   {% if employee.esi_eligible == 'Yes' %}required{% endif %}>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label required">ESI Number</label>
+            <input type="text" name="esi_number" class="form-control"
+                   value="{{ employee.esi_number|default_if_none:'' }}"
+                   placeholder="Enter ESI number"
+                   {% if employee.esi_eligible == 'Yes' %}required{% endif %}>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label required">PT Establishment ID</label>
+            <input type="text" name="pt_establishment_id" class="form-control"
+                   value="{{ employee.pt_establishment_id|default_if_none:'' }}"
+                   placeholder="Enter PT establishment ID"
+                   {% if employee.esi_eligible == 'Yes' %}required{% endif %}>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label required">LWF Eligible</label>
+            <select name="lwf_eligible" class="form-control" {% if employee.esi_eligible == 'Yes' %}required{% endif %}>
+                <option value="">Select</option>
+                {% for value, label in lwf_eligible_choices %}
+                <option value="{{ value }}" {% if employee.lwf_eligible == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label required">Enrollment Number</label>
+            <input type="text" name="enrollment_number" class="form-control"
+                   value="{{ employee.enrollment_number|default_if_none:'' }}"
+                   placeholder="Enter enrollment number"
+                   {% if employee.esi_eligible == 'Yes' %}required{% endif %}>
+        </div>
+    </div>
+</div>
+
+                        <!-- Insurance Details Section -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 mb-3 text-primary">
+                                    <i class="fas fa-shield-alt me-2"></i>Insurance Details
+                                </h6>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Insurance Type</label>
+                                <select name="insurance_type" class="form-control">
+                                    <option value="">Select Insurance Type</option>
+                                    {% for value, label in insurance_type_choices %}
+                                    <option value="{{ value }}" {% if employee.insurance_type == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Policy Name</label>
+                                <input type="text" name="policy_name" class="form-control"
+                                    value="{{ employee.policy_name|default_if_none:'' }}"
+                                    placeholder="Enter policy name">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Insurance Company</label>
+                                <input type="text" name="insurance_company" class="form-control"
+                                    value="{{ employee.insurance_company|default_if_none:'' }}"
+                                    placeholder="Enter insurance company">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Policy Number</label>
+                                <input type="text" name="policy_number" class="form-control"
+                                    value="{{ employee.policy_number|default_if_none:'' }}"
+                                    placeholder="Enter policy number">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Coverage Amount (₹)</label>
+                                <input type="number" name="coverage_amount" class="form-control"
+                                    value="{{ employee.coverage_amount|default_if_none:'' }}"
+                                    placeholder="Enter coverage amount" step="0.01">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Nominee Name</label>
+                                <input type="text" name="nominee_name" class="form-control"
+                                    value="{{ employee.nominee_name|default_if_none:'' }}"
+                                    placeholder="Enter nominee name">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Relationship with Nominee</label>
+                                <input type="text" name="nominee_relationship" class="form-control"
+                                    value="{{ employee.nominee_relationship|default_if_none:'' }}"
+                                    placeholder="e.g., Spouse, Father, Mother, etc.">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Policy Start Date</label>
+                                <input type="text" name="policy_start_date" class="form-control datepicker"
+                                    value="{{ employee.policy_start_date|date:'d-m-Y' }}" placeholder="DD-MM-YYYY">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Policy End Date</label>
+                                <input type="text" name="policy_end_date" class="form-control datepicker"
+                                    value="{{ employee.policy_end_date|date:'d-m-Y' }}" placeholder="DD-MM-YYYY">
+                            </div>
+                        </div>
+
+                        <!-- Document Upload Section -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 mb-3 text-primary">
+                                    <i class="fas fa-file-upload me-2"></i>Document Upload
+                                </h6>
+                            </div>
+                        </div>
+
+                        <!-- Educational Certificates -->
+<div class="col-12">
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h6 class="mb-0">
+                <i class="fas fa-graduation-cap me-2"></i>Educational Certificates
+            </h6>
+            <button type="button" class="btn btn-sm btn-primary float-end" id="addEducation">
+                <i class="fas fa-plus"></i> Add More
+            </button>
+        </div>
+        <div class="card-body">
+            <div id="educationFields">
+                {% for doc in employee.documents.all %}
+                    {% if doc.document_type == 'educational' %}
+                    <div class="row g-3 education-row mb-3" data-existing-type="{{ doc.document_number }}">
+                        <div class="col-md-5">
+                            <label class="form-label">Certificate Type</label>
+                            <select name="education_type_{{ doc.document_number }}" class="form-control education-type">
+                                <option value="">Select Certificate Type</option>
+                                <option value="10th" {% if doc.document_number == '10th' %}selected{% endif %}>10th Certificate</option>
+                                <option value="12th" {% if doc.document_number == '12th' %}selected{% endif %}>12th Certificate</option>
+                                <option value="bachelor" {% if doc.document_number == 'bachelor' %}selected{% endif %}>Bachelor's Degree</option>
+                                <option value="master" {% if doc.document_number == 'master' %}selected{% endif %}>Master's Degree</option>
+                                <option value="diploma" {% if doc.document_number == 'diploma' %}selected{% endif %}>Diploma</option>
+                                <option value="phd" {% if doc.document_number == 'phd' %}selected{% endif %}>PhD</option>
+                                <option value="other" {% if doc.document_number == 'other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">Upload Certificate</label>
+                            <input type="file" name="education_file_{{ doc.document_number }}" class="form-control education-file" accept=".pdf,.jpg,.jpeg,.png">
+                            {% if doc.file %}
+                            <small class="text-muted">Current:
+                                <a href="{{ doc.file.url }}" target="_blank">View</a> |
+                                <a href="{{ doc.file.url }}" download>Download</a>
+                            </small>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-danger btn-sm remove-education mt-4">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% empty %}
+                    <!-- Default empty row -->
+                    <div class="row g-3 education-row" data-education-id="new_1">
+                        <div class="col-md-5">
+                            <label class="form-label">Certificate Type</label>
+                            <select name="education_type_new_1" class="form-control education-type">
+                                <option value="">Select Certificate Type</option>
+                                <option value="10th">10th Certificate</option>
+                                <option value="12th">12th Certificate</option>
+                                <option value="bachelor">Bachelor's Degree</option>
+                                <option value="master">Master's Degree</option>
+                                <option value="diploma">Diploma</option>
+                                <option value="phd">PhD</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">Upload Certificate</label>
+                            <input type="file" name="education_file_new_1" class="form-control education-file" accept=".pdf,.jpg,.jpeg,.png">
+                            <div class="form-text">PDF, JPG, PNG files only</div>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-danger btn-sm remove-education mt-4">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+<!-- PAN Card - Simple Solution -->
+<div class="col-12">
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="fas fa-id-card me-2"></i>PAN Card</h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">PAN Number</label>
+                    <!-- Always show input field -->
+                    <input type="text" name="pan_number" class="form-control" placeholder="Enter PAN Number" maxlength="10"
+                           value="{% for doc in employee.documents.all %}{% if doc.document_type == 'pan' %}{{ doc.document_number }}{% endif %}{% endfor %}">
+                    <div class="form-text">10-character PAN number (e.g., ABCDE1234F)</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Upload PAN Card</label>
+                    <input type="file" name="pan_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                    <div class="form-text">Upload front side of PAN card</div>
+                    {% for doc in employee.documents.all %}
+                        {% if doc.document_type == 'pan' %}
+                            {% if doc.file %}
+                            <small class="text-muted">Current:
+                                <a href="{{ doc.file.url }}" target="_blank">View</a> |
+                                <a href="{{ doc.file.url }}" download>Download</a>
+                            </small>
+                            {% else %}
+                            <small class="text-warning"><i class="fas fa-exclamation-triangle"></i> PAN number saved but no file uploaded</small>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+                        <!-- Aadhaar Card - Simple Solution -->
+<div class="col-12">
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="fas fa-address-card me-2"></i>Aadhaar Card</h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Aadhaar Number</label>
+                    <!-- Always show input field -->
+                    <input type="text" name="aadhaar_number" class="form-control" placeholder="Enter Aadhaar Number" maxlength="12"
+                           value="{% for doc in employee.documents.all %}{% if doc.document_type == 'aadhaar' %}{{ doc.document_number }}{% endif %}{% endfor %}">
+                    <div class="form-text">12-digit Aadhaar number</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Upload Aadhaar Card</label>
+                    <input type="file" name="aadhaar_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                    <div class="form-text">Upload front and back sides in single PDF or image</div>
+                    {% for doc in employee.documents.all %}
+                        {% if doc.document_type == 'aadhaar' %}
+                            {% if doc.file %}
+                            <small class="text-muted">Current:
+                                <a href="{{ doc.file.url }}" target="_blank">View</a> |
+                                <a href="{{ doc.file.url }}" download>Download</a>
+                            </small>
+                            {% else %}
+                            <small class="text-warning"><i class="fas fa-exclamation-triangle"></i> Aadhaar number saved but no file uploaded</small>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+                        <!-- Other Documents -->
+<!-- Other Documents -->
+<div class="col-12">
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="fas fa-file-alt me-2"></i>Other Employment Documents</h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <!-- Offer Letter -->
+                <div class="col-md-6">
+                    <label class="form-label">Offer Letter</label>
+                    <input type="file" name="offer_letter_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                    <div class="form-text">Upload signed offer letter</div>
+                    {% for doc in employee.documents.all %}
+                        {% if doc.document_type == 'offer_letter' and doc.file %}
+                        <small class="text-muted">Current:
+                            <a href="{{ doc.file.url }}" target="_blank">View</a> |
+                            <a href="{{ doc.file.url }}" download>Download</a>
+                        </small>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+               
+                <!-- Salary Slips -->
+                <div class="col-md-6">
+                    <label class="form-label">Last 3 Months Salary Slips</label>
+                    <input type="file" name="salary_slip_files" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                    <div class="form-text">You can select multiple files</div>
+                    {% with salary_slip_count=0 %}
+                        {% for doc in employee.documents.all %}
+                            {% if doc.document_type == 'salary_slip' and doc.file %}
+                                {% with salary_slip_count=salary_slip_count|add:1 %}
+                                {% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if salary_slip_count > 0 %}
+                            <small class="text-muted">Current: {{ salary_slip_count }} file(s) uploaded</small>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+               
+                <!-- Bank Statement -->
+                <div class="col-md-6">
+                    <label class="form-label">Bank Statement (Last 3 Months)</label>
+                    <input type="file" name="bank_statement_file" class="form-control" accept=".pdf">
+                    <div class="form-text">Upload bank statement PDF</div>
+                    {% for doc in employee.documents.all %}
+                        {% if doc.document_type == 'bank_statement' and doc.file %}
+                        <small class="text-muted">Current:
+                            <a href="{{ doc.file.url }}" target="_blank">View</a> |
+                            <a href="{{ doc.file.url }}" download>Download</a>
+                        </small>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+               
+                <!-- Experience/Relieving Letters - Multiple Entries -->
+<div class="col-12">
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h6 class="mb-0">
+                <i class="fas fa-file-signature me-2"></i>Experience/Relieving Letters
+               
+            </h6>
+            <button type="button" class="btn btn-sm btn-primary float-end" id="addExperienceLetter">
+                    <i class="fas fa-plus"></i> Add More
+                </button>
+        </div>
+        <div class="card-body">
+            <div id="experienceLetterFields">
+                {% for doc in employee.documents.all %}
+                    {% if doc.document_type == 'experience_letter' %}
+                    <div class="row g-3 experience-letter-row mb-3" data-existing-company="{{ doc.document_number|default:'' }}">
+                        <div class="col-md-5">
+                            <label class="form-label">Company Name</label>
+                            <input type="text" name="experience_company_{{ doc.document_number|default:forloop.counter }}"
+                                   class="form-control experience-company"
+                                   value="{{ doc.document_number|default:'' }}"
+                                   placeholder="Enter company name">
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">Upload Experience/Relieving Letter</label>
+                            <input type="file" name="experience_letter_file_{{ doc.document_number|default:forloop.counter }}"
+                                   class="form-control experience-file" accept=".pdf,.jpg,.jpeg,.png">
+                            {% if doc.file %}
+                            <small class="text-muted">Current:
+                                <a href="{{ doc.file.url }}" target="_blank">View</a> |
+                                <a href="{{ doc.file.url }}" download>Download</a>
+                            </small>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-danger btn-sm remove-experience-letter mt-4">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% empty %}
+                    <!-- Default empty row -->
+                    <div class="row g-3 experience-letter-row" data-experience-id="new_1">
+                        <div class="col-md-5">
+                            <label class="form-label">Company Name</label>
+                            <input type="text" name="experience_company_new_1"
+                                   class="form-control experience-company"
+                                   placeholder="Enter company name">
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">Upload Experience/Relieving Letter</label>
+                            <input type="file" name="experience_letter_file_new_1"
+                                   class="form-control experience-file" accept=".pdf,.jpg,.jpeg,.png">
+                            <div class="form-text">PDF, JPG, PNG files only</div>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-danger btn-sm remove-experience-letter mt-4">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+                <!-- Form 16 Document -->
+                <div class="col-md-6">
+                    <label class="form-label">Form 16 Document</label>
+                    <input type="file" name="form16_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                    <div class="form-text">Upload Form 16 from previous employment</div>
+                    {% for doc in employee.documents.all %}
+                        {% if doc.document_type == 'form16' and doc.file %}
+                        <small class="text-muted">Current:
+                            <a href="{{ doc.file.url }}" target="_blank">View</a> |
+                            <a href="{{ doc.file.url }}" download>Download</a>
+                        </small>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <!-- ITR Document -->
+                <div class="col-md-6">
+                    <label class="form-label">ITR - Investment Declaration</label>
+                    <input type="file" name="iir_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                    <div class="form-text">Upload investment declaration documents</div>
+                    {% for doc in employee.documents.all %}
+                        {% if doc.document_type == 'iir' and doc.file %}
+                        <small class="text-muted">Current:
+                            <a href="{{ doc.file.url }}" target="_blank">View</a> |
+                            <a href="{{ doc.file.url }}" download>Download</a>
+                        </small>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+                        <!-- Form Actions -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex gap-2 justify-content-end">
+                                    <a href="{% url 'employee_detail' employee.id %}" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Update Employee
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Your existing JavaScript code for education fields, validation, etc.
+    // Enhanced education field management
+document.addEventListener('DOMContentLoaded', function() {
+    let educationCounter = 1;
+   
+    // Add more education fields
+    document.getElementById('addEducation').addEventListener('click', function() {
+        educationCounter++;
+        const educationFields = document.getElementById('educationFields');
+        const newRow = document.createElement('div');
+        newRow.className = 'row g-3 education-row mt-3';
+        newRow.setAttribute('data-education-id', 'new_' + educationCounter);
+        newRow.innerHTML = `
+            <div class="col-md-5">
+                <select name="education_type_new_${educationCounter}" class="form-control education-type">
+                    <option value="">Select Certificate Type</option>
+                    <option value="10th">10th Certificate</option>
+                    <option value="12th">12th Certificate</option>
+                    <option value="bachelor">Bachelor's Degree</option>
+                    <option value="master">Master's Degree</option>
+                    <option value="diploma">Diploma</option>
+                    <option value="phd">PhD</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="col-md-5">
+                <input type="file" name="education_file_new_${educationCounter}" class="form-control education-file" accept=".pdf,.jpg,.jpeg,.png">
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-danger btn-sm remove-education mt-4">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        educationFields.appendChild(newRow);
+       
+        // Add event listener to prevent duplicates for the new field
+        const newSelect = newRow.querySelector('.education-type');
+        newSelect.addEventListener('change', preventDuplicateEducationTypes);
+    });
+
+    // Remove education fields
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-education')) {
+            const row = e.target.closest('.education-row');
+            row.remove();
+            console.log('Removed education row');
+        }
+    });
+
+    // Prevent duplicate education types
+    function preventDuplicateEducationTypes(e) {
+        const selectedValue = e.target.value;
+        const allEducationSelects = document.querySelectorAll('.education-type');
+       
+        if (selectedValue === '') return;
+       
+        let duplicateFound = false;
+        allEducationSelects.forEach(select => {
+            if (select !== e.target && select.value === selectedValue) {
+                duplicateFound = true;
+            }
+        });
+       
+        if (duplicateFound) {
+            alert('This education type has already been selected. Please choose a different one.');
+            e.target.value = '';
+        }
+    }
+
+    // Add event listeners to all existing education type selects
+    document.querySelectorAll('.education-type').forEach(select => {
+        select.addEventListener('change', preventDuplicateEducationTypes);
+    });
+});
+    // PAN number validation
+    const panField = document.querySelector('[name="pan_number"]');
+    if (panField) {
+        panField.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+
+        panField.addEventListener('blur', function() {
+            if (this.value && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(this.value)) {
+                this.classList.add('is-invalid');
+                alert('Please enter a valid PAN number (e.g., ABCDE1234F)');
+            } else {
+                this.classList.remove('is-invalid');
+            }
+        });
+    }
+
+    // Aadhaar number validation
+    const aadhaarField = document.querySelector('[name="aadhaar_number"]');
+    if (aadhaarField) {
+        aadhaarField.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '');
+        });
+
+        aadhaarField.addEventListener('blur', function() {
+            if (this.value && !/^\d{12}$/.test(this.value)) {
+                this.classList.add('is-invalid');
+                alert('Please enter a valid 12-digit Aadhaar number');
+            } else {
+                this.classList.remove('is-invalid');
+            }
+        });
+    }
+
+    // Reporting manager selection
+    // --- CSRF Helper ---
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// --- Elements ---
+const managerSearchInput = document.getElementById('reportingManagerSearch');
+const managerSuggestions = document.getElementById('managerSuggestions');
+const selectedManagerSection = document.getElementById('selectedManagerSection');
+const selectedManagerName = document.getElementById('selectedManagerName');
+const selectedManagerId = document.getElementById('selectedManagerId');
+const reportingManagerId = document.getElementById('reportingManagerId');
+const clearManagerSelection = document.getElementById('clearManagerSelection');
+
+// --- Debounce ---
+let searchTimeout = null;
+managerSearchInput.addEventListener('input', function() {
+    const term = this.value.trim();
+    if (searchTimeout) clearTimeout(searchTimeout);
+    if (term.length < 2) {
+        managerSuggestions.style.display = 'none';
+        return;
+    }
+    searchTimeout = setTimeout(() => searchManagers(term), 300);
+});
+
+// --- AJAX Search ---
+function searchManagers(searchTerm) {
+    fetch('/search-managers/', {   // ✅ use existing endpoint if managers are employees
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: `search_term=${encodeURIComponent(searchTerm)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.managers && data.managers.length > 0) {
+            showManagerSuggestions(data.managers);
+        } else {
+            managerSuggestions.style.display = 'none';
+        }
+    })
+    .catch(error => {
+        console.error('Error searching managers:', error);
+        managerSuggestions.style.display = 'none';
+    });
+}
+
+// --- Show Dropdown Suggestions ---
+function showManagerSuggestions(managers) {
+    managerSuggestions.innerHTML = '';
+    managers.forEach(mgr => {
+        const suggestionItem = document.createElement('a');
+        suggestionItem.className = 'dropdown-item';
+        suggestionItem.href = '#';
+        suggestionItem.innerHTML = `
+            <strong>${mgr.name}</strong>
+            <small class="text-muted">(${mgr.employee_id})</small>
+        `;
+        suggestionItem.addEventListener('click', function (e) {
+            e.preventDefault();
+            selectManager(mgr);
+        });
+        managerSuggestions.appendChild(suggestionItem);
+    });
+    managerSuggestions.style.display = 'block';
+}
+
+// --- Select Manager ---
+function selectManager(mgr) {
+    managerSearchInput.value = `${mgr.name}`;
+    reportingManagerId.value = mgr.employee_id;
+    selectedManagerName.textContent = mgr.name;
+    selectedManagerId.textContent = `(${mgr.employee_id})`;
+    selectedManagerSection.style.display = 'block';
+    managerSuggestions.style.display = 'none';
+}
+
+// --- Clear Selection ---
+clearManagerSelection.addEventListener('click', () => {
+    reportingManagerId.value = '';
+    managerSearchInput.value = '';
+    selectedManagerSection.style.display = 'none';
+});
+
+
+    // Form validation for required fields
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('editEmployeeForm');
+       
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                let isValid = true;
+                const requiredFields = form.querySelectorAll('[required]');
+               
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        isValid = false;
+                        field.classList.add('is-invalid');
+                    } else {
+                        field.classList.remove('is-invalid');
+                    }
+                });
+
+                if (!isValid) {
+                    e.preventDefault();
+                    alert('Please fill all required fields marked with *');
+                }
+            });
+
+            // Real-time validation for required fields
+            const requiredFields = form.querySelectorAll('[required]');
+            requiredFields.forEach(field => {
+                field.addEventListener('blur', function() {
+                    if (!this.value.trim()) {
+                        this.classList.add('is-invalid');
+                    } else {
+                        this.classList.remove('is-invalid');
+                    }
+                });
+            });
+        }
+    });
+    // PF Details Available toggle functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const pfDetailsAvailable = document.getElementById('pfDetailsAvailable');
+    const pfFieldsContainer = document.querySelector('.pf-fields');
+    const pfFields = [
+        'pf_establishment_id',
+        'pf_joining_date',
+        'name_on_pf_account',
+        'uan'
+    ];
+
+    function togglePfFields() {
+        const isPfRequired = pfDetailsAvailable.value === 'Yes';
+       
+        if (isPfRequired) {
+            // Show PF fields with animation
+            pfFieldsContainer.style.display = 'block';
+            setTimeout(() => {
+                pfFieldsContainer.style.opacity = '1';
+                pfFieldsContainer.style.transform = 'translateY(0)';
+            }, 10);
+           
+            // Make fields required
+            pfFields.forEach(fieldName => {
+                const field = document.querySelector(`[name="${fieldName}"]`);
+                if (field) {
+                    field.required = true;
+                    const label = field.closest('.col-md-4').querySelector('label');
+                    if (label && !label.classList.contains('required')) {
+                        label.classList.add('required');
+                    }
+                }
+            });
+        } else {
+            // Hide PF fields with animation
+            pfFieldsContainer.style.opacity = '0';
+            pfFieldsContainer.style.transform = 'translateY(-10px)';
+           
+            // Remove requirement and clear validation
+            pfFields.forEach(fieldName => {
+                const field = document.querySelector(`[name="${fieldName}"]`);
+                if (field) {
+                    field.required = false;
+                    field.classList.remove('is-invalid');
+                    const label = field.closest('.col-md-4').querySelector('label');
+                    if (label) {
+                        label.classList.remove('required');
+                    }
+                   
+                    // Clear field values when PF is not available
+                    if (!field.value) {
+                        field.value = '';
+                    }
+                }
+            });
+           
+            setTimeout(() => {
+                pfFieldsContainer.style.display = 'none';
+            }, 300);
+        }
+    }
+
+    // Initial setup
+    togglePfFields();
+    pfDetailsAvailable.addEventListener('change', togglePfFields);
+
+    // Form validation
+    const form = document.getElementById('editEmployeeForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            const errorMessages = [];
+           
+            // Check PF fields only if they are required
+            if (pfDetailsAvailable.value === 'Yes') {
+                pfFields.forEach(fieldName => {
+                    const field = document.querySelector(`[name="${fieldName}"]`);
+                    if (field && !field.value.trim()) {
+                        isValid = false;
+                        field.classList.add('is-invalid');
+                        const fieldLabel = field.closest('.col-md-4').querySelector('label').textContent.replace(' *', '');
+                        errorMessages.push(`${fieldLabel} is required`);
+                    }
+                });
+            }
+           
+            if (!isValid) {
+                e.preventDefault();
+                const firstError = document.querySelector('.pf-fields .is-invalid');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                alert('Please fill all required PF fields:\n\n' + errorMessages.join('\n'));
+            }
+        });
+
+        // Real-time validation for PF fields
+        pfFields.forEach(fieldName => {
+            const field = document.querySelector(`[name="${fieldName}"]`);
+            if (field) {
+                field.addEventListener('blur', function() {
+                    if (pfDetailsAvailable.value === 'Yes' && !this.value.trim()) {
+                        this.classList.add('is-invalid');
+                    } else {
+                        this.classList.remove('is-invalid');
+                    }
+                });
+               
+                field.addEventListener('input', function() {
+                    if (this.value.trim()) {
+                        this.classList.remove('is-invalid');
+                    }
+                });
+            }
+        });
+    }
+});
+
+// ESI Eligible toggle functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const esiEligible = document.getElementById('esiEligible');
+    const esiFieldsContainer = document.querySelector('.esi-fields');
+    const esiFields = [
+        'esi_details_available',
+        'employer_esi_number',
+        'esi_number',
+        'pt_establishment_id',
+        'lwf_eligible',
+        'enrollment_number'
+    ];
+
+    function toggleEsiFields() {
+        const isEsiRequired = esiEligible.value === 'Yes';
+       
+        if (isEsiRequired) {
+            // Show ESI fields with animation
+            esiFieldsContainer.style.display = 'block';
+            setTimeout(() => {
+                esiFieldsContainer.style.opacity = '1';
+                esiFieldsContainer.style.transform = 'translateY(0)';
+            }, 10);
+           
+            // Make fields required
+            esiFields.forEach(fieldName => {
+                const field = document.querySelector(`[name="${fieldName}"]`);
+                if (field) {
+                    field.required = true;
+                    const label = field.closest('.col-md-4').querySelector('label');
+                    if (label && !label.classList.contains('required')) {
+                        label.classList.add('required');
+                    }
+                }
+            });
+        } else {
+            // Hide ESI fields with animation
+            esiFieldsContainer.style.opacity = '0';
+            esiFieldsContainer.style.transform = 'translateY(-10px)';
+           
+            // Remove requirement and clear validation
+            esiFields.forEach(fieldName => {
+                const field = document.querySelector(`[name="${fieldName}"]`);
+                if (field) {
+                    field.required = false;
+                    field.classList.remove('is-invalid');
+                    const label = field.closest('.col-md-4').querySelector('label');
+                    if (label) {
+                        label.classList.remove('required');
+                    }
+                   
+                    // Auto-set specific fields to "No" when ESI is not eligible
+                    if (fieldName === 'esi_details_available' || fieldName === 'lwf_eligible') {
+                        field.value = 'No';
+                    }
+                   
+                    // Clear other field values only if they don't have existing data
+                    if ((fieldName === 'employer_esi_number' || fieldName === 'esi_number' ||
+                         fieldName === 'pt_establishment_id' || fieldName === 'enrollment_number') && !field.value) {
+                        field.value = '';
+                    }
+                }
+            });
+           
+            setTimeout(() => {
+                esiFieldsContainer.style.display = 'none';
+            }, 300);
+        }
+    }
+
+    // Initial setup
+    toggleEsiFields();
+    esiEligible.addEventListener('change', toggleEsiFields);
+
+    // Form validation
+    const form = document.getElementById('editEmployeeForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            const errorMessages = [];
+           
+            // Check ESI fields only if they are required
+            if (esiEligible.value === 'Yes') {
+                esiFields.forEach(fieldName => {
+                    const field = document.querySelector(`[name="${fieldName}"]`);
+                    if (field && !field.value.trim()) {
+                        isValid = false;
+                        field.classList.add('is-invalid');
+                        const fieldLabel = field.closest('.col-md-4').querySelector('label').textContent.replace(' *', '');
+                        errorMessages.push(`${fieldLabel} is required`);
+                    }
+                });
+            }
+           
+            if (!isValid) {
+                e.preventDefault();
+                const firstError = document.querySelector('.esi-fields .is-invalid');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                alert('Please fill all required ESI fields:\n\n' + errorMessages.join('\n'));
+            }
+        });
+
+        // Real-time validation for ESI fields
+        esiFields.forEach(fieldName => {
+            const field = document.querySelector(`[name="${fieldName}"]`);
+            if (field) {
+                field.addEventListener('blur', function() {
+                    if (esiEligible.value === 'Yes' && !this.value.trim()) {
+                        this.classList.add('is-invalid');
+                    } else {
+                        this.classList.remove('is-invalid');
+                    }
+                });
+               
+                field.addEventListener('input', function() {
+                    if (this.value.trim()) {
+                        this.classList.remove('is-invalid');
+                    }
+                });
+            }
+        });
+    }
+});
+
+// Employee ID uppercase conversion
+document.addEventListener('DOMContentLoaded', function() {
+    const employeeIdField = document.querySelector('input[name="employee_id"]');
+   
+    if (employeeIdField) {
+        // Convert to uppercase as user types
+        employeeIdField.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+       
+        // Convert on blur (for paste operations)
+        employeeIdField.addEventListener('blur', function() {
+            this.value = this.value.toUpperCase();
+        });
+       
+        // Convert on paste
+        employeeIdField.addEventListener('paste', function(e) {
+            setTimeout(() => {
+                this.value = this.value.toUpperCase();
+            }, 0);
+        });
+    }
+});
+
+// Experience Letter dynamic fields
+document.addEventListener('DOMContentLoaded', function() {
+    let experienceCounter = 1;
+   
+    // Add more experience letter fields
+    document.getElementById('addExperienceLetter').addEventListener('click', function() {
+        experienceCounter++;
+        const experienceFields = document.getElementById('experienceLetterFields');
+        const newRow = document.createElement('div');
+        newRow.className = 'row g-3 experience-letter-row mt-3';
+        newRow.setAttribute('data-experience-id', 'new_' + experienceCounter);
+        newRow.innerHTML = `
+            <div class="col-md-5">
+                <input type="text" name="experience_company_new_${experienceCounter}"
+                       class="form-control experience-company"
+                       placeholder="Enter company name">
+            </div>
+            <div class="col-md-5">
+                <input type="file" name="experience_letter_file_new_${experienceCounter}"
+                       class="form-control experience-file" accept=".pdf,.jpg,.jpeg,.png">
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-danger btn-sm remove-experience-letter mt-4">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        experienceFields.appendChild(newRow);
+    });
+
+    // Remove experience letter fields
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-experience-letter')) {
+            const row = e.target.closest('.experience-letter-row');
+            row.remove();
+            console.log('Removed experience letter row');
+        }
+    });
+
+    // Prevent duplicate company names (optional)
+    function preventDuplicateCompanies(e) {
+        const selectedValue = e.target.value.trim();
+        const allCompanyInputs = document.querySelectorAll('.experience-company');
+       
+        if (selectedValue === '') return;
+       
+        let duplicateFound = false;
+        allCompanyInputs.forEach(input => {
+            if (input !== e.target && input.value.trim() === selectedValue) {
+                duplicateFound = true;
+            }
+        });
+       
+        if (duplicateFound) {
+            alert('This company has already been added. Please enter a different company name.');
+            e.target.value = '';
+        }
+    }
+
+    // Add event listeners to all existing company inputs
+    document.querySelectorAll('.experience-company').forEach(input => {
+        input.addEventListener('blur', preventDuplicateCompanies);
+    });
+});
+
+$(document).ready(function() {
+    // Store the initially selected designation
+    var initiallySelectedDesignationId = $('#designationSelect').val();
+    var initiallySelectedDepartmentId = $('#departmentSelect').val();
+
+    // Department change event
+    $('#departmentSelect').change(function() {
+        var departmentId = $(this).val();
+        var designationSelect = $('#designationSelect');
+       
+        // Clear current options except the first one
+        designationSelect.find('option:not(:first)').remove();
+       
+        if (departmentId) {
+            // Show loading state
+            designationSelect.prop('disabled', true);
+            designationSelect.html('<option value="">Loading designations...</option>');
+           
+            // Fetch designations for selected department
+            $.ajax({
+                url: '/get-designations-by-department/',  // Update with your URL
+                type: 'GET',
+                data: {
+                    'department_id': departmentId
+                },
+                success: function(response) {
+                    designationSelect.prop('disabled', false);
+                    designationSelect.html('<option value="">Select Designation</option>');
+                   
+                    if (response.designations && response.designations.length > 0) {
+                        $.each(response.designations, function(index, designation) {
+                            var isSelected = (designation.id == initiallySelectedDesignationId && departmentId == initiallySelectedDepartmentId);
+                           
+                            designationSelect.append(
+                                $('<option>', {
+                                    value: designation.id,
+                                    text: designation.display_text,
+                                    selected: isSelected,
+                                    'data-designation-title': designation.title,
+                                    'data-designation-level': designation.level,
+                                    'data-department-id': departmentId
+                                })
+                            );
+                        });
+                    } else {
+                        designationSelect.append(
+                            $('<option>', {
+                                value: '',
+                                text: 'No designations found for this department',
+                                disabled: true
+                            })
+                        );
+                    }
+                },
+                error: function(xhr, status, error) {
+                    designationSelect.prop('disabled', false);
+                    designationSelect.html('<option value="">Error loading designations</option>');
+                    console.error('Error fetching designations:', error);
+                }
+            });
+        } else {
+            // If no department selected, load all designations
+            loadAllDesignations();
+        }
+    });
+   
+    // Function to load all designations
+    function loadAllDesignations() {
+        var designationSelect = $('#designationSelect');
+        designationSelect.prop('disabled', true);
+        designationSelect.html('<option value="">Loading all designations...</option>');
+       
+        $.ajax({
+            url: '/get-designations-by-department/',
+            type: 'GET',
+            success: function(response) {
+                designationSelect.prop('disabled', false);
+                designationSelect.html('<option value="">Select Designation</option>');
+               
+                if (response.designations && response.designations.length > 0) {
+                    $.each(response.designations, function(index, designation) {
+                        var isSelected = (designation.id == initiallySelectedDesignationId);
+                       
+                        designationSelect.append(
+                            $('<option>', {
+                                value: designation.id,
+                                text: designation.display_text,
+                                selected: isSelected,
+                                'data-designation-title': designation.title,
+                                'data-designation-level': designation.level
+                            })
+                        );
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                designationSelect.prop('disabled', false);
+                designationSelect.html('<option value="">Error loading designations</option>');
+                console.error('Error fetching designations:', error);
+            }
+        });
+    }
+
+    // Initialize on page load - filter designations based on pre-selected department
+    function initializeEditPage() {
+        var initialDepartmentId = $('#departmentSelect').val();
+        if (initialDepartmentId) {
+            $('#departmentSelect').trigger('change');
+        }
+    }
+
+    // Initialize the page
+    initializeEditPage();
+});
+</script>
+
+<style>
+.required::after {
+    content: " *";
+    color: #dc3545;
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+    padding-right: calc(1.5em + 0.75rem);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 3.6.4.4.4-.4'/%3e%3cpath d='M6 7v1'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.section-header {
+    background-color: #f8f9fa;
+    border-left: 4px solid #0d6efd;
+    padding: 10px 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+}
+/* PF Fields transition */
+.pf-fields {
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.3s ease-in-out;
+    width: 100%;
+}
+
+/* ESI Fields transition */
+.esi-fields {
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.3s ease-in-out;
+    width: 100%;
+}
+
+.required::after {
+    content: " *";
+    color: #dc3545;
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+}
+</style>
+{% endblock %}

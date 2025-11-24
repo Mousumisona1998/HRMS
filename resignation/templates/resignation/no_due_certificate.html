@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}No Due Certificate - HR System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h1 class="h2 mb-0"> No Due Certificate</h1>
+                        <p class="text-muted mb-0">Digital no due certificate for {{ resignation.employee.first_name }} {{ resignation.employee.last_name }}</p>
+                    </div>
+                    <div class="col-auto">
+                        <a href="{% url 'resignation:resignation_detail' resignation.id %}" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Details
+                        </a>
+                        {% if no_due_cert.is_completed %}
+                        <a href="{% url 'resignation:download_no_due_certificate' resignation.id %}" class="btn btn-primary" target="_blank">
+                            <i class="fas fa-download me-2"></i>Download PDF
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Certificate Preview -->
+            <div class="custom-card mb-4">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">No Due Certificate Preview</h4>
+                    {% if no_due_cert.certificate_number %}
+                    <span class="badge bg-success">Certificate #: {{ no_due_cert.certificate_number }}</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <!-- No Due Certificate Content -->
+                    <div class="certificate-container border p-4 bg-light">
+                        <div class="text-center mb-4">
+                            <h2 class="text-uppercase fw-bold">NO DUE CERTIFICATE</h2>
+                            <div class="border-top border-dark mx-auto" style="width: 100px;"></div>
+                        </div>
+
+                        <div class="certificate-content">
+                            <p class="mb-3">This is to certify that <strong>{{ resignation.employee.first_name }} {{ resignation.employee.last_name }}</strong> (Employee ID: {{ resignation.employee.employee_id }}) has resigned from services of our organization effective from <strong>{{ resignation.last_working_date }}</strong>.</p>
+                            
+                            <p class="mb-3">We confirm that the employee has received the full and final settlement amount of <strong>{{ no_due_cert.final_settlement_amount }}</strong> through <strong>{{ no_due_cert.get_settlement_mode_display }}</strong> on <strong>{{ no_due_cert.settlement_date|default:"_________" }}</strong>.</p>
+                            
+                            <div class="alert alert-info mb-3">
+                                <h6 class="mb-2">Employee Declaration:</h6>
+                                <p class="mb-2"><em>"Received my salary towards my full and final settlement through online/NEFT/Transfer. All my dues from IKONTEL Solutions Pvt Ltd are cleared. I have received all my dues pertaining to earned leave encashment, notice pay, service compensation, leave or any other claim in connection with my employment with the management. I have no further claim/Demand for reinstatement or re-employment. I will not raise any claim or demand, whatsoever against the Company."</em></p>
+                            </div>
+
+                            <!-- Signatures Section -->
+                            <div class="row mt-4">
+                                <!-- Employee Signature -->
+                                <div class="col-md-6">
+                                    <div class="signature-section text-center">
+                                        <h6 class="border-bottom pb-2">Accepted By/Receiver</h6>
+                                        {% if no_due_cert.employee_signature %}
+                                        <div class="signature-preview mb-2">
+                                            <img src="{{ no_due_cert.employee_signature }}" alt="Employee Signature" class="img-fluid" style="max-height: 80px;">
+                                        </div>
+                                        <p class="mb-1"><strong>Signature</strong></p>
+                                        <p class="mb-1">Name: {{ resignation.employee.first_name }} {{ resignation.employee.last_name }}</p>
+                                        <p class="mb-1">Designation: {{ resignation.employee.designation }}</p>
+                                        <p class="mb-1">Place: Bangalore</p>
+                                        <p class="mb-0">Date: {{ no_due_cert.employee_signed_at|date:"d/m/Y" }}</p>
+                                        {% else %}
+                                        <div class="text-muted py-4">
+                                            <i class="fas fa-signature fa-2x mb-2"></i>
+                                            <p>Pending Employee Signature</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- HR Signature -->
+                                <div class="col-md-6">
+                                    <div class="signature-section text-center">
+                                        <h6 class="border-bottom pb-2">For IKONTEL SOLUTIONS PRIVATE LIMITED</h6>
+                                        {% if no_due_cert.hr_signature %}
+                                        <div class="signature-preview mb-2">
+                                            <img src="{{ no_due_cert.hr_signature }}" alt="HR Signature" class="img-fluid" style="max-height: 80px;">
+                                        </div>
+                                        <p class="mb-1"><strong>Authorized Signatory</strong></p>
+                                        <p class="mb-1">Name: {{ no_due_cert.hr_approved_by.first_name }} {{ no_due_cert.hr_approved_by.last_name }}</p>
+                                        <p class="mb-1">Designation: {{ no_due_cert.hr_approved_by.designation }}</p>
+                                        <p class="mb-1">Place: Bangalore</p>
+                                        <p class="mb-0">Date: {{ no_due_cert.hr_signed_at|date:"d/m/Y" }}</p>
+                                        {% else %}
+                                        <div class="text-muted py-4">
+                                            <i class="fas fa-stamp fa-2x mb-2"></i>
+                                            <p>Pending HR Approval</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Company Footer -->
+                            <div class="text-center mt-4 pt-3 border-top">
+                                <h6 class="mb-1">IKONTEL SOLUTIONS PRIVATE LIMITED</h6>
+                                <p class="small mb-1">#72,73 & 74 ABMGP building, 1st Floor, 17th cross, Margosa Road, Malleshwaram, Bangalore  560 003</p>
+                                <p class="small mb-0">CIN No: U72400KA2014PTC072933; URL: www.ikontel.com; Contact: 080-41155041; Email: info@ikontel.com</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Digital Signature Section -->
+            <div class="row">
+                <!-- Employee Signature -->
+                {% if user_role == 'EMPLOYEE' and resignation.employee.email == request.session.user_email and not no_due_cert.employee_signature %}
+                <div class="col-md-6">
+                    <div class="custom-card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+ Provide Your Digital Signature</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label class="form-label">Draw your signature below:</label>
+                                    <div id="signature-pad" class="border rounded" style="height: 200px; background: white;">
+                                        <canvas id="signature-canvas" width="400" height="200" style="border: 1px solid #ddd;"></canvas>
+                                    </div>
+                                    <div class="mt-2">
+                                        <button type="button" id="clear-signature" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-eraser me-1"></i>Clear
+                                        </button>
+                                    </div>
+                                    <input type="hidden" name="signature_data" id="signature-data">
+                                </div>
+                                <button type="submit" name="action" value="employee_sign" class="btn btn-success w-100">
+                                    <i class="fas fa-check me-2"></i>Submit Digital Signature
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- HR Actions -->
+                {% if user_role in 'HR,ADMIN,SUPER ADMIN' %}
+                <div class="col-md-6">
+                    <div class="custom-card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0"> HR Approval</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Settlement Details -->
+                            <form method="POST" class="mb-3">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label class="form-label">Final Settlement Amount ()</label>
+                                    <input type="number" class="form-control" name="settlement_amount" 
+                                           value="{{ no_due_cert.final_settlement_amount }}" step="0.01" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Settlement Date</label>
+                                    <input type="date" class="form-control" name="settlement_date" 
+                                           value="{{ no_due_cert.settlement_date|date:'Y-m-d' }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Payment Mode</label>
+                                    <select class="form-select" name="settlement_mode" required>
+                                        <option value="online" {% if no_due_cert.settlement_mode == 'online' %}selected{% endif %}>Online Transfer/NEFT</option>
+                                        <option value="cheque" {% if no_due_cert.settlement_mode == 'cheque' %}selected{% endif %}>Cheque</option>
+                                        <option value="cash" {% if no_due_cert.settlement_mode == 'cash' %}selected{% endif %}>Cash</option>
+                                    </select>
+                                </div>
+                                <button type="submit" name="action" value="update_settlement" class="btn btn-outline-primary w-100">
+                                    Update Settlement Details
+                                </button>
+                            </form>
+
+                            <!-- HR Signature -->
+                            {% if not no_due_cert.hr_signature %}
+                            <form method="POST">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label class="form-label">HR Digital Signature:</label>
+                                    <div id="hr-signature-pad" class="border rounded" style="height: 150px; background: white;">
+                                        <canvas id="hr-signature-canvas" width="400" height="150" style="border: 1px solid #ddd;"></canvas>
+                                    </div>
+                                    <div class="mt-2">
+                                        <button type="button" id="clear-hr-signature" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-eraser me-1"></i>Clear
+                                        </button>
+                                    </div>
+                                    <input type="hidden" name="hr_signature_data" id="hr-signature-data">
+                                </div>
+                                <button type="submit" name="action" value="hr_approve" class="btn btn-success w-100">
+                                    <i class="fas fa-stamp me-2"></i>Approve & Sign Certificate
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize signature pads
+    let signaturePad = null;
+    let hrSignaturePad = null;
+    
+    // Employee signature pad
+    const canvas = document.getElementById('signature-canvas');
+    if (canvas) {
+        signaturePad = new SignaturePad(canvas);
+        
+        document.getElementById('clear-signature').addEventListener('click', function() {
+            signaturePad.clear();
+        });
+        
+        // Update hidden input on form submit
+        const form = canvas.closest('form');
+        if (form) {
+            form.addEventListener('submit', function() {
+                if (!signaturePad.isEmpty()) {
+                    document.getElementById('signature-data').value = signaturePad.toDataURL();
+                }
+            });
+        }
+    }
+    
+    // HR signature pad
+    const hrCanvas = document.getElementById('hr-signature-canvas');
+    if (hrCanvas) {
+        hrSignaturePad = new SignaturePad(hrCanvas);
+        
+        document.getElementById('clear-hr-signature').addEventListener('click', function() {
+            hrSignaturePad.clear();
+        });
+        
+        // Update hidden input on form submit
+        const hrForm = hrCanvas.closest('form');
+        if (hrForm) {
+            hrForm.addEventListener('submit', function() {
+                if (!hrSignaturePad.isEmpty()) {
+                    document.getElementById('hr-signature-data').value = hrSignaturePad.toDataURL();
+                }
+            });
+        }
+    }
+});
+</script>
+
+<style>
+.certificate-container {
+    background: white;
+    font-family: 'Times New Roman', serif;
+}
+.signature-section {
+    min-height: 200px;
+}
+.signature-preview {
+    border: 1px dashed #ccc;
+    padding: 10px;
+    background: white;
+}
+</style>
+{% endblock %}

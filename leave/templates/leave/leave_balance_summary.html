@@ -1,0 +1,510 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+        <div class="card-header bg-gradient-primary text-white py-3 text-center">
+            <h2 class="mb-0 fw-bold fs-4">
+                Employee Leave Balance
+            </h2>
+            {% if request.session.user_role in 'ADMIN,HR,SUPER ADMIN' %}
+            <button type="button" class="btn btn-light btn-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addLeaveBalanceModal">
+                <i class="fas fa-plus me-2"></i>Add Leave Balance
+            </button>
+            {% endif %}
+        </div>
+        <div class="card-body p-3">
+            <div class="table-responsive">
+                <table id="leaveTable" class="table table-hover align-middle mb-0">
+                    <thead class="bg-light-primary">
+                        <tr>
+                            <th class="ps-4 py-3 fw-semibold text-start text-primary small border-0">
+                                <i class="fas fa-user me-2"></i>Employee
+                            </th>
+                            <th class="py-3 fw-semibold text-center text-primary small border-0">
+                                <i class="fas fa-calendar-plus me-2"></i>Total
+                            </th>
+                            <th class="py-3 fw-semibold text-center text-primary small border-0">
+                                <i class="fas fa-calendar-minus me-2"></i>Taken
+                            </th>
+                            
+                            <th class="pe-4 py-3 fw-semibold text-center text-primary small border-0">
+                                <i class="fas fa-balance-scale me-2"></i>Remaining
+                            </th>
+                            <th class="py-3 fw-semibold text-center text-primary small border-0">
+                                Optional Total
+                            </th>
+                            <th class="py-3 fw-semibold text-center text-primary small border-0">
+                                Optional Taken
+                            </th>
+                            <th class="py-3 fw-semibold text-center text-primary small border-0">
+                                Optional Remaining
+                            </th>
+                            <th class="py-3 fw-semibold text-center text-primary small border-0">
+                                <i class="fas fa-forward me-2"></i>Carry Forward
+                            </th>
+                            {% if request.session.user_role in 'ADMIN,HR,SUPER ADMIN' %}
+                            <th class="py-3 fw-semibold text-center text-primary small border-0">
+                                <i class="fas fa-cog me-2"></i>Actions
+                            </th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in balances %}
+                        <tr>
+                            <td class="ps-4 py-3 border-0">
+                                {{ b.employee__first_name }} {{ b.employee__last_name }}
+                            </td>
+                            <td class="py-3 border-0 text-center">{{ b.total_leaves|default:"0" }}</td>
+                            <td class="py-3 border-0 text-center">{{ b.leaves_taken|default:"0" }}</td>
+                            
+                            <td class="pe-4 py-3 border-0 text-center">{{ b.leaves_remaining|default:"0" }}</td>
+                            <!-- NEW: Optional Leave Data -->
+                            <td class="pe-4 py-3 border-0 text-center">
+                                {{ b.optional_total|default:"0" }}
+                            </td>
+                            <td class="pe-4 py-3 border-0 text-center">
+                                {{ b.optional_taken|default:"0" }}
+                            </td>
+                            <td class="pe-4 py-3 border-0 text-center">
+                                <span class="badge bg-info rounded-pill">
+                                    {{ b.optional_remaining|default:"0" }}
+                                </span>
+                            </td>
+                            <td class="py-3 border-0 text-center">{{ b.carry_forward|default:"0" }}</td>
+                            <!-- ADD THIS ACTION BUTTON -->
+                            {% if request.session.user_role in 'ADMIN,HR,SUPER ADMIN' %}
+                            <td class="py-3 border-0 text-center">
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 edit-balance-btn"
+                                        data-employee-id="{{ b.employee__id }}"
+                                        data-employee-name="{{ b.employee__first_name }} {{ b.employee__last_name }}">
+                                    <i class="fas fa-edit me-1"></i>Edit
+                                </button>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <!-- FIX: Update colspan based on user role -->
+                            {% if request.session.user_role in 'ADMIN,HR,SUPER ADMIN' %}
+                            <td colspan="9" class="text-center py-5 border-0 text-muted">
+                            {% else %}
+                            <td colspan="8" class="text-center py-5 border-0 text-muted">
+                            {% endif %}
+                                <i class="fas fa-inbox fa-3x mb-3"></i>
+                                <h6 class="fw-semibold">No records found</h6>
+                                <p class="mb-0">No employee leave data available.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Add Leave Balance Modal -->
+<div class="modal fade" id="addLeaveBalanceModal" tabindex="-1" aria-labelledby="addLeaveBalanceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-gradient-primary text-white border-0">
+                <h5 class="modal-title fw-bold" id="addLeaveBalanceModalLabel">
+                    <i class="fas fa-plus-circle me-2"></i>Add Leave Balance
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'add_leave_balance' %}" id="addLeaveBalanceForm">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <!-- Employee Search -->
+<div class="mb-3 position-relative">
+    <label class="form-label required">Employee *</label>
+    <input type="text" class="form-control" id="employeeSearch" placeholder="Search Employee by Name or ID">
+    <div id="employeeSuggestions" class="dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto;"></div>
+    <input type="hidden" name="employee" id="employeeId">
+</div>
+
+<!-- Selected Employee Info -->
+<div class="row mt-3" id="selectedEmployeeSection" style="display: none;">
+    <div class="col-12">
+        <div class="alert alert-info py-2">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>Selected Employee:</strong>
+                    <span id="selectedEmployeeName" class="ms-2"></span>
+                    <span id="selectedEmployeeId" class="text-muted ms-2"></span>
+                </div>
+                <button type="button" class="btn-close" id="clearEmployeeSelection"></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+                    <div class="mb-3">
+                        <label for="leave_type" class="form-label fw-semibold">
+                            <i class="fas fa-list-alt text-primary me-2"></i>Leave Type *
+                        </label>
+                        <select class="form-select rounded-3" id="leave_type" name="leave_type" required>
+                            <option value="">Select Leave Type</option>
+                            {% for lt in leave_types %}
+                            <option value="{{ lt.id }}">{{ lt.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="total_leaves" class="form-label fw-semibold">
+                                <i class="fas fa-calendar-plus text-primary me-2"></i>Total Leaves *
+                            </label>
+                            <input type="number" class="form-control rounded-3" id="total_leaves" name="total_leaves" min="0" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="carry_forward" class="form-label fw-semibold">
+                                <i class="fas fa-forward text-primary me-2"></i>Carry Forward
+                            </label>
+                            <input type="number" class="form-control rounded-3" id="carry_forward" name="carry_forward" min="0" value="0">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="year" class="form-label fw-semibold">
+                            <i class="fas fa-calendar text-primary me-2"></i>Year *
+                        </label>
+                        <select class="form-select rounded-3" id="year" name="year" required>
+                            {% for y in years %}
+                            <option value="{{ y }}" {% if y == current_year %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="alert alert-info rounded-3 border-0 mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <small>Leaves taken and remaining will be calculated automatically based on total leaves and carry forward.</small>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">
+                        <i class="fas fa-save me-2"></i>Save Balance
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- EDIT MODAL - Only for editing carry forward -->
+<div class="modal fade" id="editLeaveBalanceModal" tabindex="-1" aria-labelledby="editLeaveBalanceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-gradient-warning text-white border-0">
+                <h5 class="modal-title fw-bold" id="editLeaveBalanceModalLabel">
+                    <i class="fas fa-edit me-2"></i>Edit Carry Forward
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'edit_leave_balance' %}" id="editLeaveBalanceForm">
+                {% csrf_token %}
+                <input type="hidden" name="employee_id" id="editEmployeeId">
+                <div class="modal-body p-4">
+                    <!-- Selected Employee Info -->
+                    <div class="mb-3">
+                        <div class="alert alert-info py-2">
+                            <strong>Employee:</strong>
+                            <span id="editEmployeeName" class="ms-2"></span>
+                        </div>
+                    </div>
+
+                    <!-- Display current total leaves (readonly) -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-calendar-plus text-primary me-2"></i>Total Leaves
+                        </label>
+                        <div class="form-control bg-light" id="display_total_leaves" readonly>
+                            <!-- Total leaves will be displayed here -->
+                        </div>
+                        <input type="hidden" id="edit_total_leaves" name="total_leaves">
+                    </div>
+
+                    <!-- Only carry forward is editable -->
+                    <div class="mb-3">
+                        <label for="edit_carry_forward" class="form-label fw-semibold">
+                            <i class="fas fa-forward text-primary me-2"></i>Carry Forward *
+                        </label>
+                        <input type="number" class="form-control rounded-3" id="edit_carry_forward" name="carry_forward" min="0" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit_year" class="form-label fw-semibold">
+                            <i class="fas fa-calendar text-primary me-2"></i>Year *
+                        </label>
+                        <select class="form-select rounded-3" id="edit_year" name="year" required>
+                            {% for y in years %}
+                            <option value="{{ y }}" {% if y == current_year %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="alert alert-info rounded-3 border-0 mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <small>Only carry forward can be modified. Total leaves are calculated from all leave types and cannot be edited here.</small>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-warning rounded-pill px-4">
+                        <i class="fas fa-save me-2"></i>Update Carry Forward
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- DataTables CSS/JS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    $('#leaveTable').DataTable({
+        responsive: true,
+        pageLength: 10,
+        lengthMenu: [5, 10, 25, 50],
+        
+        info: false,
+        language: {
+            search: "_INPUT_",
+            searchPlaceholder: "Search employees...",
+            emptyTable: "No employee records available",
+            zeroRecords: "No matching employees found",
+            lengthMenu: "Show _MENU_ entries"
+        },
+        columnDefs: [
+            { orderable: false, targets: [1,2,3,4] },
+            { className: "align-middle text-center", targets: [1,2,3,4] }
+        ],
+        order: [[0, 'asc']],
+        dom: '<"d-flex flex-column flex-md-row justify-content-between align-items-center mb-3"<"dataTables_length me-0 me-md-3 mb-2 mb-md-0"l><"dataTables_filter flex-grow-1"f>>rt<"d-flex flex-column flex-md-row justify-content-between align-items-center mt-3"<"dataTables_info mb-2 mb-md-0"i><"dataTables_paginate"p>>'
+    });
+     // Form validation
+    $('#addLeaveBalanceForm').on('submit', function(e) {
+        const totalLeaves = parseInt($('#total_leaves').val());
+        if (totalLeaves < 0) {
+            e.preventDefault();
+            alert('Total leaves cannot be negative');
+            return false;
+        }
+    });
+});
+// Edit button click handler - get data from the table row
+$('.edit-balance-btn').on('click', function() {
+    const employeeId = $(this).data('employee-id');
+    const employeeName = $(this).data('employee-name');
+    
+    // Get data from the current table row
+    const row = $(this).closest('tr');
+    const totalLeaves = row.find('td:eq(1)').text().trim(); // 2nd column - Total leaves
+    const carryForward = row.find('td:eq(5)').text().trim(); // 5th column - Carry forward
+    
+    // Set employee info in the modal
+    $('#editEmployeeId').val(employeeId);
+    $('#editEmployeeName').text(employeeName);
+    
+    // Display total leaves (readonly) and set carry forward for editing
+    $('#display_total_leaves').text(totalLeaves);
+    $('#edit_total_leaves').val(totalLeaves); // hidden field
+    $('#edit_carry_forward').val(carryForward || '0');
+    $('#edit_year').val(new Date().getFullYear());
+    
+    // Show the modal
+    $('#editLeaveBalanceModal').modal('show');
+});
+// Employee search functionality 
+const employeeSearchInput = document.getElementById('employeeSearch');
+const employeeSuggestions = document.getElementById('employeeSuggestions');
+const selectedEmployeeSection = document.getElementById('selectedEmployeeSection');
+const selectedEmployeeName = document.getElementById('selectedEmployeeName');
+const selectedEmployeeId = document.getElementById('selectedEmployeeId');
+const employeeId = document.getElementById('employeeId');
+const clearEmployeeSelection = document.getElementById('clearEmployeeSelection');
+
+let searchTimeout = null;
+employeeSearchInput.addEventListener('input', function() {
+    const term = this.value.trim();
+    if (searchTimeout) clearTimeout(searchTimeout);
+    if (term.length < 2) {
+        employeeSuggestions.style.display = 'none';
+        return;
+    }
+    searchTimeout = setTimeout(() => searchEmployees(term), 300);
+});
+
+function searchEmployees(searchTerm) {
+    fetch('/search-employees/', {  
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: `search_term=${encodeURIComponent(searchTerm)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.employees && data.employees.length > 0) {
+            showEmployeeSuggestions(data.employees);
+        } else {
+            employeeSuggestions.style.display = 'none';
+        }
+    })
+    .catch(error => {
+        console.error('Error searching employees:', error);
+        employeeSuggestions.style.display = 'none';
+    });
+}
+
+function showEmployeeSuggestions(employees) {
+    employeeSuggestions.innerHTML = '';
+    employees.forEach(emp => {
+        const suggestionItem = document.createElement('a');
+        suggestionItem.className = 'dropdown-item';
+        suggestionItem.href = '#';
+        suggestionItem.innerHTML = `<strong>${emp.name}</strong> (${emp.employee_id})`;
+        suggestionItem.addEventListener('click', function (e) {
+            e.preventDefault();
+            selectEmployee(emp);
+        });
+        employeeSuggestions.appendChild(suggestionItem);
+    });
+    employeeSuggestions.style.display = 'block';
+}
+
+function selectEmployee(emp) {
+    employeeSearchInput.value = `${emp.name} (${emp.employee_id})`;
+    employeeId.value = emp.id;  // Use employee ID
+    selectedEmployeeName.textContent = emp.name;
+    selectedEmployeeId.textContent = `(${emp.employee_id})`;
+    selectedEmployeeSection.style.display = 'block';
+    employeeSuggestions.style.display = 'none';
+}
+
+clearEmployeeSelection.addEventListener('click', () => {
+    employeeId.value = '';
+    employeeSearchInput.value = '';
+    selectedEmployeeSection.style.display = 'none';
+});
+
+// Function to get a specific cookie (used for CSRF token)
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+
+<style>
+/* Card & Header */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #1e3c72, #2a5298) !important;
+}
+.bg-light-primary {
+    background-color: rgba(30,60,114,0.08) !important;
+}
+.card {
+    background-color: #dfdbd6;
+    border-radius: 16px;
+    transition: transform 0.2s ease-in-out;
+}
+.card:hover {
+    transform: translateY(-3px);
+}
+.card-header h2 {
+    font-weight: 700;
+}
+
+/* Table Hover */
+#leaveTable tbody tr {
+    transition: all 0.2s ease;
+}
+#leaveTable tbody tr:hover {
+    background: rgba(30,60,114,0.05);
+}
+#leaveTable thead th {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    padding: 0.8rem 0.5rem;
+}
+
+/* Dropdown & Search Input */
+.dataTables_wrapper .dataTables_length select {
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    padding: 10px 16px;
+    background-color: #f8f9fa;
+    min-width: 110px;
+    font-weight: 500;
+}
+.dataTables_wrapper .dataTables_length select:hover {
+    border-color: #2a5298;
+    background-color: #ffffff;
+}
+.dataTables_wrapper .dataTables_filter input {
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    padding: 10px 16px;
+    width: 100%;
+    max-width: 320px;
+}
+.dataTables_wrapper .dataTables_filter input:focus {
+    border-color: #2a5298;
+    box-shadow: 0 0 5px rgba(42,82,152,0.2);
+}
+
+/* Pagination Buttons */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    border-radius: 8px !important;
+    padding: 6px 12px !important;
+    margin: 0 2px !important;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: #2a5298 !important;
+    color: #fff !important;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: #1e3c72 !important;
+    color: #fff !important;
+}
+
+/* Responsive Adjustments */
+@media (max-width:768px){
+    .container { padding: 0 10px; }
+    .card-header h2 { font-size: 1.3rem !important; }
+    .dataTables_wrapper .dataTables_length select { min-width: 80px; padding: 8px 12px; }
+    .dataTables_wrapper .dataTables_filter input { max-width: 100%; margin-top: 8px; }
+    .dataTables_wrapper .dataTables_paginate { justify-content: center !important; margin-top: 10px; }
+}
+</style>
+{% endblock %}

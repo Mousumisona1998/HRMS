@@ -1,0 +1,1256 @@
+{% extends 'base.html' %}
+
+{% block title %}Employee Details - HR System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center page-header">
+    <h1 class="h2">Employee Details</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{% url 'employee_page' %}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Employees
+            </a>
+            {% if request.session.user_role in 'ADMIN,HR,MANAGER,SUPER ADMIN' %}
+            <a class="btn btn-sm btn-primary" href="{% url 'edit_employee' employee.id %}">
+                <i class="fas fa-edit"></i> Edit Employee
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Sidebar - Profile Card -->
+    <div class="col-md-4">
+        <div class="custom-card profile-card">
+            <div class="text-center">
+                {% if employee.profile_picture %}
+                    <img src="{{ employee.profile_picture.url }}" alt="Profile" class="rounded-circle mb-3 profile-image">
+                {% else %}
+                    <div class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center mb-3 profile-image-placeholder">
+                        <i class="fas fa-user text-white"></i>
+                    </div>
+                {% endif %}
+                <h3 class="employee-name">{{ employee.first_name }} {% if employee.middle_name %}{{ employee.middle_name }} {% endif %}{{ employee.last_name }}</h3>
+                <p class="text-muted designation">{{ employee.designation }}</p>
+                <span class="badge status-badge {% if employee.status == 'active' %}bg-success{% else %}bg-danger{% endif %}">
+                    {{ employee.status|title }}
+                </span>
+            </div>
+           
+            <hr class="profile-divider">
+           
+            <div class="quick-info">
+                <h5 class="section-title">Quick Info</h5>
+                <div class="info-list">
+                    <div class="info-item">
+                        <i class="fas fa-id-card me-2 text-primary"></i>
+                        <span class="info-label">Employee ID:</span>
+                        <span class="info-value">{{ employee.employee_id }}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-building me-2 text-primary"></i>
+                        <span class="info-label">Department:</span>
+                        <span class="info-value">{{ employee.department }}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+                        <span class="info-label">Location:</span>
+                        <span class="info-value">{{ employee.location|default:"Not specified" }}</span>
+                    </div>
+                    <!-- <div class="info-item">
+                        <i class="fas fa-calendar me-2 text-primary"></i>
+                        <span class="info-label">Joining date:</span>
+                        <span class="info-value">{{ employee.date_of_joining|date:"d-m-Y" }}</span>
+                    </div> -->
+                    <div class="info-item">
+                        <i class="fas fa-phone me-2 text-primary"></i>
+                        <span class="info-label">Phone:</span>
+                        <span class="info-value">{{ employee.dial_code }} {{ employee.phone }}</span>
+                    </div>
+                    {% if employee.alternate_phone %}
+                    <div class="info-item">
+                        <i class="fas fa-phone-alt me-2 text-primary"></i>
+                        <span class="info-label">Alt Phone:</span>
+                        <span class="info-value">{{ employee.alternate_phone }}</span>
+                    </div>
+                    {% endif %}
+                    {% if employee.email %}
+                    <div class="info-item">
+                        <i class="fas fa-envelope me-2 text-primary"></i>
+                        <span class="info-label">Email:</span>
+                        <span class="info-value">{{ employee.email }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            
+            <!-- Address Details -->
+            <div class="personal-info mt-4">
+                <h5 class="section-title">Address</h5>
+                <div class="info-list">
+                    {% if employee.address %}
+                    <div class="info-item">
+                        <span class="info-value">{{ employee.address }}</span>
+                    </div>
+                    {% endif %}                    
+                </div>
+            </div>
+
+            <!-- Personal Details -->
+            <div class="personal-info mt-4">
+                <h5 class="section-title">Personal Details</h5>
+                <div class="info-list">
+                    {% if employee.gender %}
+                    <div class="info-item">
+                        <span class="info-label">Gender:</span>
+                        <span class="info-value">{{ employee.gender }}</span>
+                    </div>
+                    {% endif %}
+                    {% if employee.date_of_birth %}
+                    <div class="info-item">
+                        <span class="info-label">Date of Birth:</span>
+                        <span class="info-value">{{ employee.date_of_birth|date:"d-m-Y" }}</span>
+                    </div>
+                    {% endif %}
+                    {% if employee.marital_status %}
+                    <div class="info-item">
+                        <span class="info-label">Marital Status:</span>
+                        <span class="info-value">{{ employee.marital_status }}</span>
+                    </div>
+                    {% endif %}
+                    {% if employee.blood_group %}
+                    <div class="info-item">
+                        <span class="info-label">Blood Group:</span>
+                        <span class="info-value">{{ employee.blood_group }}</span>
+                    </div>
+                    {% endif %}
+                    {% if employee.nationality %}
+                    <div class="info-item">
+                        <span class="info-label">Nationality:</span>
+                        <span class="info-value">{{ employee.nationality }}</span>
+                    </div>
+                    {% endif %}
+                    {% if employee.physically_handicapped %}
+                    <div class="info-item">
+                        <span class="info-label">Physically Handicapped:</span>
+                        <span class="info-value badge bg-warning">Yes</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Family Information -->
+            {% if employee.father_name or employee.mother_name or employee.spouse_name %}
+            <div class="family-info mt-4">
+                <h5 class="section-title">Family Information</h5>
+                <div class="info-list">
+                    {% if employee.father_name %}
+                    <div class="info-item">
+                        <span class="info-label">Father:</span>
+                        <span class="info-value">{{ employee.father_name }}</span>
+                    </div>
+                    {% endif %}
+                    {% if employee.mother_name %}
+                    <div class="info-item">
+                        <span class="info-label">Mother:</span>
+                        <span class="info-value">{{ employee.mother_name }}</span>
+                    </div>
+                    {% endif %}
+                    {% if employee.spouse_name %}
+                    <div class="info-item">
+                        <span class="info-label">Spouse:</span>
+                        <span class="info-value">{{ employee.spouse_name }}</span>
+                    </div>
+                    {% endif %}
+                    {% if employee.spouse_gender %}
+                    <div class="info-item">
+                        <span class="info-label">Spouse Gender:</span>
+                        <span class="info-value">{{ employee.spouse_gender }}</span>
+                    </div>
+                    {% endif %}
+                    {% if employee.marriage_date %}
+                    <div class="info-item">
+                        <span class="info-label">Marriage Date:</span>
+                        <span class="info-value">{{ employee.marriage_date|date:"d-m-Y" }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Bank Information -->
+            {% if employee.bank_name or employee.account_number or employee.ifsc_code %}
+            <div class="bank-info mt-4">
+                <h5 class="section-title">Bank Information</h5>
+                <div class="info-list">
+                    {% if employee.bank_name %}
+                    <div class="info-item">
+                        <i class="fas fa-university me-2 text-primary"></i>
+                        <span class="info-value">{{ employee.bank_name }}</span>
+                    </div>
+                    {% endif %}
+                    {% if employee.account_number %}
+                    <div class="info-item">
+                        <i class="fas fa-credit-card me-2 text-primary"></i>
+                        <span class="info-value">****{{ employee.account_number|slice:"-4:" }}</span>
+                    </div>
+                    {% endif %}
+                    {% if employee.ifsc_code %}
+                    <div class="info-item">
+                        <i class="fas fa-code me-2 text-primary"></i>
+                        <span class="info-value">{{ employee.ifsc_code }}</span>
+                    </div>
+                    {% endif %}
+                    {% if employee.name_on_bank_account %}
+                    <div class="info-item">
+                        <span class="info-label">Account Name:</span>
+                        <span class="info-value">{{ employee.name_on_bank_account }}</span>
+                    </div>
+                    {% endif %}
+                    {% if employee.salary_payment_mode %}
+                    <div class="info-item">
+                        <span class="info-label">Payment Mode:</span>
+                        <span class="info-value">{{ employee.salary_payment_mode }}</span>
+                    </div>
+                    {% endif %}
+                    {% if employee.basic_salary %}
+                    <div class="info-item">
+                        <span class="info-label">Basic Salary:</span>
+                        <span class="info-value">₹{{ employee.basic_salary }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right Content Area -->
+    <div class="col-md-8">
+        <!-- Employment Details Card -->
+        <div class="custom-card">
+            <div class="card-header gradient-header">
+                <h5 class="card-title mb-0"><i class="fas fa-briefcase me-2"></i>Employment Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label class="info-label"><strong>Employee ID</strong></label>
+                            <p class="info-value">{{ employee.employee_id }}</p>
+                        </div>
+                        <div class="info-group">
+                            <label class="info-label"><strong>Department</strong></label>
+                            <p class="info-value">{{ employee.department }}</p>
+                        </div>
+                        <div class="info-group">
+                            <label class="info-label"><strong>Designation</strong></label>
+                            <p class="info-value">{{ employee.designation }}</p>
+                        </div>
+                        <!-- <div class="info-group">
+                            <label class="info-label"><strong>Role</strong></label>
+                            <p class="info-value">{{ employee.role }}</p>
+                        </div> -->
+                        <div class="info-group">
+                            <label class="info-label"><strong>Legal Entity</strong></label>
+                            <p class="info-value">{{ employee.legal_entity|default:"Not specified" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label class="info-label"><strong>Location</strong></label>
+                            <p class="info-value">{{ employee.location|default:"Not specified" }}</p>
+                        </div>
+                        <div class="info-group">
+                            <label class="info-label"><strong>Date of Joining</strong></label>
+                            <p class="info-value">{{ employee.date_of_joining|date:"d-m-Y" }}</p>
+                        </div>
+                        <div class="info-group">
+                            <label class="info-label"><strong>Contract End Date</strong></label>
+                            <p class="info-value">{{ employee.contract_end_date|date:"d-m-Y"|default:"Not specified" }}</p>
+                        </div>
+                        <div class="info-group">
+                            <label class="info-label"><strong>Reporting Manager</strong></label>
+                            <p class="info-value">{{ employee.reporting_manager|default:"Not assigned" }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Additional Employment Information -->
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label class="info-label"><strong>Worker Type</strong></label>
+                            <p class="info-value">{{ employee.worker_type|default:"Not specified" }}</p>
+                        </div>
+                        
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label class="info-label"><strong>Status</strong></label>
+                            <p class="info-value">
+                                <span class="badge {% if employee.status == 'active' %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ employee.status|title }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PF & ESI Details Card -->
+        <div class="custom-card mt-4">
+            <div class="card-header gradient-header">
+                <h5 class="card-title mb-0"><i class="fas fa-file-invoice-dollar me-2"></i>PF & Statutory Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- PF Details -->
+                    <div class="col-md-6">
+                        <h6 class="section-subtitle">Provident Fund (PF)</h6>
+                        <div class="info-group">
+                            <label class="info-label"><strong>PF Details Available</strong></label>
+                            <p class="info-value">{{ employee.pf_details_available|default:"No" }}</p>
+                        </div>
+                        {% if employee.pf_number %}
+                        <div class="info-group">
+                            <label class="info-label"><strong>PF Number</strong></label>
+                            <p class="info-value">{{ employee.pf_number }}</p>
+                        </div>
+                        {% endif %}
+                        {% if employee.uan %}
+                        <div class="info-group">
+                            <label class="info-label"><strong>UAN</strong></label>
+                            <p class="info-value">{{ employee.uan }}</p>
+                        </div>
+                        {% endif %}
+                        {% if employee.pf_establishment_id %}
+                        <div class="info-group">
+                            <label class="info-label"><strong>PF Establishment ID</strong></label>
+                            <p class="info-value">{{ employee.pf_establishment_id }}</p>
+                        </div>
+                        {% endif %}
+                        {% if employee.pf_joining_date %}
+                        <div class="info-group">
+                            <label class="info-label"><strong>PF Joining Date</strong></label>
+                            <p class="info-value">{{ employee.pf_joining_date|date:"d-m-Y" }}</p>
+                        </div>
+                        {% endif %}
+                        {% if employee.name_on_pf_account %}
+                        <div class="info-group">
+                            <label class="info-label"><strong>Name on PF Account</strong></label>
+                            <p class="info-value">{{ employee.name_on_pf_account }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- ESI Details -->
+                    <div class="col-md-6">
+                        <h6 class="section-subtitle">Employee State Insurance (ESI)</h6>
+                        <div class="info-group">
+                            <label class="info-label"><strong>ESI Eligible</strong></label>
+                            <p class="info-value">{{ employee.esi_eligible|default:"No" }}</p>
+                        </div>
+                        <div class="info-group">
+                            <label class="info-label"><strong>ESI Details Available</strong></label>
+                            <p class="info-value">{{ employee.esi_details_available|default:"No" }}</p>
+                        </div>
+                        {% if employee.esi_number %}
+                        <div class="info-group">
+                            <label class="info-label"><strong>ESI Number</strong></label>
+                            <p class="info-value">{{ employee.esi_number }}</p>
+                        </div>
+                        {% endif %}
+                        {% if employee.employer_esi_number %}
+                        <div class="info-group">
+                            <label class="info-label"><strong>Employer ESI Number</strong></label>
+                            <p class="info-value">{{ employee.employer_esi_number }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Professional Tax & LWF -->
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h6 class="section-subtitle">Professional Tax</h6>
+                        {% if employee.pt_establishment_id %}
+                        <div class="info-group">
+                            <label class="info-label"><strong>PT Establishment ID</strong></label>
+                            <p class="info-value">{{ employee.pt_establishment_id }}</p>
+                        </div>
+                        {% else %}
+                        <div class="info-group">
+                            <label class="info-label"><strong>PT Establishment ID</strong></label>
+                            <p class="info-value text-muted">Not specified</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="section-subtitle">Labor Welfare Fund</h6>
+                        <div class="info-group">
+                            <label class="info-label"><strong>LWF Eligible</strong></label>
+                            <p class="info-value">{{ employee.lwf_eligible|default:"No" }}</p>
+                        </div>
+                        {% if employee.enrollment_number %}
+                        <div class="info-group">
+                            <label class="info-label"><strong>Enrollment Number</strong></label>
+                            <p class="info-value">{{ employee.enrollment_number }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insurance Details Card -->
+        <div class="custom-card mt-4">
+            <div class="card-header gradient-header">
+                <h5 class="card-title mb-0"><i class="fas fa-shield-alt me-2"></i>Insurance Details</h5>
+            </div>
+            <div class="card-body">
+                {% if employee.insurance_type or employee.policy_name or employee.insurance_company %}
+                <div class="row">
+                    <div class="col-md-6">
+                        {% if employee.insurance_type %}
+                        <div class="info-group">
+                            <label class="info-label"><strong>Insurance Type</strong></label>
+                            <p class="info-value">{{ employee.insurance_type }}</p>
+                        </div>
+                        {% endif %}
+                        {% if employee.policy_name %}
+                        <div class="info-group">
+                            <label class="info-label"><strong>Policy Name</strong></label>
+                            <p class="info-value">{{ employee.policy_name }}</p>
+                        </div>
+                        {% endif %}
+                        {% if employee.insurance_company %}
+                        <div class="info-group">
+                            <label class="info-label"><strong>Insurance Company</strong></label>
+                            <p class="info-value">{{ employee.insurance_company }}</p>
+                        </div>
+                        {% endif %}
+                        {% if employee.policy_number %}
+                        <div class="info-group">
+                            <label class="info-label"><strong>Policy Number</strong></label>
+                            <p class="info-value">{{ employee.policy_number }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        {% if employee.coverage_amount %}
+                        <div class="info-group">
+                            <label class="info-label"><strong>Coverage Amount</strong></label>
+                            <p class="info-value">₹{{ employee.coverage_amount }}</p>
+                        </div>
+                        {% endif %}
+                        {% if employee.nominee_name %}
+                        <div class="info-group">
+                            <label class="info-label"><strong>Nominee Name</strong></label>
+                            <p class="info-value">{{ employee.nominee_name }}</p>
+                        </div>
+                        {% endif %}
+                        {% if employee.nominee_relationship %}
+                        <div class="info-group">
+                            <label class="info-label"><strong>Relationship</strong></label>
+                            <p class="info-value">{{ employee.nominee_relationship }}</p>
+                        </div>
+                        {% endif %}
+                        {% if employee.policy_start_date %}
+                        <div class="info-group">
+                            <label class="info-label"><strong>Policy Start Date</strong></label>
+                            <p class="info-value">{{ employee.policy_start_date|date:"d-m-Y" }}</p>
+                        </div>
+                        {% endif %}
+                        {% if employee.policy_end_date %}
+                        <div class="info-group">
+                            <label class="info-label"><strong>Policy End Date</strong></label>
+                            <p class="info-value">{{ employee.policy_end_date|date:"d-m-Y" }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-shield-alt fa-3x mb-3"></i>
+                    <p>No insurance details available</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Documents Section -->
+<div class="custom-card mt-4">
+    <div class="card-header gradient-header">
+        <h5 class="card-title mb-0"><i class="fas fa-file-alt me-2"></i>Employee Documents</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <!-- Educational Certificates -->
+            <div class="col-md-6 mb-4">
+                <h6 class="border-bottom pb-2 mb-3">
+                    <i class="fas fa-graduation-cap me-2"></i>Educational Certificates
+                </h6>
+                <div id="educationDocuments">
+                    {% for doc in employee.documents.all %}
+                        {% if doc.document_type == 'educational' %}
+                        <div class="document-item mb-2 p-2 border rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ doc.document_number|title }} Certificate</strong>
+                                    <br>
+                                    <small class="text-muted">Uploaded: {{ doc.created_at|date:"d-m-Y" }}</small>
+                                    {% if not doc.file %}
+                                    <br><small class="text-warning"><i class="fas fa-exclamation-triangle"></i> No file uploaded</small>
+                                    {% endif %}
+                                </div>
+                                {% if doc.file %}
+                                <div class="btn-group">
+                                    <a href="{{ doc.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ doc.file.url }}" download class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                    {% if request.session.user_role in 'ADMIN,HR,SUPER ADMIN' %}
+                                    <form method="POST" action="{% url 'delete_document' doc.id %}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this document?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                                {% else %}
+                                <span class="badge bg-warning">No File</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% empty %}
+                        <p class="text-muted">No educational certificates uploaded</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- PAN Card -->
+            <div class="col-md-6 mb-4">
+                <h6 class="border-bottom pb-2 mb-3">
+                    <i class="fas fa-id-card me-2"></i>PAN Card
+                </h6>
+                {% for doc in employee.documents.all %}
+                    {% if doc.document_type == 'pan' %}
+                    <div class="document-item mb-2 p-2 border rounded">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>PAN: {{ doc.document_number }}</strong>
+                                <br>
+                                <small class="text-muted">Uploaded: {{ doc.created_at|date:"d-m-Y" }}</small>
+                                {% if not doc.file %}
+                                <br><small class="text-warning"><i class="fas fa-exclamation-triangle"></i> No file uploaded</small>
+                                {% endif %}
+                            </div>
+                            {% if doc.file %}
+                            <div class="btn-group">
+                                <a href="{{ doc.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ doc.file.url }}" download class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                                {% if request.session.user_role in 'ADMIN,HR,SUPER ADMIN' %}
+                                <form method="POST" action="{% url 'delete_document' doc.id %}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this document?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <span class="badge bg-warning">No File</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% empty %}
+                <p class="text-muted">PAN card not uploaded</p>
+                {% endfor %}
+            </div>
+
+            <!-- Aadhaar Card -->
+            <div class="col-md-6 mb-4">
+                <h6 class="border-bottom pb-2 mb-3">
+                    <i class="fas fa-address-card me-2"></i>Aadhaar Card
+                </h6>
+                {% for doc in employee.documents.all %}
+                    {% if doc.document_type == 'aadhaar' %}
+                    <div class="document-item mb-2 p-2 border rounded">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Aadhaar: ****{{ doc.document_number|slice:"-4:" }}</strong>
+                                <br>
+                                <small class="text-muted">Uploaded: {{ doc.created_at|date:"d-m-Y" }}</small>
+                                {% if not doc.file %}
+                                <br><small class="text-warning"><i class="fas fa-exclamation-triangle"></i> No file uploaded</small>
+                                {% endif %}
+                            </div>
+                            {% if doc.file %}
+                            <div class="btn-group">
+                                <a href="{{ doc.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ doc.file.url }}" download class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                                {% if request.session.user_role in 'ADMIN,HR,SUPER ADMIN' %}
+                                <form method="POST" action="{% url 'delete_document' doc.id %}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this document?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <span class="badge bg-warning">No File</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% empty %}
+                <p class="text-muted">Aadhaar card not uploaded</p>
+                {% endfor %}
+            </div>
+
+            <!-- Form 16 Document -->
+            <div class="col-md-6 mb-4">
+                <h6 class="border-bottom pb-2 mb-3">
+                    <i class="fas fa-file-invoice-dollar me-2"></i>Form 16 Document
+                </h6>
+                {% for doc in employee.documents.all %}
+                    {% if doc.document_type == 'form16' and doc.file %}
+                    <div class="document-item mb-2 p-2 border rounded">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Form 16</strong>
+                                {% if doc.document_number and doc.document_number != 'Form 16' %}
+                                <br><small class="text-muted">{{ doc.document_number }}</small>
+                                {% endif %}
+                                <br>
+                                <small class="text-muted">Uploaded: {{ doc.created_at|date:"d-m-Y" }}</small>
+                            </div>
+                            <div class="btn-group">
+                                <a href="{{ doc.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ doc.file.url }}" download class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                                {% if request.session.user_role in 'ADMIN,HR,SUPER ADMIN' %}
+                                <form method="POST" action="{% url 'delete_document' doc.id %}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this document?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% empty %}
+                <p class="text-muted">Form 16 document not uploaded</p>
+                {% endfor %}
+            </div>
+
+            <!-- IIR Document -->
+            <div class="col-md-6 mb-4">
+                <h6 class="border-bottom pb-2 mb-3">
+                    <i class="fas fa-chart-pie me-2"></i>IIR - Investment Declaration
+                </h6>
+                {% for doc in employee.documents.all %}
+                    {% if doc.document_type == 'iir' and doc.file %}
+                    <div class="document-item mb-2 p-2 border rounded">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>IIR Document</strong>
+                                {% if doc.document_number and doc.document_number != 'IIR Investment Declaration' %}
+                                <br><small class="text-muted">{{ doc.document_number }}</small>
+                                {% endif %}
+                                <br>
+                                <small class="text-muted">Uploaded: {{ doc.created_at|date:"d-m-Y" }}</small>
+                            </div>
+                            <div class="btn-group">
+                                <a href="{{ doc.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ doc.file.url }}" download class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                                {% if request.session.user_role in 'ADMIN,HR,SUPER ADMIN' %}
+                                <form method="POST" action="{% url 'delete_document' doc.id %}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this document?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% empty %}
+                <p class="text-muted">IIR document not uploaded</p>
+                {% endfor %}
+            </div>
+
+            <!-- Other Documents -->
+            <div class="col-12">
+                <div class="row">
+                    <!-- Bank Passbook -->
+                    <div class="col-md-6 mb-4">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="fas fa-book me-2"></i>Bank Passbook
+                        </h6>
+                        {% for doc in employee.documents.all %}
+                            {% if doc.document_type == 'passbook' and doc.file %}
+                            <div class="document-item mb-2 p-2 border rounded">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Bank Passbook</strong>
+                                        <br>
+                                        <small class="text-muted">Uploaded: {{ doc.created_at|date:"d-m-Y" }}</small>
+                                    </div>
+                                    <div class="btn-group">
+                                        <a href="{{ doc.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ doc.file.url }}" download class="btn btn-sm btn-outline-success">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        {% if request.session.user_role in 'ADMIN,HR,SUPER ADMIN' %}
+                                        <form method="POST" action="{% url 'delete_document' doc.id %}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this document?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% empty %}
+                        <p class="text-muted">Bank passbook not uploaded</p>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Offer Letter -->
+                    <div class="col-md-6 mb-4">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="fas fa-file-contract me-2"></i>Offer Letter
+                        </h6>
+                        {% for doc in employee.documents.all %}
+                            {% if doc.document_type == 'offer_letter' and doc.file %}
+                            <div class="document-item mb-2 p-2 border rounded">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Offer Letter</strong>
+                                        <br>
+                                        <small class="text-muted">Uploaded: {{ doc.created_at|date:"d-m-Y" }}</small>
+                                    </div>
+                                    <div class="btn-group">
+                                        <a href="{{ doc.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ doc.file.url }}" download class="btn btn-sm btn-outline-success">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                       {% if request.session.user_role in 'ADMIN,HR,SUPER ADMIN' %}
+                                        <form method="POST" action="{% url 'delete_document' doc.id %}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this document?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% empty %}
+                        <p class="text-muted">Offer letter not uploaded</p>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Salary Slips -->
+                    <div class="col-md-6 mb-4">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="fas fa-file-invoice-dollar me-2"></i>Salary Slips
+                        </h6>
+                        {% for doc in employee.documents.all %}
+                            {% if doc.document_type == 'salary_slip' and doc.file %}
+                            <div class="document-item mb-2 p-2 border rounded">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Salary Slip {{ forloop.counter }}</strong>
+                                        <br>
+                                        <small class="text-muted">Uploaded: {{ doc.created_at|date:"d-m-Y" }}</small>
+                                    </div>
+                                    <div class="btn-group">
+                                        <a href="{{ doc.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ doc.file.url }}" download class="btn btn-sm btn-outline-success">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        {% if request.session.user_role in 'ADMIN,HR,SUPER ADMIN' %}
+                                        <form method="POST" action="{% url 'delete_document' doc.id %}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this document?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% empty %}
+                        <p class="text-muted">No salary slips uploaded</p>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Bank Statement -->
+                    <div class="col-md-6 mb-4">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="fas fa-file-invoice me-2"></i>Bank Statement
+                        </h6>
+                        {% for doc in employee.documents.all %}
+                            {% if doc.document_type == 'bank_statement' and doc.file %}
+                            <div class="document-item mb-2 p-2 border rounded">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Bank Statement</strong>
+                                        <br>
+                                        <small class="text-muted">Uploaded: {{ doc.created_at|date:"d-m-Y" }}</small>
+                                    </div>
+                                    <div class="btn-group">
+                                        <a href="{{ doc.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ doc.file.url }}" download class="btn btn-sm btn-outline-success">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        {% if request.session.user_role in 'ADMIN,HR,SUPER ADMIN' %}
+                                        <form method="POST" action="{% url 'delete_document' doc.id %}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this document?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% empty %}
+                        <p class="text-muted">Bank statement not uploaded</p>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Experience Letter -->
+                    <div class="col-md-6 mb-4">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="fas fa-file-signature me-2"></i>Experience/Relieving Letter
+                        </h6>
+                        {% for doc in employee.documents.all %}
+                            {% if doc.document_type == 'experience_letter' and doc.file %}
+                            <div class="document-item mb-2 p-2 border rounded">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Experience Letter</strong>
+                                        {% if doc.document_number and doc.document_number != 'Experience Letter' %}
+                                        <br><small class="text-muted">{{ doc.document_number }}</small>
+                                        {% endif %}
+                                        <br>
+                                        <small class="text-muted">Uploaded: {{ doc.created_at|date:"d-m-Y" }}</small>
+                                    </div>
+                                    <div class="btn-group">
+                                        <a href="{{ doc.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ doc.file.url }}" download class="btn btn-sm btn-outline-success">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        {% if request.session.user_role in 'ADMIN,HR,SUPER ADMIN' %}
+                                        <form method="POST" action="{% url 'delete_document' doc.id %}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this document?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% empty %}
+                        <p class="text-muted">Experience letter not uploaded</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+        <!-- System Information -->
+        <div class="custom-card mt-4">
+            <div class="card-header gradient-header">
+                <h5 class="card-title mb-0"><i class="fas fa-clock me-2"></i>System Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label class="info-label"><strong>Account Created</strong></label>
+                            <p class="info-value">{{ employee.created_at|date:"d-m-Y" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label class="info-label"><strong>Last Updated</strong></label>
+                            <p class="info-value">{{ employee.updated_at|date:"d-m-Y" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add smooth scrolling for better UX
+    const links = document.querySelectorAll('a[href^="#"]');
+    links.forEach(link => {
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+
+    // Add animation to cards when they come into view
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+
+    // Observe all custom cards
+    document.querySelectorAll('.custom-card').forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(card);
+    });
+
+    // Add hover effects to document items
+    const documentItems = document.querySelectorAll('.document-item');
+    documentItems.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        item.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+
+    
+    
+    // Add print button to button group
+    const buttonGroup = document.querySelector('.btn-group');
+    if (buttonGroup) {
+        buttonGroup.appendChild(printButton);
+    }
+});
+</script>
+
+<style>
+/* Enhanced CSS for better UI */
+.profile-card {
+    position: sticky;
+    top: 20px;
+    height: fit-content;
+}
+
+.profile-image {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border: 4px solid #e9ecef;
+}
+
+.profile-image-placeholder {
+    width: 150px;
+    height: 150px;
+    font-size: 4rem;
+}
+
+.employee-name {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    font-size: 1.4rem;
+}
+
+.designation {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: #6c757d;
+}
+
+.status-badge {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+}
+
+.profile-divider {
+    margin: 1.5rem 0;
+    border-color: #e9ecef;
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.section-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    margin-right: 8px;
+    border-radius: 2px;
+}
+
+.section-subtitle {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.75rem;
+    padding-left: 1rem;
+    border-left: 3px solid #007bff;
+}
+
+.info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 500;
+    color: #6c757d;
+    min-width: 140px;
+    font-size: 0.9rem;
+}
+
+.info-value {
+    color: #495057;
+    font-weight: 400;
+    flex: 1;
+}
+
+.gradient-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 1.25rem 1.5rem;
+}
+
+.gradient-header .card-title {
+    color: black;
+    font-weight: 600;
+}
+
+.info-group {
+    margin-bottom: 1.25rem;
+}
+
+.info-group .info-label {
+    display: block;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+    min-width: auto;
+}
+
+.info-group .info-value {
+    font-size: 1rem;
+    color: #2c3e50;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.custom-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.custom-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+.custom-card .card-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 1.25rem 1.5rem;
+}
+
+.custom-card .card-body {
+    padding: 1.5rem;
+}
+
+.document-item {
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.document-item:hover {
+    background-color: #e9ecef;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.btn-group .btn {
+    border-radius: 6px;
+    margin: 0 2px;
+    transition: all 0.2s ease;
+    border: 1px solid #dee2e6;
+}
+
+.btn-group .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .profile-card {
+        position: static;
+        margin-bottom: 1.5rem;
+    }
+    
+    .info-item {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .info-label {
+        min-width: auto;
+        font-weight: 600;
+    }
+    
+    .employee-name {
+        font-size: 1.2rem;
+    }
+    
+    .custom-card .card-body {
+        padding: 1rem;
+    }
+}
+
+
+/* Animation classes */
+.fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s ease;
+}
+
+.fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Badge enhancements */
+.badge {
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.35rem 0.65rem;
+}
+
+/* Icon colors */
+.text-primary {
+    color: #667eea !important;
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+</style>
+{% endblock %}

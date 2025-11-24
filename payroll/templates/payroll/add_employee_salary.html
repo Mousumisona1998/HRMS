@@ -1,0 +1,439 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Employee Salary - HRMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h3 mb-0">Add Employee Salary</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'employee_salaries' %}">Employee Salaries</a></li>
+                        <li class="breadcrumb-item active">Add Salary</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'employee_salaries' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Salaries
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="custom-card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Salary Structure Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="salaryForm">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+    <div class="col-md-6 position-relative">
+        <label class="form-label required">Employee</label>
+        <input type="text" class="form-control" id="employeeSelect" placeholder="Search Employee by Name or ID">
+        <div id="managerSuggestions" class="dropdown-menu w-100" style="display: none;"></div>
+        <input type="hidden" name="employee" id="empId">
+    </div>
+
+    <!-- Selected Employee Info -->
+    <div class="row mt-3" id="selectedManagerSection" style="display: none;">
+        <div class="col-12">
+            <div class="alert alert-info py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>Selected Employee:</strong>
+                        <span id="selectedManagerName" class="ms-2"></span>
+                        <span id="selectedManagerId" class="text-muted ms-2"></span>
+                    </div>
+                    <button type="button" class="btn-close" id="clearManagerSelection"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Effective Date <span class="text-danger">*</span></label>
+        <input type="date" class="form-control" name="effective_date" value="{{ today_date|date:'Y-m-d' }}" required>
+    </div>
+</div>
+
+                        <!-- Basic Salary & Unpaid Balance -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Basic Salary <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" name="basic_salary" id="basicSalary" 
+                                       placeholder="Select employee to auto-fill" step="0.01" required readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Unpaid Leave Balance</label>
+                                <input type="number" class="form-control" id="unpaidBalance" 
+                                       placeholder="Unpaid leave balance" readonly style="background-color: #f8f9fa;">
+                            </div>
+                        </div>
+
+                        <!-- Salary Components -->
+                        <div class="mb-4">
+                            <h6 class="mb-3">Salary Components</h6>
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Component</th>
+                                            <th>Type</th>
+                                            <th>Calculation</th>
+                                            <th>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for component in components %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ component.name }}</strong>
+                                                {% if component.calculation_type == 'percentage' %}
+                                                <br><small class="text-muted">{{ component.value }}% of Basic</small>
+                                                {% elif component.calculation_type == 'formula' %}
+                                                <br><small class="text-muted">Formula: {{ component.formula }}</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge {% if component.component_type == 'earning' %}bg-success{% else %}bg-danger{% endif %}">
+                                                    {{ component.get_component_type_display }}
+                                                </span>
+                                            </td>
+                                            <td>{{ component.get_calculation_type_display }}</td>
+                                            <td>
+                                                {% if component.calculation_type == 'percentage' or component.calculation_type == 'formula' %}
+                                                <div class="input-group input-group-sm">
+                                                    <span class="input-group-text">₹</span>
+                                                    <input type="number" class="form-control" 
+                                                           id="component_{{ component.id }}_calc" 
+                                                           readonly style="background-color: #f8f9fa;">
+                                                </div>
+                                                <input type="hidden" name="component_{{ component.id }}" 
+                                                       id="component_{{ component.id }}">
+                                                {% else %}
+                                                <div class="input-group input-group-sm">
+                                                    <span class="input-group-text">₹</span>
+                                                    <input type="number" class="form-control component-input" 
+                                                           name="component_{{ component.id }}" 
+                                                           value="0" step="0.01" 
+                                                           data-component-type="{{ component.component_type }}">
+                                                </div>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Salary Summary -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="custom-card bg-light">
+                                    <h6 class="mb-3">Salary Summary</h6>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Basic Salary:</span>
+                                        <strong id="summaryBasic">₹0.00</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Total Earnings:</span>
+                                        <strong class="text-success" id="summaryEarnings">₹0.00</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Total Deductions:</span>
+                                        <strong class="text-danger" id="summaryDeductions">₹0.00</strong>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <span><strong>Net Salary:</strong></span>
+                                        <strong class="text-primary" id="summaryNet">₹0.00</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Salary Structure
+                            </button>
+                            <a href="{% url 'employee_salaries' %}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Function to load employee data when selected
+    async function loadEmployeeData(employeeId, basicSalary = null) {
+        const basicSalaryField = document.getElementById('basicSalary');
+        const unpaidBalanceField = document.getElementById('unpaidBalance');
+        
+        if (!employeeId) {
+            // Reset fields if no employee selected
+            basicSalaryField.value = '';
+            basicSalaryField.readOnly = true;
+            unpaidBalanceField.value = '';
+            calculateSalary();
+            return;
+        }
+        
+        try {
+            // Set basic salary if provided
+            if (basicSalary) {
+                basicSalaryField.value = basicSalary;
+                basicSalaryField.readOnly = false;
+            }
+            
+            // Fetch unpaid leave balance and other data from backend
+            const response = await fetch(`/payroll/api/employee-salary-data/${employeeId}/`);
+            const data = await response.json();
+            
+            if (response.ok) {
+                unpaidBalanceField.value = data.unpaid_leave_balance || 0;
+                // If basic salary wasn't provided, try to get it from the API response
+                if (!basicSalary && data.basic_salary) {
+                    basicSalaryField.value = data.basic_salary;
+                    basicSalaryField.readOnly = false;
+                }
+            } else {
+                unpaidBalanceField.value = 0;
+            }
+            
+            // Trigger salary calculation
+            calculateSalary();
+            
+        } catch (error) {
+            console.error('Error loading employee data:', error);
+            basicSalaryField.value = '';
+            basicSalaryField.readOnly = true;
+            unpaidBalanceField.value = 0;
+        }
+    }
+
+    function calculateSalary() {
+        const basicSalary = parseFloat(document.getElementById('basicSalary').value) || 0;
+        let totalEarnings = 0;
+        let totalDeductions = 0;
+
+        // Calculate percentage-based components
+        {% for component in components %}
+            {% if component.calculation_type == 'percentage' %}
+                const {{ component.name|slugify }}Amount = basicSalary * {{ component.value }} / 100;
+                const calcField = document.getElementById('component_{{ component.id }}_calc');
+                const hiddenField = document.getElementById('component_{{ component.id }}');
+                
+                if (calcField) {
+                    calcField.value = {{ component.name|slugify }}Amount.toFixed(2);
+                }
+                if (hiddenField) {
+                    hiddenField.value = {{ component.name|slugify }}Amount.toFixed(2);
+                }
+                
+                {% if component.component_type == 'earning' %}
+                    totalEarnings += {{ component.name|slugify }}Amount;
+                {% else %}
+                    totalDeductions += {{ component.name|slugify }}Amount;
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+
+        // Function to handle dynamic variables
+        function getDynamicVariables() {
+            const variables = {
+                basic_salary: parseFloat(document.getElementById('basicSalary').value) || 0,
+                per_day_salary: (parseFloat(document.getElementById('basicSalary').value) || 0) / 30,
+                unpaid_balance: parseFloat(document.getElementById('unpaidBalance').value) || 0
+            };
+            
+            return variables;
+        }
+
+        function evaluateFormula(formula, variables) {
+            let evaluatedFormula = formula;
+            
+            // Replace all variables in the formula
+            for (const [key, value] of Object.entries(variables)) {
+                const regex = new RegExp(key, 'gi');
+                evaluatedFormula = evaluatedFormula.replace(regex, value);
+            }
+            
+            // Safe evaluation
+            try {
+                return eval(evaluatedFormula);
+            } catch (error) {
+                console.error('Formula evaluation error:', error);
+                return 0;
+            }
+        }
+
+        // Calculate formula-based components
+        {% for component in components %}
+            {% if component.calculation_type == 'formula' %}
+                let {{ component.name|slugify }}Amount = 0;
+                
+                try {
+                    const variables = getDynamicVariables();
+                    {{ component.name|slugify }}Amount = evaluateFormula("{{ component.formula }}", variables);
+                    
+                    // Update the display fields
+                    const calcField = document.getElementById('component_{{ component.id }}_calc');
+                    const hiddenField = document.getElementById('component_{{ component.id }}');
+                    if (calcField) calcField.value = {{ component.name|slugify }}Amount.toFixed(2);
+                    if (hiddenField) hiddenField.value = {{ component.name|slugify }}Amount.toFixed(2);
+                    
+                    {% if component.component_type == 'earning' %}
+                        totalEarnings += {{ component.name|slugify }}Amount;
+                    {% else %}
+                        totalDeductions += {{ component.name|slugify }}Amount;
+                    {% endif %}
+                    
+                } catch (error) {
+                    console.error('Error calculating {{ component.name }}:', error);
+                }
+            {% endif %}
+        {% endfor %}
+
+        // Calculate fixed amount components
+        document.querySelectorAll('.component-input').forEach(input => {
+            const amount = parseFloat(input.value) || 0;
+            const componentType = input.getAttribute('data-component-type');
+            
+            if (componentType === 'earning') {
+                totalEarnings += amount;
+            } else {
+                totalDeductions += amount;
+            }
+        });
+
+        // Update summary
+        document.getElementById('summaryBasic').textContent = '₹' + basicSalary.toFixed(2);
+        document.getElementById('summaryEarnings').textContent = '₹' + totalEarnings.toFixed(2);
+        document.getElementById('summaryDeductions').textContent = '₹' + totalDeductions.toFixed(2);
+        
+        const netSalary = basicSalary + totalEarnings - totalDeductions;
+        document.getElementById('summaryNet').textContent = '₹' + netSalary.toFixed(2);
+    }
+
+    // Event listeners
+    document.getElementById('basicSalary').addEventListener('input', calculateSalary);
+    document.querySelectorAll('.component-input').forEach(input => {
+        input.addEventListener('input', calculateSalary);
+    });
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+    // Employee selection functionality
+    const employeeSearchInput = document.getElementById('employeeSelect');
+    const employeeSuggestions = document.getElementById('managerSuggestions');
+    const selectedEmployeeSection = document.getElementById('selectedManagerSection');
+    const selectedEmployeeName = document.getElementById('selectedManagerName');
+    const selectedEmployeeId = document.getElementById('selectedManagerId');
+    const employeeIdField = document.getElementById('empId');
+    const clearEmployeeSelection = document.getElementById('clearManagerSelection');
+
+    let searchTimeout = null;
+    employeeSearchInput.addEventListener('input', function() {
+        const term = this.value.trim();
+        if (searchTimeout) clearTimeout(searchTimeout);
+        if (term.length < 2) {
+            employeeSuggestions.style.display = 'none';
+            return;
+        }
+        searchTimeout = setTimeout(() => searchEmployees(term), 300);
+    });
+
+    function searchEmployees(searchTerm) {
+        fetch('/search-employees/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: `search_term=${encodeURIComponent(searchTerm)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.employees && data.employees.length > 0) {
+                showEmployeeSuggestions(data.employees);
+            } else {
+                employeeSuggestions.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Error searching employees:', error);
+            employeeSuggestions.style.display = 'none';
+        });
+    }
+
+    function showEmployeeSuggestions(employees) {
+        employeeSuggestions.innerHTML = '';
+        employees.forEach(emp => {
+            const suggestionItem = document.createElement('a');
+            suggestionItem.className = 'dropdown-item';
+            suggestionItem.href = '#';
+            suggestionItem.innerHTML = `
+                <strong>${emp.name}</strong>
+                <small class="text-muted ms-2">${emp.employee_id}</small>
+            `;
+            suggestionItem.addEventListener('click', function (e) {
+                e.preventDefault();
+                selectEmployee(emp);
+            });
+            employeeSuggestions.appendChild(suggestionItem);
+        });
+        employeeSuggestions.style.display = 'block';
+    }
+
+    function selectEmployee(emp) {
+        employeeSearchInput.value = `${emp.name}`;
+        employeeIdField.value = emp.id;
+        selectedEmployeeName.textContent = emp.name;
+        selectedEmployeeId.textContent = `(${emp.employee_id})`;
+        selectedEmployeeSection.style.display = 'block';
+        employeeSuggestions.style.display = 'none';
+        
+        // Load employee data including basic salary
+        loadEmployeeData(emp.id, emp.current_salary);
+    }
+
+    clearEmployeeSelection.addEventListener('click', () => {
+        employeeIdField.value = '';
+        employeeSearchInput.value = '';
+        selectedEmployeeSection.style.display = 'none';
+        loadEmployeeData(null);
+    });
+
+    // Function to get a specific cookie (used for CSRF token)
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Initial calculation
+    calculateSalary();
+</script>
+{% endblock %}

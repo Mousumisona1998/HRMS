@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Update Profile - HR System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center page-header">
+    <h1 class="h2">Update My Profile</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'employee_dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="custom-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-user-edit"></i> Profile Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>First Name</strong></label>
+                            <input type="text" class="form-control" value="{{ employee.first_name }}" readonly>
+                            <small class="form-text text-muted">Contact HR to change name</small>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Last Name</strong></label>
+                            <input type="text" class="form-control" value="{{ employee.last_name }}" readonly>
+                            <small class="form-text text-muted">Contact HR to change name</small>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Email</strong></label>
+                            <input type="email" class="form-control" value="{{ employee.email }}" readonly>
+                            <small class="form-text text-muted">Email cannot be changed</small>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Phone</strong></label>
+                            <input type="text" name="phone" class="form-control" value="{{ employee.phone }}" required>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Department</strong></label>
+                            <input type="text" name="department" class="form-control" value="{{ employee.department }}" readonly>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Designation</strong></label>
+                            <input type="text" name="designation" class="form-control" value="{{ employee.designation }}" readonly>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Location</strong></label>
+                            <input type="text" name="location" class="form-control" value="{{ employee.location }}" readonly>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Profile Picture</strong></label>
+                            <input type="file" name="profile_picture" class="form-control" accept="image/*">
+                            {% if employee.profile_picture %}
+                                <small class="form-text text-muted">Current: {{ employee.profile_picture.name }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Present Address</strong></label>
+                            <input type="text" name="present_address" class="form-control" value="{{ employee.present_address }}" required>
+                        </div>
+
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Profile
+                        </button>
+                        <a href="{% url 'employee_dashboard' %}" class="btn btn-secondary">Cancel</a>
+                        <a href="{% url 'change_password' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-key"></i> Change Password
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="custom-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-user"></i> Current Profile</h5>
+            </div>
+            <div class="card-body text-center">
+                {% if employee.profile_picture %}
+                    <img src="{{ employee.profile_picture.url }}" alt="Profile" class="rounded-circle mb-3" width="120" height="120">
+                {% else %}
+                    <div class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center mb-3" style="width: 120px; height: 120px;">
+                        <i class="fas fa-user text-white" style="font-size: 3rem;"></i>
+                    </div>
+                {% endif %}
+                <h5>{{ employee.first_name }} {{ employee.last_name }}</h5>
+                <p class="text-muted">{{ employee.designation }}</p>
+                <p class="small">
+                    <i class="fas fa-id-card"></i> {{ employee.employee_id }}<br>
+                    <i class="fas fa-building"></i> {{ employee.department }}<br>
+                    <i class="fas fa-map-marker-alt"></i> {{ employee.location|default:"Not specified" }}
+                </p>
+            </div>
+        </div>
+        
+        <div class="custom-card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-info-circle"></i> Profile Update Info</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Note:</strong> You can update your contact information and profile picture.<br>
+                    For changes to name, email, or employee ID, please contact HR.
+                </div>
+                <p class="small text-muted">
+                    <strong>Last Updated:</strong><br>
+                    {{ employee.updated_at|date:"M d, Y H:i" }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

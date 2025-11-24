@@ -1,0 +1,1010 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <h1 class="mb-3"><i class="fas fa-building me-2"></i>Branch Management</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'location_list' %}">Master Data</a></li>
+                <li class="breadcrumb-item active">Branches</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Success Messages from URL Parameters -->
+    <div id="success-messages" class="mb-4"></div>
+
+    <!-- Form Error Messages -->
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+        {% for error in form.non_field_errors %}
+        {{ error }}<br>
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    <!-- Search and Filter Card -->
+    <div class="card custom-card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" 
+                               class="form-control" 
+                               id="search" 
+                               name="search" 
+                               placeholder="Search branches..."
+                               value="{{ search_query }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select filter-select" id="status" name="status">
+                        <option value="">All Status</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBranchModal">
+                            <i class="fas fa-plus me-2"></i>Add New Branch
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Branches Table Card -->
+    <div class="card custom-card">
+        <div class="card-body p-0">
+            {% if branches %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Code</th>
+                            <th>Address</th>
+                            <th>City</th>
+                            <th>Status</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for branch in branches %}
+                        <tr>
+                            <td>
+                                <strong>{{ branch.name }}</strong>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark">{{ branch.code }}</span>
+                            </td>
+                            <td>
+                                <div class="text-muted small">
+                                    {{ branch.address|truncatewords:5|default:"No address" }}
+                                </div>
+                            </td>
+                            <td>
+                                {{ branch.city|default:"-" }}
+                            </td>
+                            <td>
+                                <span class="badge {% if branch.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {{ branch.is_active|yesno:"Active,Inactive" }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-muted">{{ branch.created_at|date:"Y-m-d" }}</span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-primary edit-branch-btn" 
+                                            title="Edit"
+                                            data-branch-id="{{ branch.pk }}"
+                                            data-branch-name="{{ branch.name }}"
+                                            data-branch-code="{{ branch.code }}"
+                                            data-branch-address="{{ branch.address|default:'' }}"
+                                            data-branch-city="{{ branch.city|default:'' }}"
+                                            data-branch-state="{{ branch.state|default:'' }}"
+                                            data-branch-country="{{ branch.country|default:'' }}"
+                                            data-branch-zip-code="{{ branch.zip_code|default:'' }}"
+                                            data-branch-is-active="{{ branch.is_active|yesno:'true,false' }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger delete-branch-btn" 
+                                            title="Delete"
+                                            data-branch-id="{{ branch.pk }}"
+                                            data-branch-name="{{ branch.name }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-building fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No branches found</h5>
+                <p class="text-muted">Get started by adding your first branch.</p>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBranchModal">
+                    <i class="fas fa-plus me-2"></i>Add New Branch
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Branch Modal -->
+<div class="modal fade" id="addBranchModal" tabindex="-1" aria-labelledby="addBranchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="addBranchModalLabel">
+                    <i class="fas fa-plus-circle me-2"></i>Add New Branch
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'location_create' %}" id="addBranchForm" novalidate>
+                {% csrf_token %}
+                <div class="modal-body">
+                    <!-- Form Errors Display -->
+                    <div id="addFormErrors" class="alert alert-danger" style="display: none;"></div>
+                    
+                    {% if form.non_field_errors and show_add_modal %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="row g-3">
+                        <!-- Branch Name -->
+                        <div class="col-md-6">
+                            <label for="id_name" class="form-label">
+                                Branch Name <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" 
+                                   class="form-control {% if form.name.errors and show_add_modal %}is-invalid{% endif %}" 
+                                   id="id_name" 
+                                   name="name" 
+                                   value="{% if form.name.value %}{{ form.name.value }}{% endif %}"
+                                   placeholder="Enter branch name"
+                                   required>
+                            {% if form.name.errors and show_add_modal %}
+                            <div class="invalid-feedback">
+                                {% for error in form.name.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Branch Code -->
+                        <div class="col-md-6">
+                            <label for="id_code" class="form-label">
+                                Branch Code <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" 
+                                   class="form-control {% if form.code.errors and show_add_modal %}is-invalid{% endif %}" 
+                                   id="id_code" 
+                                   name="code" 
+                                   value="{% if form.code.value %}{{ form.code.value }}{% endif %}"
+                                   placeholder="Enter branch code (e.g., BR-001)"
+                                   required>
+                            {% if form.code.errors and show_add_modal %}
+                            <div class="invalid-feedback">
+                                {% for error in form.code.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Unique code for the branch (e.g., BR-001, BR-002)</div>
+                        </div>
+
+                        <!-- Address -->
+                        <div class="col-12">
+                            <label for="id_address" class="form-label">
+                                Address
+                            </label>
+                            <textarea class="form-control {% if form.address.errors and show_add_modal %}is-invalid{% endif %}" 
+                                      id="id_address" 
+                                      name="address" 
+                                      rows="3" 
+                                      placeholder="Enter branch address">{% if form.address.value %}{{ form.address.value }}{% endif %}</textarea>
+                            {% if form.address.errors and show_add_modal %}
+                            <div class="invalid-feedback">
+                                {% for error in form.address.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- City -->
+                        <div class="col-md-6">
+                            <label for="id_city" class="form-label">
+                                City
+                            </label>
+                            <input type="text" 
+                                   class="form-control {% if form.city.errors and show_add_modal %}is-invalid{% endif %}" 
+                                   id="id_city" 
+                                   name="city" 
+                                   value="{% if form.city.value %}{{ form.city.value }}{% endif %}"
+                                   placeholder="Enter city">
+                            {% if form.city.errors and show_add_modal %}
+                            <div class="invalid-feedback">
+                                {% for error in form.city.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- State -->
+                        <div class="col-md-6">
+                            <label for="id_state" class="form-label">
+                                State/Province
+                            </label>
+                            <input type="text" 
+                                   class="form-control {% if form.state.errors and show_add_modal %}is-invalid{% endif %}" 
+                                   id="id_state" 
+                                   name="state" 
+                                   value="{% if form.state.value %}{{ form.state.value }}{% endif %}"
+                                   placeholder="Enter state/province">
+                            {% if form.state.errors and show_add_modal %}
+                            <div class="invalid-feedback">
+                                {% for error in form.state.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Country -->
+                        <div class="col-md-6">
+                            <label for="id_country" class="form-label">
+                                Country <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" 
+                                   class="form-control {% if form.country.errors and show_add_modal %}is-invalid{% endif %}" 
+                                   id="id_country" 
+                                   name="country" 
+                                   value="{% if form.country.value %}{{ form.country.value }}{% endif %}"
+                                   placeholder="Enter country"
+                                   required>
+                            {% if form.country.errors and show_add_modal %}
+                            <div class="invalid-feedback">
+                                {% for error in form.country.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- ZIP Code -->
+                        <div class="col-md-6">
+                            <label for="id_zip_code" class="form-label">
+                                ZIP/Postal Code
+                            </label>
+                            <input type="text" 
+                                   class="form-control {% if form.zip_code.errors and show_add_modal %}is-invalid{% endif %}" 
+                                   id="id_zip_code" 
+                                   name="zip_code" 
+                                   value="{% if form.zip_code.value %}{{ form.zip_code.value }}{% endif %}"
+                                   placeholder="Enter ZIP/postal code">
+                            {% if form.zip_code.errors and show_add_modal %}
+                            <div class="invalid-feedback">
+                                {% for error in form.zip_code.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Status -->
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       id="id_is_active" 
+                                       name="is_active" 
+                                       {% if form.is_active.value or not form.is_active.value %}checked{% endif %}>
+                                <label class="form-check-label" for="id_is_active">
+                                    Active Branch
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Branch
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Branch Modal -->
+<div class="modal fade" id="editBranchModal" tabindex="-1" aria-labelledby="editBranchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="editBranchModalLabel">
+                    <i class="fas fa-edit me-2"></i>Edit Branch
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="" id="editBranchForm" novalidate>
+                {% csrf_token %}
+                <div class="modal-body">
+                    <!-- Form Errors Display -->
+                    <div id="editFormErrors" class="alert alert-danger" style="display: none;"></div>
+                    
+                    {% if form.non_field_errors and editing_location_id %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="row g-3">
+                        <!-- Branch Name -->
+                        <div class="col-md-6">
+                            <label for="edit_id_name" class="form-label">
+                                Branch Name <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" 
+                                   class="form-control {% if form.name.errors and editing_location_id %}is-invalid{% endif %}" 
+                                   id="edit_id_name" 
+                                   name="name" 
+                                   placeholder="Enter branch name"
+                                   required>
+                            {% if form.name.errors and editing_location_id %}
+                            <div class="invalid-feedback">
+                                {% for error in form.name.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Branch Code -->
+                        <div class="col-md-6">
+                            <label for="edit_id_code" class="form-label">
+                                Branch Code <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" 
+                                   class="form-control {% if form.code.errors and editing_location_id %}is-invalid{% endif %}" 
+                                   id="edit_id_code" 
+                                   name="code" 
+                                   placeholder="Enter branch code"
+                                   required>
+                            {% if form.code.errors and editing_location_id %}
+                            <div class="invalid-feedback">
+                                {% for error in form.code.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Unique code for the branch</div>
+                        </div>
+
+                        <!-- Address -->
+                        <div class="col-12">
+                            <label for="edit_id_address" class="form-label">
+                                Address
+                            </label>
+                            <textarea class="form-control {% if form.address.errors and editing_location_id %}is-invalid{% endif %}" 
+                                      id="edit_id_address" 
+                                      name="address" 
+                                      rows="3" 
+                                      placeholder="Enter branch address"></textarea>
+                            {% if form.address.errors and editing_location_id %}
+                            <div class="invalid-feedback">
+                                {% for error in form.address.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- City -->
+                        <div class="col-md-6">
+                            <label for="edit_id_city" class="form-label">
+                                City
+                            </label>
+                            <input type="text" 
+                                   class="form-control {% if form.city.errors and editing_location_id %}is-invalid{% endif %}" 
+                                   id="edit_id_city" 
+                                   name="city" 
+                                   placeholder="Enter city">
+                            {% if form.city.errors and editing_location_id %}
+                            <div class="invalid-feedback">
+                                {% for error in form.city.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- State -->
+                        <div class="col-md-6">
+                            <label for="edit_id_state" class="form-label">
+                                State/Province
+                            </label>
+                            <input type="text" 
+                                   class="form-control {% if form.state.errors and editing_location_id %}is-invalid{% endif %}" 
+                                   id="edit_id_state" 
+                                   name="state" 
+                                   placeholder="Enter state/province">
+                            {% if form.state.errors and editing_location_id %}
+                            <div class="invalid-feedback">
+                                {% for error in form.state.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Country -->
+                        <div class="col-md-6">
+                            <label for="edit_id_country" class="form-label">
+                                Country <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" 
+                                   class="form-control {% if form.country.errors and editing_location_id %}is-invalid{% endif %}" 
+                                   id="edit_id_country" 
+                                   name="country" 
+                                   placeholder="Enter country"
+                                   required>
+                            {% if form.country.errors and editing_location_id %}
+                            <div class="invalid-feedback">
+                                {% for error in form.country.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- ZIP Code -->
+                        <div class="col-md-6">
+                            <label for="edit_id_zip_code" class="form-label">
+                                ZIP/Postal Code
+                            </label>
+                            <input type="text" 
+                                   class="form-control {% if form.zip_code.errors and editing_location_id %}is-invalid{% endif %}" 
+                                   id="edit_id_zip_code" 
+                                   name="zip_code" 
+                                   placeholder="Enter ZIP/postal code">
+                            {% if form.zip_code.errors and editing_location_id %}
+                            <div class="invalid-feedback">
+                                {% for error in form.zip_code.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Status -->
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       id="edit_id_is_active" 
+                                       name="is_active">
+                                <label class="form-check-label" for="edit_id_is_active">
+                                    Active Branch
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Update Branch
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Branch Modal -->
+<div class="modal fade" id="deleteBranchModal" tabindex="-1" aria-labelledby="deleteBranchModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteBranchModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Branch
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-4">
+                    <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                    <h4>Are you sure?</h4>
+                    <p class="text-muted">
+                        You are about to delete the branch <strong id="delete-branch-name"></strong>. 
+                        This action cannot be undone.
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <form method="post" action="" id="deleteBranchForm">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Delete Branch
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle success messages from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const name = urlParams.get('name');
+    
+    if (success && name) {
+        let message = '';
+        let type = 'success';
+        
+        switch(success) {
+            case 'created':
+                message = `Branch "${name}" created successfully!`;
+                break;
+            case 'updated':
+                message = `Branch "${name}" updated successfully!`;
+                break;
+            case 'deleted':
+                message = `Branch "${name}" deleted successfully!`;
+                break;
+        }
+        
+        if (message) {
+            const messagesContainer = document.getElementById('success-messages');
+            messagesContainer.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            
+            // Clean URL without page reload - remove success parameters
+            const cleanUrl = window.location.pathname + 
+                window.location.search
+                    .replace(/[?&]success=[^&]+/, '')
+                    .replace(/[?&]name=[^&]+/, '')
+                    .replace(/&$/, '')
+                    .replace(/\?$/, '');
+            
+            if (cleanUrl === window.location.pathname) {
+                window.history.replaceState({}, document.title, cleanUrl);
+            } else {
+                window.history.replaceState({}, document.title, cleanUrl.replace(/&&/g, '&').replace(/\?&/, '?'));
+            }
+        }
+    }
+
+    // Search functionality
+    const searchInput = document.getElementById('search');
+    const statusSelect = document.getElementById('status');
+    
+    function applyFilters() {
+        const search = searchInput.value;
+        const status = statusSelect.value;
+        
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        if (status) params.append('status', status);
+        
+        window.location.href = '{% url "location_list" %}' + (params.toString() ? '?' + params.toString() : '');
+    }
+    
+    // Debounce search input
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(applyFilters, 500);
+    });
+    
+    statusSelect.addEventListener('change', applyFilters);
+
+    // Auto-show modals if there are form errors
+    {% if show_add_modal %}
+    var addModal = new bootstrap.Modal(document.getElementById('addBranchModal'));
+    addModal.show();
+    {% endif %}
+
+    {% if editing_location_id %}
+    var editModal = new bootstrap.Modal(document.getElementById('editBranchModal'));
+    
+    // Populate edit form with existing data and errors
+    document.getElementById('edit_id_name').value = "{{ editing_location.name }}";
+    document.getElementById('edit_id_code').value = "{{ editing_location.code }}";
+    document.getElementById('edit_id_address').value = "{{ editing_location.address|default:'' }}";
+    document.getElementById('edit_id_city').value = "{{ editing_location.city|default:'' }}";
+    document.getElementById('edit_id_state').value = "{{ editing_location.state|default:'' }}";
+    document.getElementById('edit_id_country').value = "{{ editing_location.country|default:'' }}";
+    document.getElementById('edit_id_zip_code').value = "{{ editing_location.zip_code|default:'' }}";
+    document.getElementById('edit_id_is_active').checked = {{ editing_location.is_active|yesno:"true,false" }};
+    
+    // Set form action
+    document.getElementById('editBranchForm').action = "{% url 'location_edit' editing_location_id %}";
+    
+    // Update modal title
+    document.getElementById('editBranchModalLabel').innerHTML = 
+        '<i class="fas fa-edit me-2"></i>Edit Branch: {{ editing_location.name }}';
+    
+    editModal.show();
+    {% endif %}
+
+    // Edit branch modal functionality
+    const editButtons = document.querySelectorAll('.edit-branch-btn');
+    const editBranchModal = new bootstrap.Modal(document.getElementById('editBranchModal'));
+    const editBranchForm = document.getElementById('editBranchForm');
+
+    editButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const branchId = this.getAttribute('data-branch-id');
+            const branchName = this.getAttribute('data-branch-name');
+            const branchCode = this.getAttribute('data-branch-code');
+            const branchAddress = this.getAttribute('data-branch-address');
+            const branchCity = this.getAttribute('data-branch-city');
+            const branchState = this.getAttribute('data-branch-state');
+            const branchCountry = this.getAttribute('data-branch-country');
+            const branchZipCode = this.getAttribute('data-branch-zip-code');
+            const branchIsActive = this.getAttribute('data-branch-is-active');
+            
+            // Populate form fields
+            document.getElementById('edit_id_name').value = branchName;
+            document.getElementById('edit_id_code').value = branchCode;
+            document.getElementById('edit_id_address').value = branchAddress;
+            document.getElementById('edit_id_city').value = branchCity;
+            document.getElementById('edit_id_state').value = branchState;
+            document.getElementById('edit_id_country').value = branchCountry;
+            document.getElementById('edit_id_zip_code').value = branchZipCode;
+            document.getElementById('edit_id_is_active').checked = branchIsActive === 'true';
+            
+            // Set form action for update
+            editBranchForm.action = "{% url 'location_edit' 0 %}".replace('0', branchId);
+            
+            // Update modal title
+            document.getElementById('editBranchModalLabel').innerHTML = 
+                '<i class="fas fa-edit me-2"></i>Edit Branch: ' + branchName;
+            
+            // Clear previous errors
+            document.getElementById('editFormErrors').style.display = 'none';
+            const invalidFields = document.querySelectorAll('#editBranchForm .is-invalid');
+            invalidFields.forEach(field => {
+                field.classList.remove('is-invalid');
+            });
+            
+            // Show modal
+            editBranchModal.show();
+        });
+    });
+
+    // Delete branch modal functionality
+    const deleteButtons = document.querySelectorAll('.delete-branch-btn');
+    const deleteBranchModal = new bootstrap.Modal(document.getElementById('deleteBranchModal'));
+    const deleteBranchForm = document.getElementById('deleteBranchForm');
+    const deleteBranchName = document.getElementById('delete-branch-name');
+
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const branchId = this.getAttribute('data-branch-id');
+            const branchName = this.getAttribute('data-branch-name');
+            
+            // Update modal content
+            deleteBranchName.textContent = '"' + branchName + '"';
+            
+            // Set form action
+            deleteBranchForm.action = "{% url 'location_delete' 0 %}".replace('0', branchId);
+            
+            // Show modal
+            deleteBranchModal.show();
+        });
+    });
+
+    // Form validation for add branch
+    const addBranchForm = document.getElementById('addBranchForm');
+    if (addBranchForm) {
+        addBranchForm.addEventListener('submit', function(e) {
+            // Basic validation
+            const nameField = document.getElementById('id_name');
+            const codeField = document.getElementById('id_code');
+            const countryField = document.getElementById('id_country');
+            const errorsDiv = document.getElementById('addFormErrors');
+            
+            let isValid = true;
+            let errorMessages = [];
+            
+            if (!nameField.value.trim()) {
+                nameField.classList.add('is-invalid');
+                errorMessages.push('Branch name is required.');
+                isValid = false;
+            } else {
+                nameField.classList.remove('is-invalid');
+            }
+            
+            if (!codeField.value.trim()) {
+                codeField.classList.add('is-invalid');
+                errorMessages.push('Branch code is required.');
+                isValid = false;
+            } else {
+                codeField.classList.remove('is-invalid');
+            }
+            
+            if (!countryField.value.trim()) {
+                countryField.classList.add('is-invalid');
+                errorMessages.push('Country is required.');
+                isValid = false;
+            } else {
+                countryField.classList.remove('is-invalid');
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                errorsDiv.innerHTML = errorMessages.join('<br>');
+                errorsDiv.style.display = 'block';
+                return false;
+            }
+        });
+    }
+
+    // Form validation for edit branch
+    const editBranchFormElement = document.getElementById('editBranchForm');
+    if (editBranchFormElement) {
+        editBranchFormElement.addEventListener('submit', function(e) {
+            // Basic validation
+            const nameField = document.getElementById('edit_id_name');
+            const codeField = document.getElementById('edit_id_code');
+            const countryField = document.getElementById('edit_id_country');
+            const errorsDiv = document.getElementById('editFormErrors');
+            
+            let isValid = true;
+            let errorMessages = [];
+            
+            if (!nameField.value.trim()) {
+                nameField.classList.add('is-invalid');
+                errorMessages.push('Branch name is required.');
+                isValid = false;
+            } else {
+                nameField.classList.remove('is-invalid');
+            }
+            
+            if (!codeField.value.trim()) {
+                codeField.classList.add('is-invalid');
+                errorMessages.push('Branch code is required.');
+                isValid = false;
+            } else {
+                codeField.classList.remove('is-invalid');
+            }
+            
+            if (!countryField.value.trim()) {
+                countryField.classList.add('is-invalid');
+                errorMessages.push('Country is required.');
+                isValid = false;
+            } else {
+                countryField.classList.remove('is-invalid');
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                errorsDiv.innerHTML = errorMessages.join('<br>');
+                errorsDiv.style.display = 'block';
+                return false;
+            }
+        });
+    }
+
+    // Clear form when add modal is closed
+    const addBranchModal = document.getElementById('addBranchModal');
+    if (addBranchModal) {
+        addBranchModal.addEventListener('hidden.bs.modal', function() {
+            const form = document.getElementById('addBranchForm');
+            if (form) {
+                form.reset();
+                // Clear validation states
+                document.getElementById('addFormErrors').style.display = 'none';
+                const invalidFields = form.querySelectorAll('.is-invalid');
+                invalidFields.forEach(field => {
+                    field.classList.remove('is-invalid');
+                });
+            }
+        });
+    }
+
+    // Clear form when edit modal is closed
+    const editBranchModalElement = document.getElementById('editBranchModal');
+    if (editBranchModalElement) {
+        editBranchModalElement.addEventListener('hidden.bs.modal', function() {
+            document.getElementById('editFormErrors').style.display = 'none';
+            const invalidFields = document.querySelectorAll('#editBranchForm .is-invalid');
+            invalidFields.forEach(field => {
+                field.classList.remove('is-invalid');
+            });
+        });
+    }
+
+    // Real-time validation for add form
+    const nameField = document.getElementById('id_name');
+    const codeField = document.getElementById('id_code');
+    const countryField = document.getElementById('id_country');
+    
+    if (nameField) {
+        nameField.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+                document.getElementById('addFormErrors').style.display = 'none';
+            }
+        });
+    }
+    
+    if (codeField) {
+        codeField.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+                document.getElementById('addFormErrors').style.display = 'none';
+            }
+        });
+    }
+    
+    if (countryField) {
+        countryField.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+                document.getElementById('addFormErrors').style.display = 'none';
+            }
+        });
+    }
+
+    // Real-time validation for edit form
+    const editNameField = document.getElementById('edit_id_name');
+    const editCodeField = document.getElementById('edit_id_code');
+    const editCountryField = document.getElementById('edit_id_country');
+    
+    if (editNameField) {
+        editNameField.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+                document.getElementById('editFormErrors').style.display = 'none';
+            }
+        });
+    }
+    
+    if (editCodeField) {
+        editCodeField.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+                document.getElementById('editFormErrors').style.display = 'none';
+            }
+        });
+    }
+    
+    if (editCountryField) {
+        editCountryField.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+                document.getElementById('editFormErrors').style.display = 'none';
+            }
+        });
+    }
+});
+</script>
+
+<style>
+.search-box {
+    position: relative;
+}
+
+.search-box input {
+    padding-left: 40px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #2c3e50;
+    background-color: #f8f9fa;
+    padding: 12px 16px;
+}
+
+.table td {
+    padding: 12px 16px;
+    vertical-align: middle;
+}
+
+.form-label {
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.form-control, .form-select {
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    padding: 8px 12px;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+.form-check-input:checked {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+.btn-group .btn {
+    border-radius: 4px;
+    margin-right: 4px;
+}
+
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+.invalid-feedback {
+    display: block;
+}
+
+.modal-header {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-footer {
+    border-top: 1px solid #dee2e6;
+}
+
+.alert {
+    border-radius: 8px;
+    border: none;
+}
+
+.badge.bg-light {
+    border: 1px solid #dee2e6;
+}
+</style>
+{% endblock %}

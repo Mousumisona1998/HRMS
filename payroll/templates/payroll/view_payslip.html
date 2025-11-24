@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}View Payslip - HRMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h3 mb-0">Payslip Details</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'payslips' %}">Payslips</a></li>
+                        <li class="breadcrumb-item active">Payslip #{{ payslip.payslip_number }}</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group">
+                    <a href="{% url 'download_payslip' payslip.id %}" class="btn btn-success">
+                        <i class="fas fa-download me-2"></i>Download PDF
+                    </a>
+                    <a href="{% url 'payslips' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Payslips
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Payslip Preview -->
+            <div class="custom-card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Payslip Preview - {{ payslip.payslip_number }}</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Company Header -->
+                    <div class="text-center mb-4 p-4 border rounded bg-light">
+                        <h3 class="text-primary mb-1">HR Management System</h3>
+                        <p class="text-muted mb-2">Your Company Address • Phone: +1234567890</p>
+                        <h4 class="text-dark">PAYSLIP</h4>
+                    </div>
+
+                    <!-- Employee & Payment Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">EMPLOYEE INFORMATION</h6>
+                            <p class="mb-1"><strong>Name:</strong> {{ payslip.employee.first_name }} {{ payslip.employee.last_name }}</p>
+                            <p class="mb-1"><strong>ID:</strong> {{ payslip.employee.employee_id }}</p>
+                            <p class="mb-1"><strong>Department:</strong> {{ payslip.employee.department }}</p>
+                            <p class="mb-1"><strong>Designation:</strong> {{ payslip.employee.designation }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">PAYMENT INFORMATION</h6>
+                            <p class="mb-1"><strong>Payslip No:</strong> {{ payslip.payslip_number }}</p>
+                            <p class="mb-1"><strong>Payment Date:</strong> {{ payslip.generated_at|date:"d M Y" }}</p>
+                            <p class="mb-1"><strong>Pay Period:</strong> {{ payslip.payroll_run.payroll_month }}/{{ payslip.payroll_run.payroll_year }}</p>
+                            <p class="mb-1"><strong>Status:</strong> 
+                                <span class="badge 
+                                    {% if payslip.status == 'generated' %}bg-warning
+                                    {% elif payslip.status == 'approved' %}bg-success
+                                    {% elif payslip.status == 'paid' %}bg-info
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ payslip.get_status_display }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Salary Breakdown -->
+                    <div class="row">
+                        <!-- Earnings -->
+                        <div class="col-md-6 mb-4">
+                            <div class="border rounded">
+                                <div class="bg-success text-white p-3">
+                                    <h6 class="mb-0"><i class="fas fa-arrow-up me-2"></i>EARNINGS</h6>
+                                </div>
+                                <div class="p-3">
+                                    {% for component in components %}
+                                    {% if component.component_type == 'earning' %}
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>{{ component.component.name }}</span>
+                                        <strong class="text-success">+ ₹{{ component.amount }}</strong>
+                                    </div>
+                                    {% endif %}
+                                    {% endfor %}
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <strong>Total Earnings</strong>
+                                        <strong class="text-success">₹{{ payslip.gross_earnings }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Deductions -->
+                        <div class="col-md-6 mb-4">
+                            <div class="border rounded">
+                                <div class="bg-danger text-white p-3">
+                                    <h6 class="mb-0"><i class="fas fa-arrow-down me-2"></i>DEDUCTIONS</h6>
+                                </div>
+                                <div class="p-3">
+                                    {% for component in components %}
+                                    {% if component.component_type == 'deduction' %}
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>{{ component.component.name }}</span>
+                                        <strong class="text-danger">- ₹{{ component.amount }}</strong>
+                                    </div>
+                                    {% endif %}
+                                    {% endfor %}
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <strong>Total Deductions</strong>
+                                        <strong class="text-danger">₹{{ payslip.total_deductions }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="border rounded text-black">
+                                <div class="p-3 text-center">
+                                    <h5 class="mb-2">NET SALARY</h5>
+                                    <h2 class="mb-0">₹{{ payslip.net_salary }}</h2>
+                                    <small>Paid via Bank Transfer</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Attendance Summary -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="border rounded">
+                                <div class="text-balack p-3">
+                                    <h6 class="mb-0"><i class="fas fa-calendar me-2"></i>ATTENDANCE SUMMARY</h6>
+                                </div>
+                                <div class="p-3">
+                                    <div class="row text-center">
+                                        <div class="col-md-4">
+                                            <h5 class="text-primary">{{ payslip.working_days }}</h5>
+                                            <small class="text-muted">Working Days</small>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <h5 class="text-success">{{ payslip.paid_days }}</h5>
+                                            <small class="text-muted">Paid Days</small>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <h5 class="text-warning">{{ payslip.leave_days }}</h5>
+                                            <small class="text-muted">Leave Days</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

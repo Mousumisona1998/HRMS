@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 40px; 
+            line-height: 1.4;
+        }
+        .title { 
+            text-align: center; 
+            font-weight: bold; 
+            font-size: 18px; 
+            margin-bottom: 10px;
+            text-decoration: underline;
+        }
+        .content {
+            font-size: 14px;
+            margin: 20px 0;
+        }
+        .separator {
+            border-top: 1px solid black;
+            margin: 20px 0;
+        }
+        .signature-section {
+            margin: 20px 0;
+        }
+        .signature-line {
+            margin-top: 30px;
+            margin-bottom: 10px;
+        }
+        .details-row {
+            margin: 8px 0;
+        }
+        .detail-label {
+            font-weight: bold;
+            display: inline-block;
+            width: 80px;
+        }
+        .company-footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 11px;
+        }
+        .company-name {
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="title">NO DUE CERTIFICATE</div>
+    
+    <div class="content">
+        <p>Received my <strong>salary</strong> towards my full and final settlement through online /NEFT/Transfer all my dues from IKONTEL Solutions Pvt Ltd are cleared.</p>
+        
+        <p>I have received all my dues pertaining to earned leave encashment, notice pay, service compensation, leave or any other claim in connection with my employment with the management.</p>
+        
+        <p>I have no further claim/Demand for reinstatement or re-employment.</p>
+        <p>I will not raise any claim or demand, whatsoever against the Company.</p>
+    </div>
+    
+    <div class="separator"></div>
+    
+    <div class="signature-section">
+        <div>Accepted By/Receiver</div>
+        
+        <div class="signature-line">Signature</div>
+        
+        <div class="details-row">
+            <span class="detail-label">Name:</span>
+            <span>{{ resignation.employee.first_name }} {{ resignation.employee.last_name }}</span>
+            <span class="detail-label" style="margin-left: 40px;">Designation:</span>
+            <span>{{ resignation.employee.designation|default:"_________" }}</span>
+        </div>
+        
+        <div class="details-row">
+            <span class="detail-label">Place:</span>
+            <span>Bangalore</span>
+            <span class="detail-label" style="margin-left: 40px;">Date:</span>
+            <span>{{ no_due_cert.settlement_date|date:"d-m-Y"|default:today_date }}</span>
+        </div>
+    </div>
+    
+    <div class="company-footer">
+        <div class="company-name">IKONTEL SOLUTIONS PRIVATE LIMITED</div>
+        <div>Registered Office: #72,73 & 74 ABMGP building, 1st Floor, 17th cross, Margosa Road, Malleshwaram, Bangalore - 560 003</div>
+        <div>CIN: U72400KA2014PTC072933 | www.ikontel.com | Phone: 080-41155041 | Email: info@ikontel.com</div>
+    </div>
+</body>
+</html>

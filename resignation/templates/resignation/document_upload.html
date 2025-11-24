@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Upload Form - HR System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="custom-card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0"> Upload Form</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Employee Info -->
+                    <div class="alert alert-info">
+                        <h6>Employee: {{ resignation.employee.first_name }} {{ resignation.employee.last_name }}</h6>
+                        <p class="mb-0">ID: {{ resignation.employee.employee_id }} | Department: {{ resignation.employee.department }}</p>
+                    </div>
+
+                    <!-- Upload Form -->
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Form Type *</label>
+                            <select class="form-select" name="document_type" required>
+                                <option value="">Select Form Type</option>
+                                <option value="exit_interview">Exit Interview Form</option>
+                                <option value="no_due_certificate">No Due Certificate</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Select PDF File *</label>
+                            <input type="file" class="form-control" name="document_file" 
+                                   accept=".pdf" required>
+                            <small class="text-muted">Only PDF files allowed (Max 5MB)</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Description (Optional)</label>
+                            <textarea class="form-control" name="description" rows="2" 
+                                      placeholder="Add any notes about this form..."></textarea>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{% url 'resignation:resignation_detail' resignation.id %}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i>Back
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-upload me-2"></i>Upload Form
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+<div class="mb-3">
+    <label for="id_edit-domain" class="form-label">Domain</label>
+    <input type="text" class="form-control" name="domain" 
+           value="{{ domain.domain }}" required
+           id="id_edit-domain">
+    <div class="form-text">
+        Use <code>*.domain.com</code> to allow all subdomains of domain.com
+    </div>
+</div>
+
+<div class="mb-3">
+    <label for="id_edit-domain_type" class="form-label">Domain Type</label>
+    <select class="form-select" name="domain_type" id="id_edit-domain_type" required>
+        <option value="ALLOW" {% if domain.domain_type == 'ALLOW' %}selected{% endif %}>Allow - Users can login</option>
+    <option value="BLOCK" {% if domain.domain_type == 'BLOCK' %}selected{% endif %}>Block - Users cannot login</option>
+    </select>
+</div>
+
+<!-- <div class="mb-3">
+    <label for="id_edit-description" class="form-label">Description (Optional)</label>
+    <textarea class="form-control" name="description" rows="3" 
+              placeholder="Optional description"
+              id="id_edit-description">{{ domain.description|default:"" }}</textarea>
+</div> -->
+
+<div class="form-check form-switch mb-3">
+    <input class="form-check-input" type="checkbox" name="is_active" 
+           id="id_edit-is_active" {% if domain.is_active %}checked{% endif %}>
+    <label class="form-check-label" for="id_edit-is_active">
+        Active
+    </label>
+</div>

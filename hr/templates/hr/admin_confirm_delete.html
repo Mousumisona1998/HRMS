@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Admin - HR System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="custom-card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle"></i> Confirm Deletion
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-4">
+                    <i class="fas fa-trash text-danger" style="font-size: 4rem;"></i>
+                </div>
+                
+                <h4>Delete Administrator</h4>
+                <p class="text-muted">
+                    Are you sure you want to delete the administrator 
+                    <strong>"{{ admin.name }}"</strong>?
+                </p>
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-circle"></i>
+                    This action cannot be undone. All data associated with this administrator will be permanently removed.
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Yes, Delete Admin
+                        </button>
+                        <a href="{% url 'admin_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

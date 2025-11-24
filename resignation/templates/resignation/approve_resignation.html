@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Approve Resignation - HR System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="custom-card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0"> Review Resignation</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Employee Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6>Employee Details</h6>
+                            <p><strong>Name:</strong> {{ resignation.employee.first_name }} {{ resignation.employee.last_name }}</p>
+                            <p><strong>Employee ID:</strong> {{ resignation.employee.employee_id }}</p>
+                            <p><strong>Department:</strong> {{ resignation.employee.department }}</p>
+                            <p><strong>Designation:</strong> {{ resignation.employee.designation }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Resignation Details</h6>
+                            <p><strong>Resignation Date:</strong> {{ resignation.resignation_date }}</p>
+                            <p><strong>Last Working Date:</strong> {{ resignation.last_working_date }}</p>
+                            <p><strong>Notice Period:</strong> {{ resignation.actual_notice_days }} days</p>
+                            <p><strong>Current Status:</strong> 
+                                <span class="badge bg-warning">{{ resignation.get_status_display }}</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Reason for Resignation -->
+                    <div class="mb-4">
+                        <h6>Reason for Resignation</h6>
+                        <div class="alert alert-light">
+                            {{ resignation.reason }}
+                        </div>
+                    </div>
+
+                    <!-- Approval Form -->
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="remarks" class="form-label">Remarks / Feedback</label>
+                            <textarea class="form-control" id="remarks" name="remarks" rows="4" 
+                                      placeholder="Enter your feedback or remarks for the employee..."></textarea>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{% url 'resignation:resignation_detail' resignation.id %}" 
+                                       class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i>Back to Details
+                                    </a>
+                                    <div class="btn-group">
+                                        <button type="submit" name="action" value="reject" 
+                                                class="btn btn-danger" 
+                                                onclick="return confirmReject()">
+                                            <i class="fas fa-times me-2"></i>Reject
+                                        </button>
+                                        <button type="submit" name="action" value="approve" 
+                                                class="btn btn-success"
+                                                onclick="return confirmApprove()">
+                                            <i class="fas fa-check me-2"></i>Approve
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmApprove() {
+    return confirm('Are you sure you want to APPROVE this resignation? The employee will start serving notice period.');
+}
+
+function confirmReject() {
+    const remarks = document.getElementById('remarks').value.trim();
+    if (!remarks) {
+        alert('Please provide remarks explaining why you are rejecting this resignation.');
+        return false;
+    }
+    return confirm('Are you sure you want to REJECT this resignation? The employee will be notified.');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,443 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Permission Center - HRMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Search and Filter Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h4>Assign Permissions</h4>
+                </div>
+                <div class="card-body">
+                    <form id="permissionForm">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <!-- Role Selection -->
+                            <div class="col-md-12">
+                                <label style="
+                                    background: linear-gradient(180deg, #2c3e50 0%, #3498db 100%);
+                                    -webkit-background-clip: text;
+                                    -webkit-text-fill-color: transparent;
+                                    text-align: center;
+                                " for="roleSelect" class="form-label">Select Role</label>
+                                <div class="input-group">
+                                    <select class="form-select" id="roleSelect">
+                                        <option value="" selected disabled>Choose a role...</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Menu Permissions Section -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0">Menu Permissions</h5>
+                                        <div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary me-2" id="selectAllMenus">
+                                                <i class="fas fa-check-square me-1"></i>Select All
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAllMenus">
+                                                <i class="fas fa-times-circle me-1"></i>Deselect All
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-text mb-3" id="selectedCount">0 menus selected</div>
+                                        <div id="menuCheckboxes" style="max-height: 500px; overflow-y: auto;">
+                                            <div class="text-center text-muted">
+                                                <i class="fas fa-spinner fa-spin"></i> Loading menus...
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="row mt-4">
+                            <div class="col-12 text-center">
+                                <button type="submit" class="btn btn-success btn-lg px-5">
+                                    <i class="fas fa-check-circle me-2"></i>Assign Permissions to Role
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const roleSelect = document.getElementById('roleSelect');
+        const menuCheckboxes = document.getElementById('menuCheckboxes');
+        const selectedCount = document.getElementById('selectedCount');
+        const selectAllMenus = document.getElementById('selectAllMenus');
+        const deselectAllMenus = document.getElementById('deselectAllMenus');
+        const permissionForm = document.getElementById('permissionForm');
+
+        let selectedRoleId = null;
+        let allMenus = [];
+
+        // Load roles and menus on page load
+        loadRoles();
+        loadAllMenus();
+
+        // Role selection change
+        roleSelect.addEventListener('change', function () {
+            selectedRoleId = this.value;
+            if (selectedRoleId) {
+                loadAssignedPermissions();
+            }
+            updateSelectedCount();
+        });
+
+        // Select All / Deselect All buttons
+        selectAllMenus.addEventListener('click', function () {
+            document.querySelectorAll('.menu-link-checkbox').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            updateSelectedCount();
+        });
+
+        deselectAllMenus.addEventListener('click', function () {
+            document.querySelectorAll('.menu-link-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updateSelectedCount();
+        });
+
+        // Form submission
+        permissionForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            assignPermissions();
+        });
+
+        function loadRoles() {
+            fetch('/get-roles/')
+                .then(response => response.json())
+                .then(data => {
+                    roleSelect.innerHTML = '<option value="" selected disabled>Choose a role...</option>';
+                    data.roles.forEach(role => {
+                        const option = document.createElement('option');
+                        option.value = role.id;
+                        option.textContent = role.name;
+                        roleSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error loading roles:', error));
+        }
+
+        function loadAllMenus() {
+            fetch('/get-all-menus/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.menus) {
+                        allMenus = data.menus;
+                        displayMenuCheckboxes(data.menus);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading menus:', error);
+                    menuCheckboxes.innerHTML = '<div class="text-center text-danger">Error loading menus</div>';
+                });
+        }
+
+        function displayMenuCheckboxes(menus) {
+            menuCheckboxes.innerHTML = '';
+            
+            if (menus.length === 0) {
+                menuCheckboxes.innerHTML = '<div class="text-center text-muted">No menus available</div>';
+                return;
+            }
+            
+            menus.forEach(menu => {
+                if (menu.has_submenus && menu.menu_links.length > 0) {
+                    // Menu with submenus
+                    const menuSection = document.createElement('div');
+                    menuSection.className = 'mb-4 p-3 border rounded';
+                    menuSection.innerHTML = `
+                        <div class="fw-bold mb-2 text-primary fs-6">${menu.menu_name}</div>
+                        <div class="ms-3" id="menu-links-${menu.menu_id}"></div>
+                    `;
+                    menuCheckboxes.appendChild(menuSection);
+
+                    const menuLinksContainer = document.getElementById(`menu-links-${menu.menu_id}`);
+                    
+                    menu.menu_links.forEach(link => {
+                        const linkItem = document.createElement('div');
+                        linkItem.className = 'form-check mb-2';
+                        linkItem.innerHTML = `
+                            <input class="form-check-input menu-link-checkbox" 
+                                   type="checkbox" 
+                                   value="${link.menu_link_id}" 
+                                   id="link-${link.menu_link_id}">
+                            <label class="form-check-label fs-6" for="link-${link.menu_link_id}">
+                                ${link.menu_link_name}
+                            </label>
+                        `;
+                        menuLinksContainer.appendChild(linkItem);
+                    });
+                } else {
+                    // Standalone menu
+                    const menuItem = document.createElement('div');
+                    menuItem.className = 'form-check mb-3 p-3 border rounded';
+                    menuItem.innerHTML = `
+                        <input class="form-check-input menu-link-checkbox" 
+                               type="checkbox" 
+                               value="menu_${menu.menu_id}" 
+                               id="menu-${menu.menu_id}">
+                        <label class="form-check-label fw-bold fs-6" for="menu-${menu.menu_id}">
+                            ${menu.menu_name}
+                        </label>
+                    `;
+                    menuCheckboxes.appendChild(menuItem);
+                }
+            });
+
+            // Add event listeners to checkboxes
+            document.querySelectorAll('.menu-link-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    updateSelectedCount();
+                });
+            });
+            
+            updateSelectedCount();
+            
+            // If a role is already selected, load its permissions after menus are loaded
+            if (selectedRoleId) {
+                setTimeout(() => {
+                    loadAssignedPermissions();
+                }, 100);
+            }
+        }
+
+        function loadAssignedPermissions() {
+            if (!selectedRoleId) return;
+
+            console.log("Loading assigned permissions for role:", selectedRoleId);
+
+            fetch(`/get-assigned-permissions/?role_id=${selectedRoleId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Assigned permissions data:", data);
+                    
+                    if (data.assigned_menus) {
+                        // Reset all checkboxes first
+                        document.querySelectorAll('.menu-link-checkbox').forEach(checkbox => {
+                            checkbox.checked = false;
+                        });
+                        
+                        // Check the assigned items
+                        data.assigned_menus.forEach(assignedMenu => {
+                            const checkbox = document.querySelector(`.menu-link-checkbox[value="${assignedMenu}"]`);
+                            if (checkbox) {
+                                checkbox.checked = true;
+                                console.log(`Checked checkbox with value: ${assignedMenu}`);
+                            } else {
+                                console.warn("Checkbox not found for value:", assignedMenu);
+                            }
+                        });
+                        
+                        console.log("Updated checkboxes for assigned menus");
+                    } else {
+                        console.log("No assigned menus found for this role");
+                        // Clear all checkboxes if no assigned menus
+                        document.querySelectorAll('.menu-link-checkbox').forEach(checkbox => {
+                            checkbox.checked = false;
+                        });
+                    }
+                    
+                    updateSelectedCount();
+                })
+                .catch(error => {
+                    console.error('Error loading assigned permissions:', error);
+                    // Clear checkboxes on error
+                    document.querySelectorAll('.menu-link-checkbox').forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+                    updateSelectedCount();
+                });
+        }
+
+        function updateSelectedCount() {
+            const selectedCountValue = document.querySelectorAll('.menu-link-checkbox:checked').length;
+            selectedCount.textContent = `${selectedCountValue} menus selected`;
+        }
+
+        function assignPermissions() {
+            if (!selectedRoleId) {
+                alert('Please select a role.');
+                return;
+            }
+
+            const selectedMenuLinks = Array.from(document.querySelectorAll('.menu-link-checkbox:checked'))
+                .map(checkbox => {
+                    // Ensure all values are properly formatted
+                    if (checkbox.value.startsWith('menu_')) {
+                        return checkbox.value;
+                    } else {
+                        return parseInt(checkbox.value);
+                    }
+                })
+                .filter(value => value !== null && value !== undefined);
+
+            console.log("Selected menu links:", selectedMenuLinks);
+
+            if (selectedMenuLinks.length === 0) {
+                alert('Please select at least one menu permission.');
+                return;
+            }
+
+            const formData = {
+                role_id: selectedRoleId,
+                menu_links: selectedMenuLinks
+            };
+
+            console.log("Sending form data:", formData);
+
+            fetch('/assign-permissions/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(formData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Permissions assigned successfully to role!');
+                        // Reload the assigned permissions to reflect the changes
+                        loadAssignedPermissions();
+                    } else {
+                        alert('Error: ' + (data.error || 'Failed to assign permissions'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error assigning permissions:', error);
+                    alert('Error assigning permissions. Please try again.');
+                });
+        }
+
+        // CSRF token helper function
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+</script>
+
+<style>
+    .card {
+        border: none;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        border-radius: 0.35rem;
+    }
+
+    .card-header {
+        border-bottom: 1px solid #e3e6f0;
+        background-color: #f8f9fc;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+
+    .btn-success {
+        background-color: #1cc88a;
+        border-color: #1cc88a;
+    }
+
+    .btn-success:hover {
+        background-color: #17a673;
+        border-color: #169b6b;
+    }
+
+    /* Better checkbox visibility */
+    .form-check-input {
+        width: 1.2em;
+        height: 1.2em;
+        margin-top: 0.15em;
+        border: 2px solid #6c757d;
+    }
+
+    .form-check-input:checked {
+        background-color: #1cc88a;
+        border-color: #1cc88a;
+        box-shadow: 0 0 0 0.2rem rgba(28, 200, 138, 0.25);
+    }
+
+    .form-check-input:focus {
+        border-color: #1cc88a;
+        box-shadow: 0 0 0 0.2rem rgba(28, 200, 138, 0.25);
+    }
+
+    .form-check-label {
+        margin-left: 0.5em;
+        cursor: pointer;
+        font-size: 0.95em;
+    }
+
+    /* Menu sections styling */
+    .mb-4.p-3.border.rounded {
+        background-color: #f8f9fc;
+        border: 1px solid #e3e6f0 !important;
+    }
+
+    .mb-3.p-3.border.rounded {
+        background-color: #f8f9fc;
+        border: 1px solid #e3e6f0 !important;
+    }
+
+    /* Scrollable menu area */
+    #menuCheckboxes {
+        max-height: 500px;
+        overflow-y: auto;
+        padding: 10px;
+    }
+
+    /* Selected count style */
+    #selectedCount {
+        font-weight: 500;
+        color: #1cc88a;
+        font-size: 1.1em;
+    }
+
+    /* Menu headers */
+    .text-primary.fs-6 {
+        color: #2c3e50 !important;
+        font-weight: 600;
+    }
+
+    .fw-bold.fs-6 {
+        color: #2c3e50;
+    }
+</style>
+{% endblock %}

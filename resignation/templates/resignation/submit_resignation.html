@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  Submit Resignation - HR System
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="custom-card">
+          <div class="card-header">
+            <h4 class="card-title mb-0"> Submit Resignation</h4>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle me-2"></i>
+              <strong>Important:</strong> Please ensure all information is accurate. Your resignation will be reviewed by your manager and HR.
+            </div>
+
+            <form method="POST" id="resignationForm">
+              {% csrf_token %}
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="resignation_date" class="form-label">Resignation Date *</label>
+                  <input type="date" class="form-control" id="resignation_date" name="resignation_date" min="{{ min_date }}" value="{{ min_date }}" required />
+                  <div class="form-text">The date you are submitting your resignation</div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Last Working Date (Auto-calculated)</label>
+                  <input type="text" class="form-control" id="last_working_date_preview" value="{{ min_date }}" readonly disabled />
+                  <div class="form-text">Automatically calculated: Resignation date + {{ notice_period }} days notice period</div>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="reason" class="form-label">Reason for Resignation *</label>
+                <textarea class="form-control" id="reason" name="reason" rows="5" placeholder="Please provide detailed reason for your resignation..." required></textarea>
+              </div>
+
+              <!-- Resignation Policy -->
+              <div class="alert alert-warning">
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>Resignation Policy</h6>
+                <ul class="mb-0">
+                  <li>
+                    Standard notice period: <strong>{{ notice_period }} days</strong>
+                  </li>
+                  <li>Only one active resignation allowed at a time</li>
+                  <li>30-day cooldown period after withdrawal</li>
+                  <li>Resignation subject to manager approval</li>
+                </ul>
+              </div>
+
+              <div class="row mt-4">
+                <div class="col-12">
+                  <div class="d-flex justify-content-between">
+                    <a href="{% url 'resignation:dashboard' %}" class="btn btn-secondary"><i class="fas fa-arrow-left me-2"></i>Back to Dashboard</a>
+                    <button type="submit" class="btn btn-primary" onclick="return confirmSubmit()"><i class="fas fa-paper-plane me-2"></i>Submit Resignation</button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Resignation Policy Details -->
+        <div class="custom-card mt-4">
+          <div class="card-header">
+            <h6 class="card-title mb-0"> Resignation Policy Details</h6>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <h6>Notice Period Requirements</h6>
+                <ul class="list-unstyled">
+                  <li class="mb-2">
+                    <i class="fas fa-check text-success me-2"></i> Standard notice period: {{ notice_period }} days
+                  </li>
+                  <li class="mb-2">
+                    <i class="fas fa-check text-success me-2"></i> Resignation subject to manager approval
+                  </li>
+                  <li class="mb-2">
+                    <i class="fas fa-check text-success me-2"></i> Exit interview will be scheduled
+                  </li>
+                </ul>
+              </div>
+              <div class="col-md-6">
+                <h6>Process Timeline</h6>
+                <ul class="list-unstyled">
+                  <li class="mb-2">
+                    <i class="fas fa-check text-success me-2"></i> Manager review: 2-3 business days
+                  </li>
+                  <li class="mb-2">
+                    <i class="fas fa-check text-success me-2"></i> Full and final settlement after clearance
+                  </li>
+                  <li class="mb-2">
+                    <i class="fas fa-check text-success me-2"></i> Experience letter provided upon completion
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const resignationDate = document.getElementById('resignation_date');
+    const lastWorkingDatePreview = document.getElementById('last_working_date_preview');
+    
+    function calculateLastWorkingDate() {
+        if (resignationDate.value) {
+            const resignDate = new Date(resignationDate.value);
+            const lastDate = new Date(resignDate);
+            lastDate.setDate(lastDate.getDate() + {{ notice_period }});
+            
+            lastWorkingDatePreview.value = lastDate.toISOString().split('T')[0];
+        }
+    }
+    
+    resignationDate.addEventListener('change', calculateLastWorkingDate);
+    
+    // Initial calculation
+    calculateLastWorkingDate();
+});
+
+function confirmSubmit() {
+    const reason = document.getElementById('reason').value.trim();
+    if (!reason) {
+        alert('Please provide a reason for resignation.');
+        return false;
+    }
+    
+    return confirm('Are you sure you want to submit your resignation? This action will be reviewed by your manager and cannot be easily withdrawn.');
+}
+</script>
+{% endblock %}

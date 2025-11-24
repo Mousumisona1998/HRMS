@@ -1,0 +1,888 @@
+{% extends 'base.html' %}
+
+{% block title %}My Leave Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .leave-balance-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 25px;
+        color: white;
+        margin-bottom: 25px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .leave-balance-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
+    
+    .balance-item {
+        text-align: center;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        position: relative;
+        z-index: 1;
+    }
+    
+    .balance-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .balance-label {
+        font-size: 0.9rem;
+        opacity: 0.95;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .leave-type-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border-left: 4px solid #667eea;
+    }
+    
+    .leave-type-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+    
+    .leave-type-card.casual {
+        border-left-color: #28a745;
+    }
+    
+    .leave-type-card.sick {
+        border-left-color: #ffc107;
+    }
+    
+    .leave-type-card.annual {
+        border-left-color: #17a2b8;
+    }
+    
+    .leave-type-card.maternity {
+        border-left-color: #e83e8c;
+    }
+    
+    .leave-type-card.optional {
+        border-left-color: #6f42c1;
+    }
+    
+    .leave-type-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .leave-type-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .progress-bar-container {
+        height: 10px;
+        background: #e9ecef;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 10px;
+    }
+    
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+        transition: width 0.5s ease;
+    }
+    
+    .leave-stats {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    
+    .apply-leave-btn {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        transition: all 0.3s ease;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    
+    .apply-leave-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+    }
+    
+    .history-card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        margin-top: 30px;
+    }
+    
+    .history-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #e9ecef;
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 8px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e9ecef;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-bottom: 25px;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        left: -26px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 0 0 2px #667eea;
+    }
+    
+    .timeline-marker.approved {
+        background: #28a745;
+        box-shadow: 0 0 0 2px #28a745;
+    }
+    
+    .timeline-marker.rejected {
+        background: #dc3545;
+        box-shadow: 0 0 0 2px #dc3545;
+    }
+    
+    .timeline-marker.pending {
+        background: #ffc107;
+        box-shadow: 0 0 0 2px #ffc107;
+    }
+    .timeline-marker.withdrawn {
+        background: #0772ff;
+        box-shadow: 0 0 0 2px #0772ff;
+    }
+    
+    .timeline-content {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-left: 10px;
+    }
+    
+    .timeline-date {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-bottom: 5px;
+    }
+    
+    .timeline-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 8px;
+    }
+    
+    .badge {
+        padding: 0.4em 0.8em;
+        border-radius: 8px;
+        font-size: 0.85rem;
+    }
+    
+    .badge-approved {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .badge-rejected {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .badge-pending {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    
+    .badge-new {
+        background-color: #17a2b8;
+        color: white;
+    }
+    
+    .badge-withdrawn {
+        background-color: #2259e3;
+        color: white;
+    }
+    .alert-warning-custom {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        border-left: 4px solid #ffc107;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .alert-info-custom {
+        background: linear-gradient(135deg, #d1ecf1 0%, #b8daff 100%);
+        border-left: 4px solid #17a2b8;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .alert-danger-custom {
+        /* background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); */
+        border-left: 4px solid #dc3545;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .monthly-accrual-info {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    
+    .accrual-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: 600;
+        display: inline-block;
+        margin-right: 10px;
+    }
+    
+    .filter-section {
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+    
+    /* NEW: Strict Rules Styles */
+    .rules-card {
+        background: linear-gradient(135deg, #3283ba 0%, #2e5370 100%);
+        color: #fff;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .rule-item {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        backdrop-filter: blur(10px);
+    }
+    
+    .probation-alert {
+        /* background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); */
+        color: #eb0b0b;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        /* border-left: 5px solid #c23616; */
+    }
+    
+    .leave-rule-badge {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        margin-left: 8px;
+    }
+    
+    .carry-forward-info {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .optional-leave-info {
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+    }
+    /* .col-12 {
+    flex: 0 0 auto;
+    width: 20%;
+    } */
+     .button-container {
+    width: fit-content;
+    margin-left: auto;
+    display: flex;
+    justify-content: flex-end;  /* pushes button to the right */
+    margin-right: 20px;         /* optional spacing from right edge */
+
+}
+
+/* Add this to your existing CSS */
+.timeline-item.filter-hidden {
+    display: none !important;
+}
+
+.timeline-item.page-hidden {
+    display: none !important;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-0">
+                My Leave Records
+            </h2>
+            <p class="text-muted">Manage your leave balance and history</p>
+        </div>
+    </div>
+
+    <!-- NEW: Probation Alert -->
+  {% if is_on_probation %}
+  <div class="probation-alert">
+    <div class="d-flex align-items-center">
+      <i class="fas fa-exclamation-triangle"></i>
+      <div>
+        <h5 class="mb-1">You are currently on probation</h5>
+        <p class="mb-0">{{ probation_message }}</p>
+        {% if employee.probation_end_date %}
+        <small>Probation ends on: {{ employee.probation_end_date }}</small>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+
+    <!-- NEW: Strict Leave Rules Information -->
+    <div class="rules-card">
+        <h4 class="mb-3"><i class="fas fa-gavel"></i> Leave Rules & Policies</h4>
+        <div class="button-container">
+    <button class="apply-leave-btn" onclick="location.href='{% url 'apply_leave' %}'"
+            {% if is_on_probation %}title="Limited leave options during probation"{% endif %}>
+        <i class="fas fa-plus-circle"></i> Apply for Leave
+    </button>
+</div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="rule-item">
+                    <h6><i class="fas fa-calendar-plus"></i> Monthly Accrual</h6>
+                    <p class="mb-0">1.5 days per month</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="rule-item">
+                    <h6><i class="fas fa-sync-alt"></i> Carry Forward</h6>
+                    <p class="mb-0">Max 18 days annual leave </p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="rule-item">
+                    <h6><i class="fas fa-calendar-times"></i> Optional Leave</h6>
+                    <p class="mb-0">4 days per year • Max 2 usable</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="rule-item">
+                    <h6><i class="fas fa-user-clock"></i> Probation Period</h6>
+                    <p class="mb-0">3 months no leave • Salary deduction for violations</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+
+    <!-- Leave Balance Overview -->
+    <div class="leave-balance-card">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="balance-item">
+                    <div class="balance-number">{{ leave_stats.Earned.remaining}}</div>
+                    <div class="balance-label">Earned Leave</div>
+                    <small>1.5 days/month</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="balance-item"style="padding: 32px">
+                    {% if leave_stats.Optional %}
+                    <div class="balance-number">{{ leave_stats.Optional.remaining }}</div>
+                    <div class="balance-label">Optional Leave</div>
+                    
+                    {% else %}
+                    <div class="balance-number">0</div>
+                    <div class="balance-label">Optional Leave</div>
+                    
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="balance-item">
+                    <div class="balance-number">{{ pending_leaves }}</div>
+                    <div class="balance-label">Pending Requests</div>
+                    <small>Waiting for approval</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+    <div class="balance-item">
+        {% if annual_leave_info %}
+        <div class="balance-number">{{ annual_leave_info.current_carry_forward }}</div>
+        <div class="balance-label">Carry Forward</div>
+        <small>Max {{ annual_leave_info.max_carry_forward }}</small>
+        {% else %}
+        <div class="balance-number">0</div>
+        <div class="balance-label">Carry Forward</div>
+        <small>From last year</small>
+        {% endif %}
+    </div>
+</div>
+        </div>
+    </div>
+
+    <!-- Detailed Leave Types Breakdown -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="mb-3"><i class="fas fa-chart-bar"></i> Leave Balance Details</h4>
+        </div>
+        
+        {% for leave_type, stats in leave_stats.items %}
+        <div class="col-md-6 col-lg-4 mb-3">
+            <div class="leave-type-card {{ leave_type }}">
+                <div class="leave-type-header">
+                    <div class="leave-type-name">
+                         <i class="fas fa-{% if leave_type == 'Earned' %}calendar-alt{% elif leave_type == 'Sick' %}heartbeat{% elif leave_type == 'Casual' %}umbrella-beach{% elif leave_type == 'Optional' %}star{% elif leave_type == 'Unpaid' %}money-bill-wave{% else %}calendar{% endif %}"></i> 
+                    {{ leave_type|title }} Leave
+                    {% if stats.is_optional %}
+                    <span class="leave-rule-badge">Max 2 usable</span>
+                    {% endif %}
+                    </div>
+                    {% if leave_type != 'Unpaid' %}
+                <span class="badge {% if stats.remaining > 0 %}bg-success{% else %}bg-danger{% endif %}">
+                    {{ stats.remaining }}/{{ stats.total }}
+                </span>
+                {% else %}
+                <span class="badge bg-warning">
+                    {{ stats.taken }} Taken
+                </span>
+                {% endif %}
+                </div>
+                
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" style="width: {% widthratio stats.taken stats.total 100 %}%"></div>
+                </div>
+                
+                <div class="leave-stats">
+                    <span><i class="fas fa-check-circle text-success"></i> Taken: {{ stats.taken }}</span>
+                    <span><i class="fas fa-layer-group text-info"></i> Total: {{ stats.total }}</span>
+                </div>
+                
+                <!-- Additional Info for Each Leave Type -->
+                {% if leave_type == 'Earned' %}
+                <!-- <div class="mt-2 p-2 bg-light rounded">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i> 
+                        Monthly: 1.5 days • Carry: {{ stats.carry_forward }}/{{ stats.max_carry_forward }}
+                    </small>
+                </div> -->
+                {% elif leave_type == 'Optional' and optional_leave_info %}
+                <!-- <div class="mt-2 p-2 bg-warning bg-opacity-10 rounded">
+                    <small class="text-warning">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Used: {{ optional_leave_info.used }}/2 • Will lose: {{ optional_leave_info.will_lose }}
+                    </small>
+                </div> -->
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> No leave balance information available.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Optional Leave Specific Information -->
+    <!-- {% if optional_leave_info %}
+    <div class="optional-leave-info">
+        <h5><i class="fas fa-star text-warning"></i> Optional Leave Rules</h5>
+        <div class="row">
+            <div class="col-md-3 text-center">
+                <div class="fw-bold text-primary">{{ optional_leave_info.annual_allocation }}</div>
+                <small>Earned Allocation</small>
+            </div>
+            <div class="col-md-3 text-center">
+                <div class="fw-bold text-success">{{ optional_leave_info.max_usable }}</div>
+                <small>Maximum Usable</small>
+            </div>
+            <div class="col-md-3 text-center">
+                <div class="fw-bold text-info">{{ optional_leave_info.used }}</div>
+                <small>Already Used</small>
+            </div>
+            <div class="col-md-3 text-center">
+                <div class="fw-bold text-danger">{{ optional_leave_info.will_lose }}</div>
+                <small>Will Be Lost</small>
+            </div>
+        </div>
+        <div class="mt-2 text-center">
+            <small class="text-muted">
+                <i class="fas fa-info-circle"></i> 
+                You can only use {{ optional_leave_info.max_usable }} out of {{ optional_leave_info.annual_allocation }} optional leaves per year.
+            </small>
+        </div>
+    </div>
+    {% endif %} -->
+
+    <!-- Carry Forward Information
+    {% if annual_leave_info %}
+    <div class="carry-forward-info">
+        <h5><i class="fas fa-sync-alt text-primary"></i> Earned Leave Carry Forward</h5>
+        <div class="row">
+            <div class="col-md-4 text-center">
+                <div class="fw-bold text-primary">{{ annual_leave_info.current_carry_forward }}</div>
+                <small>Current Carry Forward</small>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="fw-bold text-success">{{ annual_leave_info.max_carry_forward }}</div>
+                <small>Maximum Allowed</small>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="fw-bold text-info">{{ annual_leave_info.monthly_accrual }}</div>
+                <small>Monthly Accrual</small>
+            </div>
+        </div>
+        <div class="mt-2 text-center">
+            <small class="text-muted">
+                <i class="fas fa-info-circle"></i> 
+                You can carry forward maximum {{ annual_leave_info.max_carry_forward }} days to next year.
+            </small>
+        </div>
+    </div>
+    {% endif %} -->
+
+    <!-- Warning/Info Alerts -->
+    {% if is_on_probation %}
+    <div class="alert-danger-custom">
+        <i class="fas fa-ban"></i>
+        <strong>Probation Restrictions Active!</strong> 
+        You have no paid leave balance. Any leave taken will be unpaid. leaves during probation period.
+        {% if probation_end_date %}
+        Probation ends on {{ probation_end_date|date:"d M Y" }}.
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if optional_leave_info and optional_leave_info.used >= 2 %}
+    <div class="alert-warning-custom">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong>Optional Leave Limit Reached!</strong> 
+        You have already used your maximum 2 optional leaves for this year.
+    </div>
+    {% endif %}
+
+    <!-- Leave History -->
+    <div class="history-card">
+        <div class="history-header">
+            <h4 class="mb-0">
+                <i class="fas fa-history"></i> Leave History
+            </h4>
+            <div class="filter-section d-inline-flex gap-2">
+                <select class="form-select form-select-sm" id="statusFilter" onchange="filterHistory()">
+                    <option value="">All Status</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="pending">Pending</option>
+                    <option value="new">New</option>
+                </select>
+                <select class="form-select form-select-sm" id="yearFilter" onchange="filterHistory()">
+                    <option value="">All Years</option>
+                    <option value="{{ current_year }}">{{ current_year }}</option>
+                    <option value="{{ current_year|add:'-1' }}">{{ current_year|add:'-1' }}</option>
+                </select>
+            </div>
+        </div>
+
+        {% if leave_history %}
+        <div class="timeline" id="leaveTimeline">
+            {% for leave in leave_history %}
+            <div class="timeline-item" data-status="{{ leave.status }}" data-year="{{ leave.start_date.year }}">
+                <div class="timeline-marker {{ leave.status }}"></div>
+                <div class="timeline-content">
+                    <div class="timeline-date">
+                        <i class="fas fa-calendar"></i> 
+                        {{ leave.start_date|date:"d M Y" }} - {{ leave.end_date|date:"d M Y" }}
+                        {% if leave.is_half_day %}
+                        <span class="badge bg-info ms-2">Half Day</span>
+                        {% endif %}
+                    </div>
+                   <div class="timeline-title">
+                        {{ leave.leave_type.name }}
+                        <span class="badge bg-secondary">{{ leave.days_requested }} Day{{ leave.days_requested|pluralize }}</span>
+                        
+                        <!-- SIMPLE WITHDRAW BUTTON CONDITION -->
+                        {% if leave.status in 'pending,approved' and can_withdraw and leave.start_date > today_date %}
+                        <button class="btn btn-sm btn-outline-danger ms-2 withdraw-btn" 
+                                onclick="withdrawLeave({{ leave.id }})"
+                                title="Withdraw this leave application">
+                            <i class="fas fa-times"></i> Withdraw
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="badge badge-{{ leave.status }}">
+                            {% if leave.status == 'approved' %}
+                                <i class="fas fa-check"></i> Approved
+                            {% elif leave.status == 'rejected' %}
+                                <i class="fas fa-times"></i> Rejected
+                            {% elif leave.status == 'pending' %}
+                                <i class="fas fa-clock"></i> Pending
+                            {% else %}
+                                <i class="fas fa-circle"></i> withdrawn
+                            {% endif %}
+                        </span>
+                        
+                    </div>
+                    {% if leave.reason %}
+                    <div class="mt-2 p-2 bg-success bg-opacity-10 rounded">
+                        <small class="text-decoration">
+                            <strong>Leave Reason:</strong> {{ leave.reason }}
+                        </small>
+                    </div>
+                    {% endif %}
+                    {% if leave.rejection_reason and leave.status == 'rejected' %}
+                    <div class="mt-2 p-2 bg-danger bg-opacity-10 rounded">
+                        <small class="text-danger">
+                            <strong>Rejection Reason:</strong> {{ leave.rejection_reason }}
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <!-- ✅ Add pagination controls right here -->
+        <div class="pagination-controls mt-3 text-center">
+            <button class="btn btn-outline-primary btn-sm" id="prevPage" onclick="changePage(-1)">Previous</button>
+            <span class="mx-2" id="pageIndicator">Page 1</span>
+            <button class="btn btn-outline-primary btn-sm" id="nextPage" onclick="changePage(1)">Next</button>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-calendar-times"></i>
+            <h5>No Leave History</h5>
+            <p>You haven't applied for any leave yet. Click "Apply for Leave" to get started!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+const itemsPerPage = 5;
+
+// Get items that pass the filter (not hidden by status/year filter)
+function getFilteredItems() {
+    const items = Array.from(document.querySelectorAll('.timeline-item'));
+    return items.filter(item => {
+        // Check if item is hidden by filter
+        return !item.classList.contains('filter-hidden');
+    });
+}
+
+function showPage(page) {
+    const filteredItems = getFilteredItems();
+    const totalItems = filteredItems.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+
+    console.log('Showing page:', page, 'Total items:', totalItems, 'Total pages:', totalPages);
+
+    // Validate page number
+    if (page < 1) page = 1;
+    if (page > totalPages) page = totalPages;
+
+    currentPage = page;
+
+    // Calculate range for current page
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+
+    console.log('Start index:', startIndex, 'End index:', endIndex);
+
+    // Hide/show items based on pagination
+    filteredItems.forEach((item, index) => {
+        if (index >= startIndex && index < endIndex) {
+            item.classList.remove('page-hidden');
+            console.log('Showing item', index);
+        } else {
+            item.classList.add('page-hidden');
+            console.log('Hiding item', index);
+        }
+    });
+
+    // Update pagination UI
+    document.getElementById("pageIndicator").textContent = `Page ${currentPage} of ${totalPages}`;
+    document.getElementById("prevPage").disabled = currentPage === 1;
+    document.getElementById("nextPage").disabled = currentPage === totalPages;
+
+    console.log('Current page:', currentPage, 'Prev disabled:', currentPage === 1, 'Next disabled:', currentPage === totalPages);
+}
+
+function changePage(direction) {
+    console.log('Changing page by:', direction, 'Current:', currentPage);
+    const newPage = currentPage + direction;
+    showPage(newPage);
+}
+
+function filterHistory() {
+    const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+    const yearFilter = document.getElementById('yearFilter').value;
+    const timelineItems = document.querySelectorAll('.timeline-item');
+    const timeline = document.getElementById('leaveTimeline');
+
+    console.log('Filtering - Status:', statusFilter, 'Year:', yearFilter);
+
+    let visibleCount = 0;
+
+    // Remove old empty state if exists
+    const existingEmpty = timeline.querySelector('.empty-state');
+    if (existingEmpty) {
+        existingEmpty.remove();
+    }
+
+    // Apply filters - use class instead of display
+    timelineItems.forEach(item => {
+        const status = item.dataset.status.toLowerCase();
+        const year = item.dataset.year;
+
+        const matchesStatus = !statusFilter || status === statusFilter;
+        const matchesYear = !yearFilter || year === yearFilter;
+
+        if (matchesStatus && matchesYear) {
+            item.classList.remove('filter-hidden');
+            visibleCount++;
+        } else {
+            item.classList.add('filter-hidden');
+        }
+    });
+
+    console.log('Visible items after filter:', visibleCount);
+
+    // Handle empty state
+    if (visibleCount === 0) {
+        const emptyDiv = document.createElement('div');
+        emptyDiv.className = 'empty-state text-center py-4';
+        emptyDiv.innerHTML = `
+            <i class="fas fa-search fa-2x text-muted mb-2"></i>
+            <h5>No Results Found</h5>
+            <p>Try adjusting your filters to see more results.</p>
+        `;
+        timeline.appendChild(emptyDiv);
+        
+        // Hide pagination
+        document.querySelector('.pagination-controls').style.display = 'none';
+    } else {
+        // Show pagination
+        document.querySelector('.pagination-controls').style.display = 'block';
+        
+        // Reset to page 1 after filtering
+        currentPage = 1;
+        showPage(1);
+    }
+}
+function withdrawLeave(leaveId) {
+    if (confirm('Are you sure you want to withdraw this leave application? This action cannot be undone.')) {
+        // Create a form and submit it
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/leave/withdraw-leave/${leaveId}/`;
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Loaded - Initializing pagination');
+    
+    // Set current year filter
+    const currentYear = new Date().getFullYear();
+    const yearFilter = document.getElementById('yearFilter');
+    if (yearFilter) {
+        yearFilter.value = currentYear;
+    }
+    
+    // Initialize: show first page
+    showPage(1);
+});
+</script>
+{% endblock %}

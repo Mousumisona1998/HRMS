@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Edit Admin{% else %}Add New Admin{% endif %} - HR System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center page-header">
+    <h1 class="h2">
+        {% if form.instance.pk %}
+            <i class="fas fa-edit"></i> Edit Administrator
+        {% else %}
+            <i class="fas fa-plus"></i> Add New Administrator
+        {% endif %}
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'admin_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Admins
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="custom-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-user-tie"></i> 
+                    {% if form.instance.pk %}Edit{% else %}Add New{% endif %} Administrator
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <div class="row g-3">
+    <div class="row g-3">
+    <div class="col-md-6">
+        <label for="id_name" class="form-label">Full Name *</label>
+        <input type="text" name="name" class="form-control {% if form.name.errors %}is-invalid{% endif %}" id="id_name" 
+               value="{{ form.name.value|default:'' }}" required>
+        {% if form.name.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.name.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-6">
+        <label for="id_email" class="form-label">Email Address *</label>
+        <input type="email" name="email" class="form-control {% if form.email.errors %}is-invalid{% endif %}" id="id_email" 
+               value="{{ form.email.value|default:'' }}" required>
+        {% if form.email.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.email.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-6">
+        <label for="id_phone" class="form-label">Phone Number</label>
+        <input type="text" name="phone" class="form-control {% if form.phone.errors %}is-invalid{% endif %}" id="id_phone" 
+               value="{{ form.phone.value|default:'' }}">
+        {% if form.phone.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.phone.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-6">
+        <label for="id_role" class="form-label">Role *</label>
+        <select name="role" class="form-control {% if form.role.errors %}is-invalid{% endif %}" id="id_role" required>
+            <option value="">Select Role</option>
+            <option value="Super Admin" {% if form.role.value == "Super Admin" %}selected{% endif %}>Super Admin</option>
+        </select>
+        {% if form.role.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.role.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-6">
+        <label for="id_status" class="form-label">Status *</label>
+        <select name="status" class="form-control {% if form.status.errors %}is-invalid{% endif %}" id="id_status" required>
+            <option value="active" {% if form.status.value == "active" %}selected{% endif %}>Active</option>
+            <option value="inactive" {% if form.status.value == "inactive" %}selected{% endif %}>Inactive</option>
+        </select>
+        {% if form.status.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.status.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    {% if not form.instance.pk %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            <strong>Default Password:</strong> A temporary password will be generated for the new admin.
+            The admin will be prompted to change it on first login.
+        </div>
+    </div>
+    {% endif %}
+</div>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            {% if form.instance.pk %}Update Admin{% else %}Create Admin{% endif %}
+                        </button>
+                        <a href="{% url 'admin_list' %}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,649 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <h1 class="mb-3"><i class="fas fa-sitemap me-2"></i>Department Management</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'department_list' %}">Master Data</a></li>
+                <li class="breadcrumb-item active">Departments</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Django Messages Framework -->
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>{{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Search and Filter Card -->
+    <div class="card custom-card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" 
+                               class="form-control" 
+                               id="search" 
+                               name="search" 
+                               placeholder="Search departments..."
+                               value="{{ search_query }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select filter-select" id="status" name="status">
+                        <option value="">All Status</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDepartmentModal">
+                            <i class="fas fa-plus me-2"></i>Add New Department
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Departments Table Card -->
+    <div class="card custom-card">
+        <div class="card-body p-0">
+            {% if departments %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for department in departments %}
+                        <tr>
+                            <td>
+                                <strong>{{ department.name }}</strong>
+                            </td>
+                            <td>
+                                <span class="badge {% if department.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {{ department.is_active|yesno:"Active,Inactive" }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-muted">{{ department.created_at|date:"Y-m-d" }}</span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-primary edit-department-btn" 
+                                            title="Edit"
+                                            data-department-id="{{ department.pk }}"
+                                            data-department-name="{{ department.name }}"
+                                            data-department-is-active="{{ department.is_active|yesno:'true,false' }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger delete-department-btn" 
+                                            title="Delete"
+                                            data-department-id="{{ department.pk }}"
+                                            data-department-name="{{ department.name }}"
+                                            data-employee-count="{{ department.employees.count|default:0 }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-sitemap fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No departments found</h5>
+                <p class="text-muted">Get started by adding your first department.</p>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDepartmentModal">
+                    <i class="fas fa-plus me-2"></i>Add New Department
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Department Modal -->
+<div class="modal fade" id="addDepartmentModal" tabindex="-1" aria-labelledby="addDepartmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="addDepartmentModalLabel">
+                    <i class="fas fa-plus-circle me-2"></i>Add New Department
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'department_create' %}" id="addDepartmentForm" novalidate>
+                {% csrf_token %}
+                <div class="modal-body">
+                    <!-- Form Errors Display -->
+                    <div id="addFormErrors" class="alert alert-danger" style="display: none;"></div>
+                    
+                    <!-- Django Form Errors -->
+                    {% if form.errors and show_add_modal %}
+                    <div class="alert alert-danger">
+                        <strong>Please correct the errors below:</strong>
+                        <ul class="mb-0 mt-1">
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                            <li>{{ field.label }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <div class="row g-3">
+                        <!-- Department Name -->
+                        <div class="col-12">
+                            <label for="id_name" class="form-label">
+                                Department Name <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" 
+                                   class="form-control {% if form.name.errors and show_add_modal %}is-invalid{% endif %}" 
+                                   id="id_name" 
+                                   name="name" 
+                                   value="{% if form.name.value and show_add_modal %}{{ form.name.value }}{% endif %}"
+                                   placeholder="Enter department name"
+                                   required>
+                            {% if form.name.errors and show_add_modal %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.name.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Status -->
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       id="id_is_active" 
+                                       name="is_active" 
+                                       {% if not show_add_modal or form.is_active.value %}checked{% endif %}>
+                                <label class="form-check-label" for="id_is_active">
+                                    Active Department
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="addDepartmentSubmitBtn">
+                        <i class="fas fa-save me-2"></i>Save Department
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Edit Department Modal -->
+<div class="modal fade" id="editDepartmentModal" tabindex="-1" aria-labelledby="editDepartmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="editDepartmentModalLabel">
+                    <i class="fas fa-edit me-2"></i>Edit Department
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="" id="editDepartmentForm" novalidate>
+                {% csrf_token %}
+                <div class="modal-body">
+                    <!-- Form Errors Display -->
+                    <div id="editFormErrors" class="alert alert-danger" style="display: none;"></div>
+                    
+                    {% if form.non_field_errors and editing_department_id %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="row g-3">
+                        <!-- Department Name -->
+                        <div class="col-12">
+                            <label for="edit_id_name" class="form-label">
+                                Department Name <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" 
+                                   class="form-control {% if form.name.errors and editing_department_id %}is-invalid{% endif %}" 
+                                   id="edit_id_name" 
+                                   name="name" 
+                                   placeholder="Enter department name"
+                                   required>
+                            {% if form.name.errors and editing_department_id %}
+                            <div class="invalid-feedback">
+                                {% for error in form.name.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Status -->
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       id="edit_id_is_active" 
+                                       name="is_active">
+                                <label class="form-check-label" for="edit_id_is_active">
+                                    Active Department
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Update Department
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Department Modal -->
+<div class="modal fade" id="deleteDepartmentModal" tabindex="-1" aria-labelledby="deleteDepartmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteDepartmentModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Department
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-4">
+                    <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                    <h4>Are you sure?</h4>
+                    <p class="text-muted">
+                        You are about to delete the department <strong id="delete-department-name"></strong>. 
+                        This action cannot be undone.
+                    </p>
+                    <div class="alert alert-warning" id="employee-warning" style="display: none;">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        This department has <span id="employee-count"></span> employee(s). 
+                        Deleting it will remove the department association from these employees.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <form method="post" action="" id="deleteDepartmentForm">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Delete Department
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Search functionality
+    const searchInput = document.getElementById('search');
+    const statusSelect = document.getElementById('status');
+    
+    function applyFilters() {
+        const search = searchInput.value;
+        const status = statusSelect.value;
+        
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        if (status) params.append('status', status);
+        
+        window.location.href = '{% url "department_list" %}' + (params.toString() ? '?' + params.toString() : '');
+    }
+    
+    // Debounce search input
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(applyFilters, 500);
+    });
+    
+    statusSelect.addEventListener('change', applyFilters);
+
+    // Auto-show modals if there are form errors
+    {% if show_add_modal %}
+    var addModal = new bootstrap.Modal(document.getElementById('addDepartmentModal'));
+    addModal.show();
+    {% endif %}
+
+    {% if editing_department_id %}
+    var editModal = new bootstrap.Modal(document.getElementById('editDepartmentModal'));
+    
+    // Populate edit form with existing data and errors
+    document.getElementById('edit_id_name').value = "{{ editing_department.name }}";
+    document.getElementById('edit_id_is_active').checked = {{ editing_department.is_active|yesno:"true,false" }};
+    
+    // Set form action
+    document.getElementById('editDepartmentForm').action = "{% url 'department_edit' editing_department_id %}";
+    
+    // Update modal title
+    document.getElementById('editDepartmentModalLabel').innerHTML = 
+        '<i class="fas fa-edit me-2"></i>Edit Department: {{ editing_department.name }}';
+    
+    editModal.show();
+    {% endif %}
+
+    // Edit department modal functionality
+    const editButtons = document.querySelectorAll('.edit-department-btn');
+    const editDepartmentModal = new bootstrap.Modal(document.getElementById('editDepartmentModal'));
+    const editDepartmentForm = document.getElementById('editDepartmentForm');
+
+    editButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const departmentId = this.getAttribute('data-department-id');
+            const departmentName = this.getAttribute('data-department-name');
+            const departmentIsActive = this.getAttribute('data-department-is-active');
+            
+            // Populate form fields
+            document.getElementById('edit_id_name').value = departmentName;
+            document.getElementById('edit_id_is_active').checked = departmentIsActive === 'true';
+            
+            // Set form action for update
+            editDepartmentForm.action = "{% url 'department_edit' 0 %}".replace('0', departmentId);
+            
+            // Update modal title
+            document.getElementById('editDepartmentModalLabel').innerHTML = 
+                '<i class="fas fa-edit me-2"></i>Edit Department: ' + departmentName;
+            
+            // Clear previous errors
+            document.getElementById('editFormErrors').style.display = 'none';
+            const invalidFields = document.querySelectorAll('#editDepartmentForm .is-invalid');
+            invalidFields.forEach(field => {
+                field.classList.remove('is-invalid');
+            });
+            
+            // Show modal
+            editDepartmentModal.show();
+        });
+    });
+
+    // Delete department modal functionality
+    const deleteButtons = document.querySelectorAll('.delete-department-btn');
+    const deleteDepartmentModal = new bootstrap.Modal(document.getElementById('deleteDepartmentModal'));
+    const deleteDepartmentForm = document.getElementById('deleteDepartmentForm');
+    const deleteDepartmentName = document.getElementById('delete-department-name');
+    const employeeWarning = document.getElementById('employee-warning');
+    const employeeCount = document.getElementById('employee-count');
+
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const departmentId = this.getAttribute('data-department-id');
+            const departmentName = this.getAttribute('data-department-name');
+            const empCount = this.getAttribute('data-employee-count');
+            
+            // Update modal content
+            deleteDepartmentName.textContent = '"' + departmentName + '"';
+            
+            // Show/hide employee warning
+            if (empCount > 0) {
+                employeeCount.textContent = empCount;
+                employeeWarning.style.display = 'block';
+            } else {
+                employeeWarning.style.display = 'none';
+            }
+            
+            // Set form action
+            deleteDepartmentForm.action = "{% url 'department_delete' 0 %}".replace('0', departmentId);
+            
+            // Show modal
+            deleteDepartmentModal.show();
+        });
+    });
+
+    // Form validation for add department
+    const addDepartmentForm = document.getElementById('addDepartmentForm');
+    if (addDepartmentForm) {
+        addDepartmentForm.addEventListener('submit', function(e) {
+            // Basic validation
+            const nameField = document.getElementById('id_name');
+            const errorsDiv = document.getElementById('addFormErrors');
+            const submitBtn = document.getElementById('addDepartmentSubmitBtn');
+            
+            let isValid = true;
+            let errorMessages = [];
+            
+            if (!nameField.value.trim()) {
+                nameField.classList.add('is-invalid');
+                errorMessages.push('Department name is required.');
+                isValid = false;
+            } else {
+                nameField.classList.remove('is-invalid');
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                errorsDiv.innerHTML = errorMessages.join('<br>');
+                errorsDiv.style.display = 'block';
+                
+                // Scroll to errors
+                errorsDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return false;
+            }
+            
+            // If valid, show loading state to prevent multiple submissions
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+            }
+        });
+    }
+
+    // Form validation for edit department
+    const editDepartmentFormElement = document.getElementById('editDepartmentForm');
+    if (editDepartmentFormElement) {
+        editDepartmentFormElement.addEventListener('submit', function(e) {
+            // Basic validation
+            const nameField = document.getElementById('edit_id_name');
+            const errorsDiv = document.getElementById('editFormErrors');
+            
+            let isValid = true;
+            let errorMessages = [];
+            
+            if (!nameField.value.trim()) {
+                nameField.classList.add('is-invalid');
+                errorMessages.push('Department name is required.');
+                isValid = false;
+            } else {
+                nameField.classList.remove('is-invalid');
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                errorsDiv.innerHTML = errorMessages.join('<br>');
+                errorsDiv.style.display = 'block';
+                return false;
+            }
+        });
+    }
+
+    // Clear form when add modal is closed
+    const addDepartmentModal = document.getElementById('addDepartmentModal');
+    if (addDepartmentModal) {
+        addDepartmentModal.addEventListener('hidden.bs.modal', function() {
+            const form = document.getElementById('addDepartmentForm');
+            if (form) {
+                form.reset();
+                // Clear validation states
+                document.getElementById('addFormErrors').style.display = 'none';
+                const invalidFields = form.querySelectorAll('.is-invalid');
+                invalidFields.forEach(field => {
+                    field.classList.remove('is-invalid');
+                });
+                
+                // Reset submit button
+                const submitBtn = document.getElementById('addDepartmentSubmitBtn');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Department';
+                }
+            } 
+        });
+    }
+
+    // Clear form when edit modal is closed
+    const editDepartmentModalElement = document.getElementById('editDepartmentModal');
+    if (editDepartmentModalElement) {
+        editDepartmentModalElement.addEventListener('hidden.bs.modal', function() {
+            document.getElementById('editFormErrors').style.display = 'none';
+            const invalidFields = document.querySelectorAll('#editDepartmentForm .is-invalid');
+            invalidFields.forEach(field => {
+                field.classList.remove('is-invalid');
+            });
+        });
+    }
+
+    // Real-time validation for add form
+    const nameField = document.getElementById('id_name');
+    if (nameField) {
+        nameField.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+                document.getElementById('addFormErrors').style.display = 'none';
+            }
+        });
+    }
+
+    // Real-time validation for edit form
+    const editNameField = document.getElementById('edit_id_name');
+    if (editNameField) {
+        editNameField.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+                document.getElementById('editFormErrors').style.display = 'none';
+            }
+        });
+    }
+});
+</script>
+
+<style>
+.search-box {
+    position: relative;
+}
+
+.search-box input {
+    padding-left: 40px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #2c3e50;
+    background-color: #f8f9fa;
+    padding: 12px 16px;
+}
+
+.table td {
+    padding: 12px 16px;
+    vertical-align: middle;
+}
+
+.form-label {
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.form-control, .form-select {
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    padding: 8px 12px;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+.form-check-input:checked {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+.btn-group .btn {
+    border-radius: 4px;
+    margin-right: 4px;
+}
+
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+.invalid-feedback {
+    display: block;
+}
+
+.modal-header {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-footer {
+    border-top: 1px solid #dee2e6;
+}
+
+.alert {
+    border-radius: 8px;
+    border: none;
+}
+
+.badge {
+    font-size: 0.75em;
+    padding: 0.35em 0.65em;
+}
+</style>
+{% endblock %}

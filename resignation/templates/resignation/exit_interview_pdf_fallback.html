@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Exit Interview - {{ resignation.employee.first_name }} {{ resignation.employee.last_name }}</title>
+    <style>
+        body { font-family: Arial, Helvetica, sans-serif; color: #222; margin: 20px; line-height: 1.45; }
+        .header { text-align: center; margin-bottom: 18px; }
+        .meta { font-size: 12px; color: #444; margin-bottom: 18px; }
+        .card { border: 1px solid #e3e3e3; padding: 12px 14px; margin-bottom: 12px; border-radius: 4px; background: #fff; }
+        .section-title { background:#f4f5f6; padding:8px 10px; font-weight:700; margin-bottom:8px; border-radius: 3px; }
+        .question { font-weight:700; margin-top:10px; }
+        .answer { margin-left:8px; margin-top:6px; white-space:pre-wrap; }
+        .small { font-size:11px; color:#666; }
+        .sign-block { margin-top:26px; display:flex; gap:40px; align-items:flex-start; }
+        .signature-line { border-top:1px solid #000; width:280px; margin-top:40px; text-align:center; padding-top:6px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>EXIT INTERVIEW FORM</h2>
+        <div class="meta">
+            <strong>{{ resignation.employee.first_name }} {{ resignation.employee.last_name }}</strong>
+            &nbsp;|&nbsp; Employee ID: {{ resignation.employee.employee_id }}
+            &nbsp;|&nbsp; Date: {{ today_date }}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-title">Employee Information</div>
+        <div class="small">
+            <div><strong>Name:</strong> {{ resignation.employee.first_name }} {{ resignation.employee.last_name }}</div>
+            <div><strong>Employee ID:</strong> {{ resignation.employee.employee_id }}</div>
+            <div><strong>Department:</strong> {{ resignation.employee.department|default:"N/A" }}</div>
+            <div><strong>Region:</strong> {{ resignation.employee.location|default:"N/A" }}</div>
+            {% if exit_interview.interview_date %}
+            <div><strong>Interview Date:</strong> {{ exit_interview.interview_date }}</div>
+            {% endif %}
+            {% if exit_interview.conducted_by %}
+            <div><strong>Conducted By:</strong> {{ exit_interview.conducted_by.first_name }} {{ exit_interview.conducted_by.last_name }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-title">Exit Interview Questions & Answers</div>
+
+        {% if exit_interview.reason_for_leaving %}
+        <div class="question">1. Why have you decided to leave the company?</div>
+        <div class="answer">{{ exit_interview.reason_for_leaving }}</div>
+        {% endif %}
+
+        {% if exit_interview.concerns_shared_prior %}
+        <div class="question">2. Have you shared your concerns with anyone in the company prior to deciding to leave?</div>
+        <div class="answer">{{ exit_interview.concerns_shared_prior }}</div>
+        {% endif %}
+
+        {% if exit_interview.single_event_responsible %}
+        <div class="question">3. Was a single event responsible for your decision to leave?</div>
+        <div class="answer">{{ exit_interview.single_event_responsible }}</div>
+        {% endif %}
+
+        {% if exit_interview.new_company_offer %}
+        <div class="question">4. What does your new company offer that encouraged you to accept their offer and leave this company?</div>
+        <div class="answer">{{ exit_interview.new_company_offer }}</div>
+        {% endif %}
+
+        {% if exit_interview.valued_about_company %}
+        <div class="question">5. What do you value about the company?</div>
+        <div class="answer">{{ exit_interview.valued_about_company }}</div>
+        {% endif %}
+
+        {% if exit_interview.disliked_about_company %}
+        <div class="question">6. What did you dislike about the company?</div>
+        <div class="answer">{{ exit_interview.disliked_about_company }}</div>
+        {% endif %}
+
+        {% if exit_interview.relationship_with_manager %}
+        <div class="question">7. How was your relationship with your manager?</div>
+        <div class="answer">{{ exit_interview.relationship_with_manager }}</div>
+        {% endif %}
+
+        {% if exit_interview.supervisor_improvement %}
+        <div class="question">8. What could your supervisor do to improve his/her management style and skill?</div>
+        <div class="answer">{{ exit_interview.supervisor_improvement }}</div>
+        {% endif %}
+
+        {% if exit_interview.liked_about_job %}
+        <div class="question">9. What did you like most about your job?</div>
+        <div class="answer">{{ exit_interview.liked_about_job }}</div>
+        {% endif %}
+
+        {% if exit_interview.disliked_about_job %}
+        <div class="question">10. What did you dislike about your job? What would you change?</div>
+        <div class="answer">{{ exit_interview.disliked_about_job }}</div>
+        {% endif %}
+
+        {% if exit_interview.resources_support %}
+        <div class="question">11. Do you feel you had the resources and support necessary to accomplish your job? If not, what was missing?</div>
+        <div class="answer">{{ exit_interview.resources_support }}</div>
+        {% endif %}
+
+        {% if exit_interview.employee_morale %}
+        <div class="question">12. What is your experience of employee morale and motivation in the company?</div>
+        <div class="answer">{{ exit_interview.employee_morale }}</div>
+        {% endif %}
+
+        {% if exit_interview.clear_goals %}
+        <div class="question">13. Did you have clear goals and know what was expected of you in your job?</div>
+        <div class="answer">{{ exit_interview.clear_goals }}</div>
+        {% endif %}
+
+        {% if exit_interview.performance_feedback %}
+        <div class="question">14. Did you receive adequate feedback about your performance?</div>
+        <div class="answer">{{ exit_interview.performance_feedback }}</div>
+        {% endif %}
+
+        {% if exit_interview.quality_commitment %}
+        <div class="question">15. Describe your experience of the company's commitment to quality and customer service.</div>
+        <div class="answer">{{ exit_interview.quality_commitment }}</div>
+        {% endif %}
+
+        {% if exit_interview.career_development %}
+        <div class="question">16. Did the management help you accomplish your personal and professional development?</div>
+        <div class="answer">{{ exit_interview.career_development }}</div>
+        {% endif %}
+
+        {% if exit_interview.workplace_recommendations %}
+        <div class="question">17. What would you recommend to help us create a better workplace?</div>
+        <div class="answer">{{ exit_interview.workplace_recommendations }}</div>
+        {% endif %}
+
+        {% if exit_interview.policies_fairness %}
+        <div class="question">18. Do the policies and procedures help create a fair workplace?</div>
+        <div class="answer">{{ exit_interview.policies_fairness }}</div>
+        {% endif %}
+
+        {% if exit_interview.success_qualities %}
+        <div class="question">19. Describe the qualities of a person most likely to succeed in this company.</div>
+        <div class="answer">{{ exit_interview.success_qualities }}</div>
+        {% endif %}
+
+        {% if exit_interview.replacement_qualities %}
+        <div class="question">20. What are the key qualities we should seek in your replacement?</div>
+        <div class="answer">{{ exit_interview.replacement_qualities }}</div>
+        {% endif %}
+
+        {% if exit_interview.compensation_feedback %}
+        <div class="question">21. Any recommendations regarding compensation and benefits?</div>
+        <div class="answer">{{ exit_interview.compensation_feedback }}</div>
+        {% endif %}
+
+        {% if exit_interview.future_considerations %}
+        <div class="question">22. What would make you consider working for this company again? Would you recommend the company?</div>
+        <div class="answer">{{ exit_interview.future_considerations }}</div>
+        {% endif %}
+
+        {% if exit_interview.additional_comments %}
+        <div class="question">23. Additional comments</div>
+        <div class="answer">{{ exit_interview.additional_comments }}</div>
+        {% endif %}
+    </div>
+
+    {% if exit_interview.employee_signature or exit_interview.hr_signature %}
+    <div class="card">
+        <div class="section-title">Signatures</div>
+        <div class="sign-block">
+            {% if exit_interview.employee_signature %}
+            <div>
+                <div class="small"><strong>Employee Signature</strong></div>
+                <div style="margin-top:8px;">
+                    <img src="{{ exit_interview.employee_signature }}" style="max-width:260px; max-height:120px; display:block;">
+                </div>
+                <div class="signature-line">Signed on: {{ exit_interview.employee_signed_at|date:"M d, Y H:i" }}</div>
+            </div>
+            {% endif %}
+
+            {% if exit_interview.hr_signature %}
+            <div>
+                <div class="small"><strong>HR Signature</strong></div>
+                <div style="margin-top:8px;">
+                    <img src="{{ exit_interview.hr_signature }}" style="max-width:260px; max-height:120px; display:block;">
+                </div>
+                <div class="signature-line">Signed on: {{ exit_interview.hr_signed_at|date:"M d, Y H:i" }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</body>
+</html>

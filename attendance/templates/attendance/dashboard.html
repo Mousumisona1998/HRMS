@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance Dashboard - HR System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="fas fa-user-check"></i> Attendance Dashboard</h2>
+    <p class="text-muted">Mark your daily attendance</p>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="custom-card">
+            <div class="card-header">
+                <h5 class="card-title">Today's Attendance</h5>
+                <span class="badge bg-primary">{{ today_attendance.date|date:"F d, Y"|default:"Today" }}</span>
+            </div>
+            
+            {% if today_attendance %}
+            <div class="row text-center">
+                <div class="col-md-6 mb-3">
+                    <div class="p-4 border rounded">
+                        <i class="fas fa-sign-in-alt fa-3x text-success mb-3"></i>
+                        <h6 class="text-muted">Check-In Time</h6>
+                        <h3 class="text-success">{{ today_attendance.check_in|date:"h:i A" }}</h3>
+                        <span class="badge {% if today_attendance.status == 'On Time' %}bg-success{% else %}bg-warning{% endif %}">
+                            {{ today_attendance.status }}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="p-4 border rounded">
+                        <i class="fas fa-sign-out-alt fa-3x text-danger mb-3"></i>
+                        <h6 class="text-muted">Check-Out Time</h6>
+                        <h3 class="text-danger">
+                            {% if today_attendance.check_out %}
+                                {{ today_attendance.check_out|date:"h:i A" }}
+                            {% else %}
+                                Not Yet
+                            {% endif %}
+                        </h3>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">No attendance marked today</h5>
+                <p>Click the button below to check in</p>
+            </div>
+            {% endif %}
+            
+            <div class="text-center mt-4">
+                <form method="POST">
+                    {% csrf_token %}
+                    {% if not today_attendance %}
+                        <button type="submit" name="action" value="check_in" class="btn btn-success btn-lg">
+                            <i class="fas fa-sign-in-alt"></i> Check In
+                        </button>
+                    {% elif not today_attendance.check_out %}
+                        <button type="submit" name="action" value="check_out" class="btn btn-danger btn-lg">
+                            <i class="fas fa-sign-out-alt"></i> Check Out
+                        </button>
+                    {% else %}
+                        <button type="button" class="btn btn-secondary btn-lg" disabled>
+                            <i class="fas fa-check-circle"></i> Attendance Complete
+                        </button>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="custom-card">
+            <div class="card-header">
+                <h5 class="card-title">Quick Info</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                <div class="list-group-item d-flex justify-content-between">
+                    <span><i class="fas fa-user"></i> Employee</span>
+                    <strong>{{ employee.first_name }} {{ employee.last_name }}</strong>
+                </div>
+                <div class="list-group-item d-flex justify-content-between">
+                    <span><i class="fas fa-id-badge"></i> Employee ID</span>
+                    <strong>{{ employee.employee_id }}</strong>
+                </div>
+                <div class="list-group-item d-flex justify-content-between">
+                    <span><i class="fas fa-building"></i> Department</span>
+                    <strong>{{ employee.department }}</strong>
+                </div>
+                <div class="list-group-item d-flex justify-content-between">
+                    <span><i class="fas fa-briefcase"></i> Designation</span>
+                    <strong>{{ employee.designation }}</strong>
+                </div>
+            </div>
+        </div>
+        
+        <div class="custom-card mt-3">
+            <div class="card-header">
+                <h5 class="card-title">Quick Links</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                <a href="{% url 'attendance:all_attendance' %}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-list"></i> View My Attendance
+                </a>
+                <a href="{% url 'employee_dashboard' %}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-user"></i> My Profile
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

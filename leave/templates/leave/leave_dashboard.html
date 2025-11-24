@@ -1,0 +1,1653 @@
+{% extends 'base.html' %}
+
+{% block title %}Leave Management Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 20px;
+        color: white;
+        margin-bottom: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stats-card.present {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    
+    .stats-card.planned {
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+    }
+    
+    .stats-card.unplanned {
+        background: linear-gradient(135deg, #a8edea 0%, #4073af 100%);
+    }
+    
+    .stats-card.pending {
+        background: linear-gradient(135deg, #a1691c 0%, #fcb69f 100%);
+    }
+    
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .stats-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        margin-bottom: 10px;
+    }
+    
+    .table th {
+        background-color: #f8f9fa;
+        border-top: none;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .badge {
+        padding: 0.5em 0.75em;
+        border-radius: 10px;
+    }
+    
+    .badge-new {
+        background-color: #17a2b8;
+    }
+
+    .badge-withdrawn {
+        background-color: #17a2b8;
+    }
+    
+    .badge-approved {
+        background-color: #28a745;
+    }
+    
+    .badge-rejected {
+        background-color: #dc3545;
+    }
+    
+    .badge-pending {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    
+    .profile-img {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    
+    .dashboard-header {
+        /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+        color: rgb(0, 0, 0);
+        padding: 20px 0;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+
+    /* Custom Tab Styling */
+    .nav-tabs-custom {
+        border-bottom: 3px solid #667eea;
+        margin-bottom: 25px;
+    }
+
+    .nav-tabs-custom .nav-link {
+        border: none;
+        color: #6c757d;
+        font-weight: 600;
+        padding: 12px 25px;
+        margin-right: 10px;
+        border-radius: 10px 10px 0 0;
+        transition: all 0.3s ease;
+    }
+
+    .nav-tabs-custom .nav-link:hover {
+        color: #667eea;
+        background-color: #f8f9fa;
+    }
+
+    .nav-tabs-custom .nav-link.active {
+        color: white;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+    }
+
+    .nav-tabs-custom .nav-link i {
+        margin-right: 8px;
+    }
+
+ 
+
+    .calendar-sidebar {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+    }
+
+    .add-event-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .add-event-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .draggable-events-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .event-item {
+        padding: 10px 12px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+    }
+
+    .event-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .event-item.casual {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .event-item.maternity {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .event-item.sick {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .event-item.annual {
+        background: #cce5ff;
+        color: #004085;
+    }
+
+    .event-item.meeting {
+        background: #e4bee6;
+        color: #87168b;
+    }
+
+    .event-icon {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .calendar-container {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+    }
+
+    .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .calendar-month {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+
+    .calendar-nav {
+        display: flex;
+        gap: 10px;
+    }
+
+    .calendar-nav button {
+        background: #667eea;
+        color: white;
+        border: none;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+    }
+
+    .calendar-nav button:hover {
+        background: #764ba2;
+        transform: scale(1.05);
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 5px;
+    }
+
+    .calendar-day-header {
+        text-align: center;
+        font-weight: 600;
+        color: #667eea;
+        padding: 10px 5px;
+        font-size: 0.85rem;
+    }
+
+    .calendar-day {
+        aspect-ratio: 1.2;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 8px 5px;
+        text-align: center;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: white;
+        min-height: 80px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+    }
+
+    .calendar-day:hover {
+        border-color: #667eea;
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+    }
+
+    .calendar-day.other-month {
+        opacity: 0.3;
+        background: #f8f9fa;
+    }
+
+    .calendar-day.today {
+        border-color: #667eea;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .calendar-day.has-holiday {
+        border-color: #667eea;
+        color: white;
+        font-weight: bold;
+    }
+
+    .calendar-day.has-holiday:hover {
+        transform: scale(1.02);
+    }
+
+    .day-number {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 3px;
+    }
+
+    .holiday-indicator {
+        position: absolute;
+        bottom: 3px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 4px;
+        height: 4px;
+        background: #ff6b9d;
+        border-radius: 50%;
+    }
+
+    .calendar-day.has-holiday .holiday-indicator {
+        background: white;
+    }
+
+    .holiday-name-small {
+        font-size: 0.65rem;
+        line-height: 1.1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        margin-top: 2px;
+    }
+
+    .region-selector {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+    }
+
+    .region-badge {
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        display: inline-block;
+    }
+
+    .view-toggle {
+        display: flex;
+        gap: 10px;
+        background: #f8f9fa;
+        padding: 5px;
+        border-radius: 25px;
+    }
+
+    .view-toggle button {
+        padding: 8px 20px;
+        border: none;
+        background: transparent;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+
+    .view-toggle button.active {
+        background: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        color: #667eea;
+    }
+
+    .holiday-list-item {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-left: 4px solid #667eea;
+        transition: all 0.3s ease;
+    }
+
+    .holiday-list-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .optional-badge {
+        background: #fff3cd;
+        color: #856404;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+    }
+
+    /* Holiday type specific colors */
+    .calendar-day.holiday-national {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    }
+    
+    .calendar-day.holiday-state {
+        background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+    }
+    
+    .calendar-day.holiday-company {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    }
+    
+    .calendar-day.holiday-optional {
+        background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+    }
+    
+    .calendar-day.holiday-default {
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+    }
+
+    /* DataTables custom styling */
+    .dataTables_wrapper .dataTables_length select {
+        padding: 5px 10px;
+        border-radius: 5px;
+        border: 1px solid #ced4da;
+    }
+
+    .dataTables_wrapper .dataTables_filter input {
+        padding: 5px 10px;
+        border-radius: 5px;
+        border: 1px solid #ced4da;
+        margin-left: 10px;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 5px 10px;
+        margin: 0 2px;
+        border-radius: 5px;
+    }
+    /* ENHANCED RESPONSIVE BREAKPOINTS FOR CALENDAR */
+        /* Large devices (1200px and up) */
+        @media (min-width: 1200px) {
+            .calendar-day {
+                min-height: 80px;
+                padding: 8px 4px;
+            }
+            
+            .day-number {
+                font-size: 1rem;
+            }
+            
+            .holiday-name-small {
+                font-size: 0.7rem;
+                -webkit-line-clamp: 2;
+            }
+            
+            .calendar-day-header {
+                font-size: 0.85rem;
+                padding: 10px 4px;
+            }
+        }
+
+        /* Medium devices (992px to 1199px) */
+        @media (min-width: 992px) and (max-width: 1199px) {
+            .calendar-day {
+                min-height: 70px;
+                padding: 6px 3px;
+            }
+            
+            .day-number {
+                font-size: 0.9rem;
+            }
+            
+            .holiday-name-small {
+                font-size: 0.65rem;
+            }
+        }
+
+        /* Small devices (768px to 991px) */
+        @media (min-width: 768px) and (max-width: 991px) {
+            .calendar-day {
+                min-height: 60px;
+                padding: 5px 2px;
+            }
+            
+            .day-number {
+                font-size: 0.85rem;
+            }
+            
+            .holiday-name-small {
+                font-size: 0.6rem;
+            }
+            
+            .calendar-day-header {
+                font-size: 0.8rem;
+                padding: 8px 2px;
+            }
+        }
+
+        /* Mobile devices (576px to 767px) */
+        @media (min-width: 576px) and (max-width: 767px) {
+            .calendar-day {
+                min-height: 50px;
+                padding: 4px 1px;
+            }
+            
+            .day-number {
+                font-size: 0.8rem;
+            }
+            
+            .holiday-name-small {
+                font-size: 0.55rem;
+            }
+            
+            .calendar-day-header {
+                font-size: 0.75rem;
+                padding: 6px 1px;
+            }
+            
+            .calendar-grid {
+                gap: 1px;
+            }
+        }
+
+        /* Extra small devices (below 576px) */
+        @media (max-width: 575px) {
+            .calendar-day {
+                min-height: 40px;
+                padding: 2px 1px;
+                border-radius: 4px;
+            }
+            
+            .day-number {
+                font-size: 0.75rem;
+                margin-bottom: 0;
+            }
+            
+            .holiday-name-small {
+                font-size: 0.5rem;
+                line-height: 0.9;
+            }
+            
+            .calendar-day-header {
+                font-size: 0.7rem;
+                padding: 4px 1px;
+            }
+            
+            .calendar-grid {
+                gap: 1px;
+            }
+            
+            .holiday-indicator {
+                width: 2px;
+                height: 2px;
+                bottom: 1px;
+            }
+            
+            .calendar-container {
+                padding: 10px;
+            }
+            
+            .calendar-header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+                margin-bottom: 15px;
+            }
+            
+            .calendar-month {
+                font-size: 1.1rem;
+            }
+            
+            .calendar-nav {
+                justify-content: center;
+            }
+            
+            .calendar-nav button {
+                width: 30px;
+                height: 30px;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Very small devices (below 400px) */
+        @media (max-width: 400px) {
+            .calendar-day {
+                min-height: 35px;
+            }
+            
+            .day-number {
+                font-size: 0.7rem;
+            }
+            
+            .holiday-name-small {
+                font-size: 0.45rem;
+            }
+            
+            .calendar-day-header {
+                font-size: 0.65rem;
+            }
+        }
+
+        /* Desktop layout */
+        @media (min-width: 768px) {
+            .calendar-sidebar {
+                display: block;
+            }
+            
+            .mobile-sidebar-toggle {
+                display: none;
+            }
+            
+            .calendar-wrapper {
+                display: grid;
+                grid-template-columns: 250px 1fr;
+                gap: 20px;
+            }
+        }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if request.session.user_role in 'ADMIN,HR,MANAGER,SUPER ADMIN' %}
+<div class="dashboard-header">
+    <h2><i class="fas fa-calendar-alt"></i> Leave Management Dashboard</h2>
+    <p class="mb-0">Overview of employee leave status and requests</p>
+</div>
+{% endif %}
+<!-- Custom Tabs -->
+<ul class="nav nav-tabs nav-tabs-custom" id="leaveTabs" role="tablist">
+  {% if request.session.user_role in 'ADMIN,HR,MANAGER,SUPER ADMIN,BRANCH MANAGER' %}
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
+            <i class="fas fa-chart-line"></i> Dashboard
+        </button>
+    </li>
+   
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="holidays-tab" data-bs-toggle="tab" data-bs-target="#holidays" type="button" role="tab">
+            <i class="fas fa-calendar-day"></i> Holiday Calendar
+        </button>
+    </li>
+  {% else %}
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="holidays-tab" data-bs-toggle="tab" data-bs-target="#holidays" type="button" role="tab">
+            <i class="fas fa-calendar-day"></i> Holiday Calendar
+        </button>
+    </li>
+  {% endif %}
+</ul>
+
+<!-- Tab Content -->
+<div class="tab-content" id="leaveTabsContent">
+    {% if request.session.user_role in 'ADMIN,HR,MANAGER,SUPER ADMIN,BRANCH MANAGER' %}
+    <!-- Dashboard Tab -->
+    <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
+        <!-- Statistics Cards -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stats-card present">
+                    <div class="stats-number">{{ employees_on_leave_today }}</div>
+                    <div class="stats-label">Today's Leave</div>
+                    <small>/{{ today_present_total }}</small>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stats-card planned">
+                    <div class="stats-number">{{ planned_leaves }}</div>
+                    <div class="stats-label">Planned Leaves</div>
+                    <small>/{{ planned_leaves_total }}</small>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stats-card unplanned">
+                    <div class="stats-number">{{ unplanned_leaves }}</div>
+                    <div class="stats-label">Unplanned Leaves</div>
+                    <small>/{{ unplanned_leaves_total }}</small>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stats-card pending">
+                    <div class="stats-number">{{ pending_requests }}</div>
+                    <div class="stats-label">Pending Requests</div>
+                    <small>/{{ pending_requests_total }}</small>
+                </div>
+            </div>
+        </div>
+
+        
+
+        <!-- Employee Leave Table -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-users"></i> Employee's Leave</h5>
+                    </div>
+              <div class="card-body pt-3 pb-3">
+    <form method="get" class="row g-2 align-items-end" id="dateFilterForm">
+        <div class="col-md-3">
+            <label for="from_date" class="form-label">From Date</label>
+            <input type="text" 
+                   id="from_date" 
+                   name="from_date" 
+                   class="form-control datepicker" 
+                   placeholder="DD-MM-YYYY"
+                   value="{{ from_date_display|default:'' }}"
+                   readonly>
+        </div>
+        <div class="col-md-3">
+            <label for="to_date" class="form-label">To Date</label>
+            <input type="text" 
+                   id="to_date" 
+                   name="to_date" 
+                   class="form-control datepicker" 
+                   placeholder="DD-MM-YYYY"
+                   value="{{ to_date_display|default:'' }}"
+                   readonly>
+        </div>
+        <div class="col-md-2">
+            <label for="status" class="form-label">Status</label>
+            <select class="form-select" id="status" name="status" onchange="validateAndSubmitForm()">
+                <option value="">All Status</option>
+                <option value="new" {% if status_filter == 'new' %}selected{% endif %}>New</option>
+                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+                <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+                <option value="withdrawn" {% if status_filter == 'withdrawn' %}selected{% endif %}>Withdrawn</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label for="branch" class="form-label">Branch</label>
+            <select name="branch" id="branch" class="form-select" onchange="validateAndSubmitForm()">
+                <option value="">All Branches</option>
+                {% for region in regions %}
+                    <option value="{{ region.name }}" {% if region.name == request.GET.branch %}selected{% endif %}>
+                        {{ region.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="button" class="btn btn-outline-info" id="todayBtn">
+                <i class="fas fa-calendar-day"></i> Filter
+            </button>
+            <a href="{% url 'leave_dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-redo"></i> Reset
+            </a>
+        </div>
+    </form>
+
+    {% if filter_error %}
+    <div class="alert alert-danger mt-3" role="alert">
+        <i class="fas fa-exclamation-triangle"></i> {{ filter_error }}
+    </div>
+    {% endif %}
+</div>
+
+                    <div class="card-body px-3 pt-3 pb-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="leaveTable">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Leave Type</th>
+                                        <th>Department</th>
+                                        <th>Branch</th>
+                                        <th>Days</th>
+                                        <th>Start</th>
+                                        <th>End</th>
+                                        <th>Status</th>
+                                        {% if request.session.user_role == 'MANAGER' or request.session.user_role == 'SUPER ADMIN' or request.session.user_role == 'ADMIN' or request.session.user_role == 'HR' %}
+                                        <th>Action</th>
+                                       {% endif %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for leave in recent_leaves %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if leave.employee.profile_picture %}
+                                                    <img src="{{ leave.employee.profile_picture.url }}" alt="Profile" class="profile-img me-2">
+                                                {% else %}
+                                                    <div class="profile-img me-2 bg-secondary d-flex align-items-center justify-content-center text-white">
+                                                        {{ leave.employee.first_name|first }}{{ leave.employee.last_name|first }}
+                                                    </div>
+                                                {% endif %}
+                                                <span>{{ leave.employee.first_name }} {{ leave.employee.last_name }}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if leave.leave_type.name == 'casual' %}
+                                                <span class="badge bg-success">Casual Leave</span>
+                                            {% elif leave.leave_type.name == 'maternity' %}
+                                                <span class="badge bg-info">Maternity Leave</span>
+                                            {% elif leave.leave_type.name == 'paternity' %}
+                                                <span class="badge bg-warning">Paternity Leave</span>
+                                            {% else %}
+                                                <span class="badge bg-primary">{{ leave.leave_type }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ leave.employee.department }}</td>
+                                        <td>{{ leave.employee.location }}</td>
+                                        <td>
+                                            {% if leave.days_requested == 0.5 %}
+                                                0.5
+                                            {% else %}
+                                                {% with days_int=leave.days_requested|floatformat:"0" %}
+                                                    {{ days_int }}
+                                                {% endwith %}
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ leave.start_date|date:"d M Y" }}</td>
+                                        <td>{{ leave.end_date|date:"d M Y" }}</td>
+                                        <td>
+                                            {% if leave.status == 'new' %}
+                                                <span class="badge badge-new">New</span>
+                                            {% elif leave.status == 'withdrawn' %}
+                                                <span class="badge badge-withdrawn">Withdrawn</span>
+                                            {% elif leave.status == 'approved' %}
+                                                <span class="badge badge-approved">Approved</span>
+                                            {% elif leave.status == 'rejected' %}
+                                                <span class="badge badge-rejected">Rejected</span>
+                                            {% else %}
+                                                <span class="badge badge-pending">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                         {% if request.session.user_role == 'MANAGER' or request.session.user_role == 'SUPER ADMIN' or request.session.user_role == 'ADMIN' or request.session.user_role == 'HR' %}
+                                        <td>
+                                            
+                                            <div class="dropdown">
+                                                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                    <i class="fas fa-ellipsis-h"></i>
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li>
+                                                        <a class="dropdown-item" href="{% url 'view_leave_detail' leave.id %}">
+                                                            <i class="fas fa-eye"></i> View
+                                                        </a>
+                                                    </li>
+                                                    {% if leave.status == 'pending' or leave.status == 'new' %}
+                                                        <li><a class="dropdown-item text-success" href="#" onclick="approveLeave({{ leave.id }}, 'approve')"><i class="fas fa-check"></i> Approve</a></li>
+                                                        <li><a class="dropdown-item text-danger" href="#" onclick="approveLeave({{ leave.id }}, 'reject')"><i class="fas fa-times"></i> Reject</a></li>
+                                                    {% endif %}
+                                                    <li>
+                                                        <a class="dropdown-item" href="{% url 'edit_leave_details' leave.id %}">
+                                                            <i class="fas fa-edit"></i> Edit / Change Status
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </td>
+                                        {% endif %}
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="8" class="text-center py-4">
+                                            <i class="fas fa-inbox fa-2x text-muted"></i>
+                                            <p class="mt-2 text-muted">No leave applications found</p>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Holiday Calendar Tab -->
+    <div class="tab-pane fade {% if request.session.user_role not in 'ADMIN,HR,MANAGER,SUPER ADMIN' %}show active{% endif %}" id="holidays" role="tabpanel">
+        <!-- Region Selector -->
+        <div class="region-selector mb-3">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold"><i class="fas fa-map-marker-alt"></i> Select Region</label>
+                   <select class="form-select" id="regionFilter" onchange="filterHolidayCalendar()">
+                    <option value="">All Regions</option>
+
+                    {% for region in regions %}
+                    <option value="{{ region.id }}" 
+                        {% if region.id == default_region_id %} selected {% endif %}>
+                        {{ region.name }} ({{ region.code }})
+                    </option>
+                    {% endfor %}
+                </select>
+                </div>
+                <div class="col-md-8 text-end">
+                    <div class="view-toggle d-inline-flex">
+                        <button onclick="switchView('calendar')" id="calendarViewBtn" class="active">
+                            <i class="fas fa-calendar"></i> Calendar View
+                        </button>
+                        <button onclick="switchView('list')" id="listViewBtn">
+                            <i class="fas fa-list"></i> List View
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar View with Sidebar -->
+        <div id="calendarView" class="calendar-wrapper">
+            <!-- Left Sidebar -->
+            <div class="calendar-sidebar">
+                {% if request.session.user_role in 'ADMIN,HR,MANAGER,SUPER ADMIN' %}
+                <button class="add-event-btn" onclick="showAddHolidayModal()">
+                    <i class="fas fa-plus"></i> Add Holiday
+                </button>
+                {% endif %}
+   
+                <div class="draggable-events-title">Holiday Types</div>
+
+                <div class="event-item casual">
+                    <span class="event-icon" style="background: #28a745;"></span>
+                    <span><i class="fas fa-umbrella-beach"></i> Optional Holiday</span>
+                </div>
+
+                <div class="event-item sick">
+                    <span class="event-icon" style="background: #ffc107;"></span>
+                    <span><i class="fas fa-briefcase-medical"></i> State Holiday</span>
+                </div>
+
+                <div class="event-item annual">
+                    <span class="event-icon" style="background: #007bff;"></span>
+                    <span><i class="fas fa-calendar-check"></i> National Holiday</span>
+                </div>
+
+                <div class="event-item meeting">
+                    <span class="event-icon" style="background: #d85ddc;"></span>
+                    <span><i class="fas fa-users"></i> Company Meeting</span>
+                </div>
+
+                <div class="mt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong>Total Holidays:</strong>
+                        <span id="holidayCount" class="badge bg-primary">{{ holidays|length }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Calendar -->
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <div class="calendar-month" id="currentMonth">October 2025</div>
+                    <div class="calendar-nav">
+                        <button onclick="changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+                        <button onclick="goToToday()">Today</button>
+                        <button onclick="changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                
+                <div class="calendar-grid">
+                    <div class="calendar-day-header">Sun</div>
+                    <div class="calendar-day-header">Mon</div>
+                    <div class="calendar-day-header">Tue</div>
+                    <div class="calendar-day-header">Wed</div>
+                    <div class="calendar-day-header">Thu</div>
+                    <div class="calendar-day-header">Fri</div>
+                    <div class="calendar-day-header">Sat</div>
+                </div>
+                <div class="calendar-grid" id="calendarDays"></div>
+            </div>
+        </div>
+
+        <!-- List View -->
+        <div id="listView" style="display: none;">
+            <div id="holidaysList">
+                {% for region in regions %}
+                    {% for holiday in region.holidays.all %}
+                    <div class="holiday-list-item" data-region="{{ region.id }}" data-date="{{ holiday.date|date:'Y-m-d' }}">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3 text-center" style="min-width: 80px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #667eea;">{{ holiday.date|date:"d" }}</div>
+                                <div style="color: #6c757d;">{{ holiday.date|date:"M Y" }}</div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1">{{ holiday.name }}</h5>
+                                <div class="mb-2">
+                                    <span class="region-badge">
+                                        <i class="fas fa-map-marker-alt"></i> {{ region.name }}
+                                    </span>
+                                    {% if holiday.is_optional %}
+                                        <span class="optional-badge">
+                                            <i class="fas fa-star"></i> Optional
+                                        </span>
+                                    {% else %}
+                                        <span class="holiday-type-badge">
+                                            <i class="fas fa-sun"></i> {{ holiday.holiday_type|default:"General Holiday" }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                {% if holiday.description %}
+                                <p class="text-muted mb-0 small">{{ holiday.description }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted">{{ holiday.date|date:"l" }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% empty %}
+                <div class="text-center py-5">
+                    <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Holidays Configured</h5>
+                    <p class="text-muted">Please contact HR to add regional holidays</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Holiday Modal -->
+<div class="modal fade" id="addHolidayModal" tabindex="-1" aria-labelledby="addHolidayModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-primary">
+                <h5 class="modal-title" id="addHolidayModalLabel">
+                    <i class="fas fa-plus-circle"></i> Add New Holiday
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'add_holiday' %}" id="addHolidayForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="holidayRegion" class="form-label fw-bold">
+                            <i class="fas fa-map-marker-alt"></i> Region *
+                        </label>
+                        <select class="form-select" id="holidayRegion" name="region" required>
+                            <option value="">Select Region</option>
+                            {% for region in regions %}
+                            <option value="{{ region.id }}">{{ region.name }} ({{ region.code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="holidayName" class="form-label fw-bold">
+                            <i class="fas fa-calendar-day"></i> Holiday Name *
+                        </label>
+                        <input type="text" class="form-control" id="holidayName" name="holiday_name" 
+                               placeholder="e.g., Diwali, Christmas" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="holidayType" class="form-label fw-bold">
+                            <i class="fas fa-calendar-day"></i> Holiday Type*
+                        </label>
+                        <select class="form-control" id="holidayType" name="holiday_type" required>
+                            <option value="">Select Type</option>
+                            <option value="National Holiday">National Holiday</option>
+                            <option value="State Holiday">State Holiday</option>
+                            <option value="Company Holiday">Company Holiday</option>
+                            <option value="Optional Holiday">Optional Holiday</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="holidayDate" class="form-label fw-bold">
+                            <i class="fas fa-calendar"></i> Date *
+                        </label>
+                        <input type="date" class="form-control" id="holidayDate" name="holiday_date" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="holidayDescription" class="form-label fw-bold">
+                            <i class="fas fa-align-left"></i> Description
+                        </label>
+                        <textarea class="form-control" id="holidayDescription" name="holiday_description" 
+                                  rows="3" placeholder="Brief description of the holiday (optional)"></textarea>
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="isOptional" name="is_optional">
+                        <label class="form-check-label" for="isOptional">
+                            <i class="fas fa-star text-warning"></i> This is an optional holiday
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check"></i> Add Holiday
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- View Holiday Modal -->
+<div class="modal fade" id="viewHolidayModal" tabindex="-1" aria-labelledby="viewHolidayModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-info">
+                <h5 class="modal-title" id="viewHolidayModalLabel">
+                    <i class="fas fa-info-circle"></i> Holiday Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="holidayDetailsContent">
+                <!-- Content will be dynamically loaded -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ============================================
+// TAB STATE MANAGEMENT - NO TRANSITION VERSION
+// ============================================
+$(document).ready(function() {
+
+
+        // Initialize datepicker
+    $('.datepicker').datepicker({
+        format: 'dd-mm-yyyy',
+        autoclose: true,
+        todayHighlight: true
+    });
+
+    // Auto-submit form when date changes
+    $('.datepicker').on('changeDate', function() {
+        // Small delay to ensure both dates are updated
+        setTimeout(function() {
+            validateAndSubmitForm();
+        }, 300);
+    });
+
+    // Today button functionality
+    $('#todayBtn').on('click', function() {
+        const today = new Date();
+        const formattedDate = formatDate(today);
+        
+        $('#from_date').val(formattedDate);
+        $('#to_date').val(formattedDate);
+        
+        // Auto-submit after setting dates
+        setTimeout(function() {
+            validateAndSubmitForm();
+        }, 100);
+    });
+
+    // Auto-apply today's filter when page loads with no dates
+    function autoApplyTodayFilter() {
+        const fromDate = $('#from_date').val();
+        const toDate = $('#to_date').val();
+        
+        // If no dates are selected, automatically apply today's filter
+        if (!fromDate && !toDate) {
+            const today = new Date();
+            const formattedDate = formatDate(today);
+            
+            $('#from_date').val(formattedDate);
+            $('#to_date').val(formattedDate);
+            
+            // Auto-submit the form to show today's data
+            setTimeout(function() {
+                validateAndSubmitForm();
+            }, 100);
+        }
+    }
+
+    // Validate and submit form
+    function validateAndSubmitForm() {
+        const fromDate = $('#from_date').val();
+        const toDate = $('#to_date').val();
+        const status = $('#status').val();
+        const branch = $('#branch').val();
+        // If both dates are empty, don't submit
+        if (!fromDate && !toDate  && !status && !branch) {
+            return;
+        }
+        
+        if (fromDate && toDate) {
+            const from = parseDate(fromDate);
+            const to = parseDate(toDate);
+            
+            if (from > to) {
+                showAlert('From date cannot be greater than To date', 'error');
+                return false;
+            }
+        }
+        
+        // Submit the form
+        $('#dateFilterForm').submit();
+    }
+
+    // Format date as DD-MM-YYYY
+    function formatDate(date) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+    }
+
+    // Parse DD-MM-YYYY date string to Date object
+    function parseDate(dateString) {
+        const parts = dateString.split('-');
+        if (parts.length === 3) {
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const year = parseInt(parts[2], 10);
+            return new Date(year, month, day);
+        }
+        return null;
+    }
+
+    // Call auto-apply on page load
+    autoApplyTodayFilter();
+
+    // ============================================
+    // REST OF YOUR EXISTING CODE...
+    // ============================================
+    // Function to activate tab immediately
+    function activateTab(tabId) {
+        const tabElement = document.getElementById(tabId);
+        if (tabElement) {
+            // Hide all tab panes first
+            $('.tab-pane').removeClass('show active');
+           
+            // Deactivate all tabs
+            $('button[data-bs-toggle="tab"]').removeClass('active');
+           
+            // Activate the target tab
+            $(tabElement).addClass('active');
+            const targetPane = $(tabElement).attr('data-bs-target');
+            $(targetPane).addClass('show active');
+           
+            console.log('Activated tab:', tabId);
+           
+            // Initialize components for the active tab
+            initializeTabComponents(tabId);
+        }
+    }
+   
+    // Initialize components based on active tab
+    function initializeTabComponents(tabId) {
+        if (tabId === 'dashboard-tab') {
+            setTimeout(function() {
+                initializeLeaveTable();
+            }, 300);
+        } else if (tabId === 'holidays-tab') {
+            setTimeout(function() {
+                renderCalendar();
+                updateHolidayCount();
+            }, 300);
+        }
+    }
+   
+    // Check for saved active tab on page load
+    const savedTab = localStorage.getItem('activeLeaveTab');
+    const defaultTab = {% if request.session.user_role in 'ADMIN,HR,MANAGER,SUPER ADMIN' %}'dashboard-tab'{% else %}'holidays-tab'{% endif %};
+    const initialTab = savedTab || defaultTab;
+   
+    console.log('Initial tab:', initialTab);
+   
+    // Activate the correct tab immediately - no delay
+    activateTab(initialTab);
+   
+    // Save active tab to localStorage when a tab is shown
+    $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
+        const activeTab = $(e.target).attr('id');
+        localStorage.setItem('activeLeaveTab', activeTab);
+        console.log('Saved active tab:', activeTab);
+       
+        // Initialize components for the newly activated tab
+        initializeTabComponents(activeTab);
+    });
+   
+    // ============================================
+    // DATATABLE INITIALIZATION
+    // ============================================
+    let leaveTable = null;
+   
+    function initializeLeaveTable() {
+        console.log('Initializing DataTable...');
+       
+        const table = $('#leaveTable');
+        if (table.length === 0) {
+            console.log('Leave table not found');
+            return;
+        }
+       
+        // Check if we have actual data rows
+        const hasRealData = table.find('tbody tr').length > 0 &&
+                           !table.find('tbody tr td[colspan]').length;
+       
+        if (!hasRealData) {
+            console.log('No real data rows found, skipping DataTable');
+            table.addClass('table table-striped table-bordered table-hover');
+            return;
+        }
+       
+        // Destroy existing instance if any
+        if (leaveTable && $.fn.DataTable.isDataTable(table)) {
+            try {
+                leaveTable.destroy(true);
+            } catch (e) {
+                console.log('Error destroying old DataTable:', e);
+            }
+        }
+       
+        try {
+            leaveTable = table.DataTable({
+                destroy: true,
+                paging: true,
+                searching: true,
+                ordering: true,
+                info: true,
+                responsive: true,
+                autoWidth: false,
+                scrollX : true,
+                pageLength: 10,
+                dom: 'lftip',
+                language: {
+                    search: "Search:",
+                    lengthMenu: "Show _MENU_ entries",
+                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                    infoEmpty: "No entries available",
+                    zeroRecords: "No matching records found"
+                }
+            });
+           
+            console.log('DataTable initialized successfully');
+           
+        } catch (error) {
+            console.error('DataTable initialization failed, using basic table styling:', error);
+            table.addClass('table table-striped table-bordered table-hover');
+        }
+    }
+   
+    // ============================================
+    // AJAX FORM SUBMISSION FOR ADDING HOLIDAY
+    // ============================================
+    $('#addHolidayForm').on('submit', function(e) {
+        e.preventDefault();
+       
+        const form = $(this);
+        const submitBtn = form.find('button[type="submit"]');
+        const originalText = submitBtn.html();
+       
+        console.log('Submitting holiday form...');
+        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Adding...');
+       
+        $.ajax({
+            type: 'POST',
+            url: form.attr('action'),
+            data: form.serialize(),
+            success: function(response) {
+                console.log('Holiday added successfully');
+                showAlert('Holiday added successfully!', 'success');
+                $('#addHolidayModal').modal('hide');
+                form[0].reset();
+               
+                // Ensure we stay on holidays tab after reload
+                localStorage.setItem('activeLeaveTab', 'holidays-tab');
+                console.log('Set active tab to holidays-tab for reload');
+               
+                setTimeout(function() {
+                    window.location.reload();
+                }, 1000);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error adding holiday:', error, xhr.responseText);
+                showAlert('Error adding holiday. Please try again.', 'error');
+                submitBtn.prop('disabled', false).html(originalText);
+            }
+        });
+    });
+});
+
+// Function to show alert messages
+function showAlert(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+   
+    $('.alert-dismissible').remove();
+   
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+            <strong>${type === 'success' ? 'Success!' : 'Error!'}</strong> ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+   
+    $('body').append(alertHtml);
+   
+    setTimeout(function() {
+        $('.alert-dismissible').alert('close');
+    }, 5000);
+}
+
+// Rest of your functions remain exactly the same...
+// ============================================
+// LEAVE APPROVAL FUNCTIONALITY
+// ============================================
+function approveLeave(leaveId, action) {
+    const message = action === 'approve' ?
+        'Are you sure you want to approve this leave application?' :
+        'Are you sure you want to reject this leave application?';
+   
+    if (confirm(message)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/leave/approve/${leaveId}/`;
+       
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+       
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = action;
+        form.appendChild(actionInput);
+       
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// ============================================
+// HOLIDAY CALENDAR FUNCTIONALITY
+// ============================================
+const holidayTypeColors = {
+    'National Holiday': 'holiday-national',
+    'State Holiday': 'holiday-state',
+    'Company Holiday': 'holiday-company',
+    'Optional Holiday': 'holiday-optional'
+};
+
+let holidays = [
+    {% for region in regions %}
+        {% for holiday in region.holidays.all %}
+        {
+            name: "{{ holiday.name }}",
+            date: "{{ holiday.date|date:'Y-m-d' }}",
+            region: "{{ region.id }}",
+            regionName: "{{ region.name }}",
+            isOptional: {{ holiday.is_optional|lower }},
+            holidayType: "{{ holiday.holiday_type|default:'General Holiday' }}",
+            description: "{{ holiday.description|default:'' }}"
+        },
+        {% endfor %}
+    {% endfor %}
+];
+
+let currentDate = new Date();
+let selectedRegion = '';
+
+function renderCalendar() {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+   
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"];
+   
+    document.getElementById('currentMonth').textContent = `${monthNames[month]} ${year}`;
+   
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const prevLastDay = new Date(year, month, 0);
+   
+    const firstDayIndex = firstDay.getDay();
+    const lastDayDate = lastDay.getDate();
+    const prevLastDayDate = prevLastDay.getDate();
+   
+    const calendarDays = document.getElementById('calendarDays');
+    calendarDays.innerHTML = '';
+   
+    const today = new Date();
+   
+    // Previous month days
+    for (let i = firstDayIndex - 1; i >= 0; i--) {
+        const day = prevLastDayDate - i;
+        const dayEl = createDayElement(day, true, null);
+        calendarDays.appendChild(dayEl);
+    }
+   
+    // Current month days
+    for (let day = 1; day <= lastDayDate; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
+        const dayHolidays = holidays.filter(h => h.date === dateStr && (!selectedRegion || h.region === selectedRegion));
+       
+        const dayEl = createDayElement(day, false, dayHolidays, isToday);
+        calendarDays.appendChild(dayEl);
+    }
+   
+    // Next month days
+    const remainingDays = 42 - (firstDayIndex + lastDayDate);
+    for (let day = 1; day <= remainingDays; day++) {
+        const dayEl = createDayElement(day, true, null);
+        calendarDays.appendChild(dayEl);
+    }
+}
+
+function createDayElement(day, isOtherMonth, dayHolidays, isToday = false) {
+    const dayEl = document.createElement('div');
+    dayEl.className = 'calendar-day';
+   
+    if (isOtherMonth) {
+        dayEl.classList.add('other-month');
+    }
+    if (isToday) {
+        dayEl.classList.add('today');
+    }
+    if (dayHolidays && dayHolidays.length > 0) {
+        dayEl.classList.add('has-holiday');
+        const primaryHoliday = dayHolidays[0];
+        const colorClass = holidayTypeColors[primaryHoliday.holidayType] || 'holiday-default';
+        dayEl.classList.add(colorClass);
+        dayEl.title = dayHolidays.map(h => `${h.name} (${h.regionName})`).join('\n');
+    }
+   
+    dayEl.innerHTML = `
+        <div class="day-number">${day}</div>
+        ${dayHolidays && dayHolidays.length > 0 ? `<div class="holiday-name-small">${dayHolidays[0].name}</div>` : ''}
+        ${dayHolidays && dayHolidays.length > 1 ? '<div class="holiday-indicator"></div>' : ''}
+    `;
+   
+    if (dayHolidays && dayHolidays.length > 0) {
+        dayEl.addEventListener('click', () => showHolidayDetails(dayHolidays));
+    }
+   
+    return dayEl;
+}
+
+function showHolidayDetails(dayHolidays) {
+    const content = dayHolidays.map(h => {
+        const typeColor = {
+            'National Holiday': '#007bff',
+            'State Holiday': '#ffc107',
+            'Company Holiday': '#d85ddc',
+            'Optional Holiday': '#28a745'
+        }[h.holidayType] || '#6c757d';
+       
+        return `
+            <div class="mb-3 p-3" style="border-left: 4px solid ${typeColor}; background: #f8f9fa; border-radius: 5px;">
+                <h6 class="mb-1"><strong>${h.name}</strong></h6>
+                <p class="mb-1 text-muted small">
+                    <i class="fas fa-map-marker-alt"></i> ${h.regionName}
+                </p>
+                <span class="badge" style="background-color: ${typeColor}; color: white;">
+                    ${h.holidayType}
+                </span>
+                ${h.isOptional ? '<span class="optional-badge ms-2">Optional</span>' : ''}
+                ${h.description ? `<p class="mt-2 mb-0 small text-muted">${h.description}</p>` : ''}
+            </div>
+        `;
+    }).join('');
+   
+    document.getElementById('holidayDetailsContent').innerHTML = content;
+    const modal = new bootstrap.Modal(document.getElementById('viewHolidayModal'));
+    modal.show();
+}
+
+function changeMonth(direction) {
+    currentDate.setMonth(currentDate.getMonth() + direction);
+    renderCalendar();
+}
+
+function goToToday() {
+    currentDate = new Date();
+    renderCalendar();
+}
+
+function switchView(view) {
+    const calendarView = document.getElementById('calendarView');
+    const listView = document.getElementById('listView');
+    const calendarBtn = document.getElementById('calendarViewBtn');
+    const listBtn = document.getElementById('listViewBtn');
+   
+    if (view === 'calendar') {
+        calendarView.style.display = 'grid';
+        listView.style.display = 'none';
+        calendarBtn.classList.add('active');
+        listBtn.classList.remove('active');
+    } else {
+        calendarView.style.display = 'none';
+        listView.style.display = 'block';
+        calendarBtn.classList.remove('active');
+        listBtn.classList.add('active');
+    }
+}
+
+function filterHolidayCalendar() {
+    selectedRegion = document.getElementById('regionFilter').value;
+    renderCalendar();
+    updateHolidayCount();
+}
+
+function updateHolidayCount() {
+    const holidayItems = document.querySelectorAll('.holiday-list-item');
+    let visibleCount = 0;
+   
+    holidayItems.forEach(item => {
+        if (selectedRegion === '' || item.dataset.region === selectedRegion) {
+            item.style.display = '';
+            visibleCount++;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+   
+    document.getElementById('holidayCount').textContent = visibleCount;
+}
+
+function showAddHolidayModal() {
+    const modal = new bootstrap.Modal(document.getElementById('addHolidayModal'));
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('holidayDate').setAttribute('min', today);
+   
+    {% if default_region_id %}
+    document.getElementById('holidayRegion').value = "{{ default_region_id }}";
+    {% endif %}
+   
+    modal.show();
+}
+</script>
+{% endblock %}

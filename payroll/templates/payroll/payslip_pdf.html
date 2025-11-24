@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAYSLIP {{ payslip.payroll_run.get_month_name|upper }} {{ payslip.payroll_run.payroll_year }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            padding: 20px;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #f9f9f9;
+        }
+        
+        .payslip-container {
+            background-color: white;
+            padding: 25px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 5px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 15px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .header h2 {
+            font-size: 18px;
+            color: #34495e;
+            margin-bottom: 10px;
+        }
+        
+        .company-info {
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 5px;
+        }
+        
+        .employee-section {
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            background-color: #2c3e50;
+            color: white;
+            padding: 8px 12px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            border-radius: 3px;
+        }
+        
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        
+        .info-table td {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            vertical-align: top;
+        }
+        
+        .info-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            width: 30%;
+            background-color: #ecf0f1;
+        }
+        
+        .salary-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .days-info {
+            width: 48%;
+        }
+        
+        .earnings-deductions {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .earnings, .deductions {
+            width: 48%;
+        }
+        
+        .amount-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .amount-table th, .amount-table td {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        
+        .amount-table th {
+            background-color: #ecf0f1;
+            font-weight: bold;
+        }
+        
+        .amount-value {
+            text-align: right;
+            font-weight: bold;
+        }
+        
+        .total-row {
+            background-color: #e8f4f8;
+            font-weight: bold;
+        }
+        
+        .summary-section {
+            margin-top: 20px;
+            border-top: 2px solid #2c3e50;
+            padding-top: 15px;
+        }
+        
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .summary-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .summary-value {
+            text-align: right;
+            font-weight: bold;
+        }
+        
+        .net-salary {
+            font-size: 18px;
+            color: #2c3e50;
+            background-color: #e8f4f8;
+        }
+        
+        .footer {
+            margin-top: 25px;
+            text-align: center;
+            font-size: 12px;
+            color: #7f8c8d;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+        
+        .note {
+            font-style: italic;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        
+        .logo-placeholder {
+            height: 60px;
+            background-color: #f1f1f1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            border: 1px dashed #ccc;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="payslip-container">
+        <div class="header">
+            <div class="logo-placeholder">
+                HR Management System
+            </div>
+            <h1>PAYSLIP {{ payslip.payroll_run.get_month_name|upper }} {{ payslip.payroll_run.payroll_year }}</h1>
+            <h2>HR MANAGEMENT SYSTEM</h2>
+            <div class="company-info">
+                Your Company Address Here<br>
+                City, State - PIN CODE
+            </div>
+        </div>
+        
+        <div class="employee-section">
+            <div class="section-title">{{ payslip.employee.first_name|upper }} {{ payslip.employee.last_name|upper }}</div>
+            
+            <table class="info-table">
+                <tr>
+                    <td class="info-label">Employee Number</td>
+                    <td>{{ payslip.employee.employee_id }}</td>
+                    <td class="info-label">Date Joined</td>
+                    <td>{{ payslip.employee.date_of_joining|date:"d M Y" }}</td>
+                </tr>
+                <tr>
+                    <td class="info-label">Department</td>
+                    <td>{{ payslip.employee.department }}</td>
+                    <td class="info-label">Sub Department</td>
+                    <td>N/A</td>
+                </tr>
+                <tr>
+                    <td class="info-label">Designation</td>
+                    <td>{{ payslip.employee.designation }}</td>
+                    <td class="info-label">Payment Mode</td>
+                    <td>Bank Transfer</td>
+                </tr>
+                <tr>
+                    <td class="info-label">Bank</td>
+                    <td>{{ payslip.employee.bank_name|default:"N/A" }}</td>
+                    <td class="info-label">Bank IFSC</td>
+                    <td>{{ payslip.employee.ifsc_code|default:"N/A" }}</td>
+                </tr>
+                <tr>
+                    <td class="info-label">Bank Account</td>
+                    <td>{{ payslip.employee.account_number|default:"N/A" }}</td>
+                    <td class="info-label">UAN</td>
+                    <td>N/A</td>
+                </tr>
+                <tr>
+                    <td class="info-label">PF Number</td>
+                    <td>N/A</td>
+                    <td class="info-label">ESI Number</td>
+                    <td>N/A</td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="salary-details">
+            <div class="days-info">
+                <div class="section-title">SALARY DETAILS</div>
+                <table class="info-table">
+                    <tr>
+                        <td class="info-label">Actual Payable Days</td>
+                        <td>{{ payslip.paid_days }}</td>
+                    </tr>
+                    <tr>
+                        <td class="info-label">Total Working Days</td>
+                        <td>{{ payslip.working_days }}</td>
+                    </tr>
+                    <tr>
+                        <td class="info-label">Loss Of Pay Days</td>
+                        <td>{{ payslip.leave_days }}</td>
+                    </tr>
+                    <tr>
+                        <td class="info-label">Days Payable</td>
+                        <td>{{ payslip.paid_days }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="earnings-deductions">
+            <div class="earnings">
+                <div class="section-title">EARNINGS</div>
+                <table class="amount-table">
+                    {% for component in earning_components %}
+                    <tr>
+                        <td>{{ component.component.name }}</td>
+                        <td class="amount-value">₹{{ component.amount }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td>No Earnings</td>
+                        <td class="amount-value">₹0.00</td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="total-row">
+                        <td><strong>Total Earnings (A)</strong></td>
+                        <td class="amount-value"><strong>₹{{ payslip.gross_earnings }}</strong></td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div class="deductions">
+                <div class="section-title">DEDUCTIONS</div>
+                <table class="amount-table">
+                    {% for component in deduction_components %}
+                    <tr>
+                        <td>{{ component.component.name }}</td>
+                        <td class="amount-value">₹{{ component.amount }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td>No Deductions</td>
+                        <td class="amount-value">₹0.00</td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="total-row">
+                        <td><strong>Total Deductions (B)</strong></td>
+                        <td class="amount-value"><strong>₹{{ payslip.total_deductions }}</strong></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="summary-section">
+            <table class="summary-table">
+                <tr>
+                    <td>Net Salary Payable (A - B)</td>
+                    <td class="summary-value">₹{{ payslip.net_salary }}</td>
+                </tr>
+                <tr>
+                    <td>Net Salary in words</td>
+                    <td class="summary-value">{{ net_salary_words }}</td>
+                </tr>
+                <tr>
+                    <td>Basic Salary</td>
+                    <td class="summary-value">₹{{ payslip.basic_salary }}</td>
+                </tr>
+                <tr class="net-salary">
+                    <td><strong>Total Cost to Company (CTC)</strong></td>
+                    <td class="summary-value"><strong>₹{{ payslip.gross_earnings }}</strong></td>
+                </tr>
+                <tr>
+                    <td>CTC in words</td>
+                    <td class="summary-value">{{ ctc_words }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="footer">
+            <div class="note">Note: All amounts displayed in this payslip are in INR</div>
+            <p>*This is computer generated statement, does not require signature.</p>
+            <p>Generated on: {{ payslip.generated_at|date:"d M Y H:i" }}</p>
+        </div>
+    </div>
+</body>
+</html>

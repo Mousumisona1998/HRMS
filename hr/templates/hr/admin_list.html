@@ -1,0 +1,355 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Management - HR System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center page-header">
+    <div class="d-flex align-items-center">
+        <div class="header-icon me-3">
+            <i class="fas fa-user-tie text-primary"></i>
+        </div>
+        <div>
+            <h1 class="h2 mb-1">Admin Management</h1>
+            <p class="text-muted mb-0">Manage system administrators and their permissions</p>
+        </div>
+    </div>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <span class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-calendar me-1"></i> {{ today_date|date:"M d, Y"|default:"Today" }}
+            </span>
+        </div>
+        <a href="{% url 'admin_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-1"></i> Add New Admin
+        </a>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted mb-2">Total Admins</h6>
+                        <h2 class="mb-0 text-primary">{{ admins.count }}</h2>
+                    </div>
+                    <div class="stat-icon bg-primary bg-opacity-10">
+                        <i class="fas fa-user-tie text-primary"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="text-success small">
+                        <i class="fas fa-caret-up me-1"></i> All system administrators
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted mb-2">Active Admins</h6>
+                        <h2 class="mb-0 text-success">{{ active_admins_count }}</h2>
+                    </div>
+                    <div class="stat-icon bg-success bg-opacity-10">
+                        <i class="fas fa-user-check text-success"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="text-success small">
+                        <i class="fas fa-circle me-1"></i> Currently active
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted mb-2">Inactive Admins</h2>
+                        <h2 class="mb-0 text-warning">{{ inactive_admins_count }}</h2>
+                    </div>
+                    <div class="stat-icon bg-warning bg-opacity-10">
+                        <i class="fas fa-user-slash text-warning"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="text-warning small">
+                        <i class="fas fa-circle me-1"></i> Suspended access
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted mb-2">Admin Roles</h6>
+                        <h2 class="mb-0 text-info">{{ roles_count }}</h2>
+                    </div>
+                    <div class="stat-icon bg-info bg-opacity-10">
+                        <i class="fas fa-shield-alt text-info"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="text-info small">
+                        <i class="fas fa-tag me-1"></i> Different roles
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Admin List Card -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 border-bottom">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-list me-2 text-primary"></i>Administrator List
+            </h5>
+            <div class="d-flex gap-2">
+                <div class="input-group input-group-sm" style="width: 250px;">
+                    <span class="input-group-text bg-light border-end-0">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                    <input type="text" class="form-control border-start-0" placeholder="Search admins..." id="searchInput">
+                </div>
+                <button class="btn btn-sm btn-outline-secondary" id="filterBtn">
+                    <i class="fas fa-filter me-1"></i>Filter
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card-body p-0">
+        {% if admins %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="adminsTable">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">#</th>
+                        <th>Administrator</th>
+                        <th>Contact</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for admin in admins %}
+                    <tr class="align-middle">
+                        <td class="ps-4 fw-semibold text-muted">{{ forloop.counter }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm me-3">
+                                    <div class="avatar-title bg-primary bg-opacity-10 text-primary rounded-circle">
+                                        <i class="fas fa-user-tie"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">{{ admin.name }}</h6>
+                                    <small class="text-muted">ID: {{ admin.admin_id }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <div class="mb-1">
+                                    <i class="fas fa-envelope me-2 text-muted"></i>
+                                    <small>{{ admin.email }}</small>
+                                </div>
+                                {% if admin.phone %}
+                                <div>
+                                    <i class="fas fa-phone me-2 text-muted"></i>
+                                    <small>{{ admin.phone }}</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge 
+                                {% if admin.role == 'Super Admin' %}bg-danger
+                                {% elif admin.role == 'Admin' %}bg-primary
+                                {% elif admin.role == 'HR Admin' %}bg-success
+                                {% else %}bg-secondary{% endif %}">
+                                {{ admin.role }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge badge-pill 
+                                {% if admin.status == 'active' %}bg-success
+                                {% else %}bg-danger{% endif %}">
+                                <i class="fas fa-circle me-1" style="font-size: 6px;"></i>
+                                {{ admin.status|title }}
+                            </span>
+                        </td>
+                        <td>
+                            <small class="text-muted" data-bs-toggle="tooltip" title="{{ admin.created_at|date:'M d, Y H:i' }}">
+                                {{ admin.created_at|timesince }} ago
+                            </small>
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'admin_update' admin.pk %}" class="btn btn-sm btn-outline-primary" 
+                                   data-bs-toggle="tooltip" title="Edit Admin">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'admin_delete' admin.pk %}" class="btn btn-sm btn-outline-danger" 
+                                   data-bs-toggle="tooltip" title="Delete Admin">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <div class="empty-state">
+                <i class="fas fa-user-tie text-muted mb-3" style="font-size: 4rem;"></i>
+                <h4 class="text-muted">No Administrators Found</h4>
+                <p class="text-muted mb-4">Get started by adding your first system administrator to manage the HR system.</p>
+                <a href="{% url 'admin_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-2"></i>Add First Administrator
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    {% if admins %}
+    <div class="card-footer bg-white py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="text-muted small">
+                Showing <strong>{{ admins.count }}</strong> administrator{{ admins.count|pluralize }}
+            </div>
+            <nav aria-label="Admin pagination">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#">Previous</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.stat-card {
+    border: none;
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.avatar-sm {
+    width: 40px;
+    height: 40px;
+}
+
+.avatar-title {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.empty-state {
+    padding: 3rem 2rem;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 1rem 0.75rem;
+}
+
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.header-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(13, 110, 253, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize tooltips
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+});
+
+// Simple search functionality
+document.getElementById('searchInput').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('#adminsTable tbody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

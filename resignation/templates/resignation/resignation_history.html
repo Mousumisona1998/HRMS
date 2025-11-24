@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Resignation History - HR System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h2 mb-0"> My Resignation History</h1>
+                <p class="text-muted mb-0">View your previous resignation requests</p>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'resignation:dashboard' %}" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+                <!-- <a href="{% url 'resignation:submit_resignation' %}" class="btn btn-primary">
+                    <i class="fas fa-paper-plane me-2"></i>New Resignation
+                </a> -->
+            </div>
+        </div>
+    </div>
+
+    <div class="custom-card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Resignation History</h5>
+        </div>
+        <div class="card-body">
+            {% if resignations %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Resignation Date</th>
+                            <th>Last Working Date</th>
+                            <th>Notice Period</th>
+                            <th>Status</th>
+                            <th>Withdrawn</th>
+                            <th>Feedback</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for resignation in resignations %}
+                        <tr>
+                            <td>{{ resignation.resignation_date }}</td>
+                            <td>{{ resignation.last_working_date }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ resignation.actual_notice_days }} days</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{% if resignation.status == 'accepted' %}success{% elif resignation.status == 'rejected' %}danger{% elif resignation.status == 'withdrawn' %}secondary{% else %}warning{% endif %}">
+                                    {{ resignation.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if resignation.withdrawal_requested %}
+                                <span class="badge bg-info">Yes</span>
+                                {% else %}
+                                <span class="badge bg-secondary">No</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if resignation.feedback %}
+                                <small class="text-muted">{{ resignation.feedback|truncatewords:5 }}</small>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'resignation:resignation_detail' resignation.id %}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No resignation history found</h5>
+                <p class="text-muted">You haven't submitted any resignation requests yet.</p>
+                <a href="{% url 'resignation:submit_resignation' %}" class="btn btn-primary">
+                    <i class="fas fa-paper-plane me-2"></i>Submit First Resignation
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Resignation Policy Reminder -->
+    <div class="custom-card mt-4">
+        <div class="card-header">
+            <h6 class="card-title mb-0"> Resignation Policy Reminder</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Submission Rules</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Only one active resignation allowed</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> 30-day cooldown after withdrawal</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Manager approval required</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>Current Status</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-info-circle text-primary me-2"></i> Total submissions: {{ resignations|length }}</li>
+                        <li class="mb-2"><i class="fas fa-clock text-warning me-2"></i> Active resignations: {{ resignations|length }}</li>
+                        <li class="mb-2"><i class="fas fa-undo text-info me-2"></i> Withdrawn: {{ resignations|length }}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

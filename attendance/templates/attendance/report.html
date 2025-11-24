@@ -1,0 +1,465 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance Report - HR System{% endblock %}
+
+{% block content %}
+<!-- Include DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+
+<style>
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+        .datatable-controls .row {
+            flex-direction: column;
+        }
+        
+        .datatable-controls .col-md-3,
+        .datatable-controls .col-md-2 {
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+            margin-bottom: 10px;
+        }
+        
+        .datatable-controls .d-flex {
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+        }
+        
+        .header-actions {
+            flex-direction: column;
+            gap: 15px;
+            align-items: flex-start !important;
+        }
+        
+        .header-actions .btn {
+            width: 100%;
+            text-align: center;
+        }
+        
+        /* Ensure DataTable controls are visible on mobile */
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            float: none;
+            text-align: left;
+            margin-bottom: 10px;
+        }
+        
+        .dataTables_wrapper .dataTables_length select,
+        .dataTables_wrapper .dataTables_filter input {
+            width: 100%;
+            margin-left: 0;
+        }
+    }
+
+    @media (max-width: 575px) {
+        .table-responsive {
+           
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Ensure table has minimum width for horizontal scrolling */
+        #attendanceReportTable {
+            min-width: 1000px;
+        }
+    }
+
+    /* Keep your existing styles */
+    .text-danger i {
+        color: #e74c3c;
+        font-size: 1.1rem;
+        transition: transform 0.2s ease;
+    }
+
+    .text-danger i:hover {
+        transform: scale(1.2);
+    }
+
+    .custom-card {
+        background: #ffffff;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        overflow: hidden;
+    }
+
+    .table-responsive {
+        border-radius: 12px;
+        overflow: hidden;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        overflow-x: auto;
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center page-header" style="margin-bottom: 20px;">
+
+    <!-- LEFT SIDE: Title -->
+    <div>
+        <h2><i class="fas fa-chart-bar"></i> Attendance Report</h2>
+        <p class="text-muted">View and manage employee attendance records</p>
+    </div>
+
+    <!-- RIGHT SIDE: Branch Filter + Upload Excel -->
+    <div class="d-flex align-items-center" style="gap: 12px;">
+
+        <!-- Branch / Location Filter -->
+        <form method="GET" class="d-flex align-items-center">
+            <select name="branch" class="form-select form-select-sm" 
+                    style="width:150px; border-radius:6px; height:36px;"
+                    onchange="this.form.submit()">
+                <option value="">All Branches</option>
+                {% for br in branches %}
+                    <option value="{{ br }}" {% if br == selected_branch %}selected{% endif %}>
+                        {{ br }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+
+        <!-- Upload Excel -->
+       <form action="{% url 'attendance:upload_admin_attendance_excel' %}" 
+      method="POST" enctype="multipart/form-data"
+      class="d-flex align-items-center" style="gap:8px;">
+
+    {% csrf_token %}
+
+    <!-- Hidden field to pass selected branch -->
+    <input type="hidden" name="current_branch" value="{{ selected_branch }}">
+
+    <input type="file" name="attendance_file" accept=".xlsx,.xls" required
+           class="form-control form-control-sm"
+           style="width:180px; height:36px; font-size:13px; border-radius:6px;">
+
+    <button type="submit"
+            class="btn btn-info btn-sm"
+            style="background:#00a8ff; border:none; padding:8px 14px; font-weight:600; border-radius:6px; color:#fff;">
+        <i class="fas fa-upload me-1"></i> Upload Excel
+    </button>
+</form>
+
+
+    </div>
+
+</div>
+
+
+<!-- ✅ Filter Section -->
+<div class="datatable-controls" style="margin-bottom: 20px;">
+    <form method="GET" class="mb-3">
+        <div class="row g-3 align-items-center" style="display: flex; flex-wrap: wrap; gap: 10px;">
+
+            <!-- Search -->
+            <div class="col-md-3" style="flex: 1 1 220px; min-width: 220px;">
+                <input type="text" name="search" class="form-control" placeholder="Search employee..."
+                    value="{{ search_query }}" style="height: 42px; border-radius: 6px;">
+            </div>
+
+            <!-- Department -->
+            <!-- <div class="col-md-2" style="flex: 1 1 180px; min-width: 180px;">
+                <select name="department" class="form-select" style="height: 42px; border-radius: 6px;">
+                    <option value="">All Departments</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept }}" {% if dept == selected_department %}selected{% endif %}>{{ dept }}</option>
+                    {% endfor %}
+                </select>
+            </div> -->
+
+            <div class="col-md-2">
+                <select name="branch" class="form-select" style="height: 42px; border-radius: 6px;">
+                    <option value="">All Branches</option>
+                    {% for br in branches %}
+                        <option value="{{ br }}" {% if br == selected_branch %}selected{% endif %}>{{ br }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+           <!-- Date From -->
+                <div class="col-md-2" style="flex: 1 1 150px; min-width: 150px;">
+                    <input type="date" name="date_from" class="form-control"
+                        value="{% if date_from %}{{ date_from }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}"
+                        style="height: 42px; border-radius: 6px;">
+                </div>
+
+                <!-- Date To -->
+                <div class="col-md-2" style="flex: 1 1 150px; min-width: 150px;">
+                    <input type="date" name="date_to" class="form-control"
+                        value="{% if date_to %}{{ date_to }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}"
+                        style="height: 42px; border-radius: 6px;">
+                </div>
+
+            <!-- Status Filter -->
+            <div class="col-md-2" style="flex: 1 1 160px; min-width: 160px;">
+                <select name="status_filter" class="form-select" style="height: 42px; border-radius: 6px;">
+                    <option value="">All Status</option>
+                    <option value="Present" {% if status_filter == "Present" %}selected{% endif %}>Present</option>
+                    <option value="Absent" {% if status_filter == "Absent" %}selected{% endif %}>Absent</option>
+                    <option value="Half Day" {% if status_filter == "Half Day" %}selected{% endif %}>Half Day</option>
+                    <option value="On Time" {% if status_filter == "On Time" %}selected{% endif %}>On Time</option>
+                    <option value="Late" {% if status_filter == "Late" %}selected{% endif %}>Late</option>
+                </select>
+            </div>
+
+            <!-- Buttons -->
+            <div class="col-md-2 d-flex" style="gap: 10px; flex: 1 1 180px; min-width: 180px;">
+                <button type="submit" class="btn btn-primary w-50"
+                    style="height: 42px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-search me-1"></i> Filter
+                </button>
+
+                <a href="{% url 'attendance:report' %}" class="btn btn-secondary w-50"
+                    style="height: 42px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-redo me-1"></i> Reset
+                </a>
+            </div>
+
+        </div>
+    </form>
+</div>
+
+<!-- ✅ Card Section -->
+<div class="custom-card">
+
+   <!-- ✅ Header with Excel Upload + Download -->
+<div class="d-flex justify-content-between align-items-center mb-3 header-actions" style="width:100%;">
+
+    <div>
+        <h5 class="card-title mb-0">Attendance Records</h5>
+        <span class="badge bg-primary mt-1" id="totalRecords">Total: {{ attendances.paginator.count }}</span>
+    </div>
+
+    <div class="d-flex align-items-center" style="gap:12px;">     
+
+        <!-- Download Button -->
+        <a href="{% url 'attendance:download_admin_report' %}?search={{ search_query }}&branch={{ selected_branch }}&date_from={{ date_from }}&date_to={{ date_to }}&status_filter={{ status_filter }}"
+           class="btn btn-success btn-sm"
+           style="background:#0f9d58; border:none; padding:10px 20px; font-weight:600; border-radius:6px; color:#fff; display:flex; align-items:center;">
+            <i class="fas fa-file-excel" style="margin-right:6px;"></i> Download Report (Excel)
+        </a>
+
+    </div>
+</div>
+
+
+
+  <!-- ✅ Table Section -->
+<div class="table-responsive">
+    <table class="table align-middle text-center display nowrap" id="attendanceReportTable" style="width:100%">
+        <thead style="background-color: #f8fafc; color: #374151; font-weight: 600;">
+            <tr style="font-size: 14px; text-transform: uppercase;">
+                <th style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb;">Employee ID</th>
+                <th style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb;">Employee Name</th>
+                <th style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb;">Date</th>
+                <th style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb;">Check-In</th>
+                <th style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb; max-width: 200px;">Check-In Location</th> 
+                <th style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb;">Check-Out</th>
+                <th style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb; max-width: 200px;">Check-Out Location</th>
+                <th style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb;">Status</th>
+                <th style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb;">Duration</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for attendance in attendances %}
+            <tr style="font-size: 14px; transition: background-color 0.2s ease; border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 14px 12px; color: #111827; font-weight: 500; vertical-align: middle;">{{ attendance.employee_id }}</td>
+                <td style="padding: 14px 12px; vertical-align: middle;">
+                    <a href="{% url 'employee_detail' attendance.employee_pk %}" style="color: inherit; text-decoration: none; font-weight: 500;">
+                        {{ attendance.employee_name }}
+                    </a>
+                </td>
+                <td style="color: #6b7280; padding: 14px 12px; vertical-align: middle;">{{ attendance.date|date:"M d, Y" }}</td>
+
+               <!-- ✅ Check-In -->
+                    <td style="padding: 14px 12px; vertical-align: middle;">
+                        {% if attendance.check_in %}
+                        {% if attendance.is_late %}
+                        <!-- RED for late -->
+                        <span
+                            style="background-color:#fee2e2; color:#b91c1c; font-weight:600; padding:6px 12px; border-radius:8px; min-width:85px; display:inline-block;">
+                            {{ attendance.check_in }}
+                        </span>
+                        {% else %}
+                        <!-- GREEN for on-time -->
+                        <span
+                            style="background-color:#ecfdf5; color:#065f46; font-weight:600; padding:6px 12px; border-radius:8px; min-width:85px; display:inline-block;">
+                            {{ attendance.check_in }}
+                        </span>
+                        {% endif %}
+                        {% else %}
+                        <span
+                            style="background-color:#f3f4f6; color:#9ca3af; padding:6px 12px; border-radius:8px; min-width:85px; display:inline-block;">
+                            —
+                        </span>
+                        {% endif %}
+                    </td>
+
+
+
+                      <!-- ✅ Check-In Location -->
+                        <td style="color: #6b7280; font-size: 13px; padding: 14px 12px; vertical-align: middle; max-width: 200px; text-align: left; line-height: 1.4; word-break: break-word;">
+                            {% if attendance.checkin_address != "—" %}
+                                {{ attendance.checkin_address|linebreaksbr }}
+                            {% else %}
+                                <span style="color: #9ca3af;">—</span>
+                            {% endif %}
+                        </td>
+
+                <!-- ✅ Check-Out -->
+                            <td style="padding: 14px 12px; vertical-align: middle;">
+                        {% if attendance.check_out %}
+                            <span style="background-color:#fff7ed; color:#92400e; font-weight:600; padding:6px 12px; border-radius:8px; min-width:85px; display:inline-block;">
+                                {{ attendance.check_out }}
+                            </span>
+                        {% else %}
+                            <span style="background-color:#f3f4f6; color:#9ca3af; padding:6px 12px; border-radius:8px; min-width:85px; display:inline-block;">
+                                —
+                            </span>
+                        {% endif %}
+                    </td>
+
+
+
+                  <!-- ✅ Check-Out Location -->
+                    <td style="color: #6b7280; font-size: 13px; padding: 14px 12px; vertical-align: middle; max-width: 200px; text-align: left; line-height: 1.4; word-break: break-word;">
+                        {% if attendance.checkout_address != "—" %}
+                            {{ attendance.checkout_address|linebreaksbr }}
+                        {% else %}
+                            <span style="color: #9ca3af;">—</span>
+                        {% endif %}
+                    </td>
+
+                <!-- ✅ Status -->
+                    <td style="padding: 14px 12px; vertical-align: middle;">
+
+                        {% if attendance.status == "Present" %}
+                            <span style="background-color: #dcfce7; color: #166534; font-weight: 600; padding: 6px 12px; border-radius: 8px; display: inline-block; min-width: 90px;">
+                                Present
+                            </span>
+
+                        {% elif attendance.status == "Absent" %}
+                            <span style="background-color: #fee2e2; color: #b91c1c; font-weight: 600; padding: 6px 12px; border-radius: 8px; display: inline-block; min-width: 90px;">
+                                Absent
+                            </span>
+
+                        {% elif attendance.status == "Half Day" %}
+                            <span style="background-color: #fef9c3; color: #92400e; font-weight: 600; padding: 6px 12px; border-radius: 8px; display: inline-block; min-width: 90px;">
+                                Half Day
+                            </span>
+
+                        {% elif attendance.status == "LOP" %}
+                            <span style="background-color: #fee2e2; color: #7f1d1d; font-weight: 700; padding: 6px 12px; border-radius: 8px; display: inline-block; min-width: 90px;">
+                                LOP
+                            </span>
+
+                        {% endif %}
+                    </td>
+                <!-- ✅ Duration -->
+                <td style="padding: 14px 12px; vertical-align: middle;">
+                    {% if attendance.duration_display != "-" %}
+                    <span
+                        style="background-color: #eff6ff; color: #1d4ed8; font-weight: 600; padding: 6px 12px; border-radius: 8px; display: inline-block; min-width: 80px;">
+                        {{ attendance.duration_display }}
+                    </span>
+                    {% else %}
+                    <span
+                        style="background-color: #f3f4f6; color: #9ca3af; padding: 6px 12px; border-radius: 8px; display: inline-block; min-width: 80px;">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" class="text-center" style="padding: 40px; color: #6b7280;">
+                    <i class="fas fa-inbox" style="font-size: 24px; color: #9ca3af;"></i>
+                    <p style="margin-top: 10px; font-weight: 500;">No attendance records found</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+</div>
+
+<!-- Include jQuery and DataTables JS -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize DataTable
+        const table = $('#attendanceReportTable').DataTable({
+            "pageLength": 25,
+            "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+            "order": [[2, 'desc']], // Sort by date descending (3rd column)
+            "responsive": true,
+            "dom": "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                   "<'row'<'col-sm-12'tr>>" +
+                   "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+            "language": {
+                "search": "Search records:",
+                "lengthMenu": "Show _MENU_ entries",
+                "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+                "infoEmpty": "Showing 0 to 0 of 0 entries",
+                "infoFiltered": "(filtered from _MAX_ total entries)",
+                "paginate": {
+                    "first": "First",
+                    "last": "Last",
+                    "next": "Next",
+                    "previous": "Previous"
+                }
+            },
+            "initComplete": function(settings, json) {
+                // Add custom styling after initialization
+                $('.dataTables_filter input').addClass('form-control form-control-sm');
+                $('.dataTables_length select').addClass('form-control form-control-sm');
+                
+                // Update total records count
+                $('#totalRecords').text('Total: ' + this.api().data().length);
+                
+                // Ensure DataTable controls are properly displayed on mobile
+                if ($(window).width() < 768) {
+                    $('.dataTables_length, .dataTables_filter').css({
+                        'float': 'none',
+                        'text-align': 'left',
+                        'margin-bottom': '10px'
+                    });
+                }
+            },
+            "drawCallback": function(settings) {
+                // Update total records count on each draw
+                $('#totalRecords').text('Total: ' + this.api().data().length);
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if ($(window).width() < 768) {
+                $('.dataTables_length, .dataTables_filter').css({
+                    'float': 'none',
+                    'text-align': 'left',
+                    'margin-bottom': '10px'
+                });
+            } else {
+                $('.dataTables_length, .dataTables_filter').css({
+                    'float': '',
+                    'text-align': '',
+                    'margin-bottom': ''
+                });
+            }
+        });
+
+        // Keep your existing form functionality
+        const monthFilter = document.querySelector('input[name="month"]');
+        if (monthFilter) {
+            monthFilter.addEventListener('change', function() {
+                this.form.submit();
+            });
+        }
+    });
+</script>
+
+{% endblock %}

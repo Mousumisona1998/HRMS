@@ -1,0 +1,646 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <h1 class="mb-3"><i class="fas fa-user-tag me-2"></i>Role Management</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'role_list' %}">Master Data</a></li>
+                <li class="breadcrumb-item active">Roles</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="messages mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Search and Filter Card -->
+    <div class="card custom-card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" 
+                               class="form-control" 
+                               id="search" 
+                               name="search" 
+                               placeholder="Search roles..."
+                               value="{{ search_query }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select filter-select" id="status" name="status">
+                        <option value="">All Status</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRoleModal">
+                            <i class="fas fa-plus me-2"></i>Add New Role
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Roles Table Card -->
+    <div class="card custom-card">
+        <div class="card-body p-0">
+            {% if roles %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Role Name</th>
+                            <th>Status</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for role in roles %}
+                        <tr>
+                            <td>
+                                <strong>{{ role.name }}</strong>
+                            </td>                            
+                            <td>
+                                <span class="badge {% if role.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {{ role.is_active|yesno:"Active,Inactive" }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-muted">{{ role.created_at|date:"Y-m-d" }}</span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-primary edit-role-btn" 
+                                            title="Edit"
+                                            data-role-id="{{ role.pk }}"
+                                            data-role-name="{{ role.name }}"
+                                            data-role-is-active="{{ role.is_active|yesno:'true,false' }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger delete-role-btn" 
+                                            title="Delete"
+                                            data-role-id="{{ role.pk }}"
+                                            data-role-name="{{ role.name }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-user-tag fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No roles found</h5>
+                <p class="text-muted">Get started by adding your first role.</p>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRoleModal">
+                    <i class="fas fa-plus me-2"></i>Add New Role
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Role Modal -->
+<div class="modal fade" id="addRoleModal" tabindex="-1" aria-labelledby="addRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="addRoleModalLabel">
+                    <i class="fas fa-plus-circle me-2"></i>Add New Role
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'role_create' %}" id="addRoleForm" novalidate>
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div id="addFormErrors" class="alert alert-danger" style="display: none;"></div>
+                    
+                    <div class="row g-3">
+                        <!-- Role Name -->
+                        <div class="col-12">
+                            <label for="id_name" class="form-label">
+                                Role Name <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="id_name" 
+                                   name="name" 
+                                   placeholder="Enter role name"
+                                   required>
+                            <div class="invalid-feedback" id="nameError">
+                                Please provide a valid role name.
+                            </div>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       id="id_is_active" 
+                                       name="is_active" 
+                                       checked>
+                                <label class="form-check-label" for="id_is_active">
+                                    Active Role
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Role
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Role Modal -->
+<div class="modal fade" id="editRoleModal" tabindex="-1" aria-labelledby="editRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="editRoleModalLabel">
+                    <i class="fas fa-edit me-2"></i>Edit Role
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="" id="editRoleForm" novalidate>
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div id="editFormErrors" class="alert alert-danger" style="display: none;"></div>
+                    
+                    <div class="row g-3">
+                        <!-- Role Name -->
+                        <div class="col-12">
+                            <label for="edit_id_name" class="form-label">
+                                Role Name <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="edit_id_name" 
+                                   name="name" 
+                                   placeholder="Enter role name"
+                                   required>
+                            <div class="invalid-feedback" id="editNameError">
+                                Please provide a valid role name.
+                            </div>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       id="edit_id_is_active" 
+                                       name="is_active">
+                                <label class="form-check-label" for="edit_id_is_active">
+                                    Active Role
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Update Role
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Role Modal -->
+<div class="modal fade" id="deleteRoleModal" tabindex="-1" aria-labelledby="deleteRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteRoleModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Role
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-4">
+                    <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                    <h4>Are you sure?</h4>
+                    <p class="text-muted">
+                        You are about to delete the role <strong id="delete-role-name"></strong>. 
+                        This action cannot be undone.
+                    </p>                    
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <form method="post" action="" id="deleteRoleForm">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Delete Role
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Search functionality
+    const searchInput = document.getElementById('search');
+    const statusSelect = document.getElementById('status');
+    
+    function applyFilters() {
+        const search = searchInput.value;
+        const status = statusSelect.value;
+        
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        if (status) params.append('status', status);
+        
+        window.location.href = '{% url "role_list" %}' + (params.toString() ? '?' + params.toString() : '');
+    }
+    
+    // Debounce search input
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(applyFilters, 500);
+    });
+    
+    statusSelect.addEventListener('change', applyFilters);
+
+    // Edit role modal functionality
+    const editButtons = document.querySelectorAll('.edit-role-btn');
+    const editRoleModal = new bootstrap.Modal(document.getElementById('editRoleModal'));
+    const editRoleForm = document.getElementById('editRoleForm');
+
+    editButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const roleId = this.getAttribute('data-role-id');
+            const roleName = this.getAttribute('data-role-name');
+            const roleIsActive = this.getAttribute('data-role-is-active');
+            
+            // Populate form fields
+            document.getElementById('edit_id_name').value = roleName;
+            document.getElementById('edit_id_is_active').checked = roleIsActive === 'true';
+            
+            // Set form action for update
+            editRoleForm.action = "{% url 'role_edit' 0 %}".replace('0', roleId);
+            
+            // Update modal title
+            document.getElementById('editRoleModalLabel').innerHTML = 
+                '<i class="fas fa-edit me-2"></i>Edit Role: ' + roleName;
+            
+            // Clear previous errors
+            document.getElementById('editFormErrors').style.display = 'none';
+            document.getElementById('edit_id_name').classList.remove('is-invalid');
+            
+            // Show modal
+            editRoleModal.show();
+        });
+    });
+
+    // Delete role modal functionality
+    const deleteButtons = document.querySelectorAll('.delete-role-btn');
+    const deleteRoleModal = new bootstrap.Modal(document.getElementById('deleteRoleModal'));
+    const deleteRoleForm = document.getElementById('deleteRoleForm');
+    const deleteRoleName = document.getElementById('delete-role-name');
+
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const roleId = this.getAttribute('data-role-id');
+            const roleName = this.getAttribute('data-role-name');
+            
+            // Update modal content
+            deleteRoleName.textContent = '"' + roleName + '"';
+            
+            // Set form action
+            deleteRoleForm.action = "{% url 'role_delete' 0 %}".replace('0', roleId);
+            
+            // Show modal
+            deleteRoleModal.show();
+        });
+    });
+
+    // AJAX Form submission for add role
+    const addRoleForm = document.getElementById('addRoleForm');
+    if (addRoleForm) {
+        addRoleForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Basic validation
+            const nameField = document.getElementById('id_name');
+            const errorsDiv = document.getElementById('addFormErrors');
+            
+            let isValid = true;
+            let errorMessages = [];
+            
+            if (!nameField.value.trim()) {
+                nameField.classList.add('is-invalid');
+                errorMessages.push('Role name is required.');
+                isValid = false;
+            } else {
+                nameField.classList.remove('is-invalid');
+            }
+            
+            if (!isValid) {
+                errorsDiv.innerHTML = errorMessages.join('<br>');
+                errorsDiv.style.display = 'block';
+                return false;
+            }
+            
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+            submitBtn.disabled = true;
+            
+            // AJAX submission
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Close modal and reload page to show new data and message
+                    bootstrap.Modal.getInstance(document.getElementById('addRoleModal')).hide();
+                    location.reload();
+                } else {
+                    // Show form errors
+                    let errorMessages = [];
+                    for (const field in data.errors) {
+                        errorMessages.push(...data.errors[field]);
+                    }
+                    errorsDiv.innerHTML = errorMessages.join('<br>');
+                    errorsDiv.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                errorsDiv.innerHTML = 'An error occurred. Please try again.';
+                errorsDiv.style.display = 'block';
+            })
+            .finally(() => {
+                // Reset button state
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+    }
+
+    // AJAX Form submission for edit role
+    const editRoleFormElement = document.getElementById('editRoleForm');
+    if (editRoleFormElement) {
+        editRoleFormElement.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Basic validation
+            const nameField = document.getElementById('edit_id_name');
+            const errorsDiv = document.getElementById('editFormErrors');
+            
+            let isValid = true;
+            let errorMessages = [];
+            
+            if (!nameField.value.trim()) {
+                nameField.classList.add('is-invalid');
+                errorMessages.push('Role name is required.');
+                isValid = false;
+            } else {
+                nameField.classList.remove('is-invalid');
+            }
+            
+            if (!isValid) {
+                errorsDiv.innerHTML = errorMessages.join('<br>');
+                errorsDiv.style.display = 'block';
+                return false;
+            }
+            
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Updating...';
+            submitBtn.disabled = true;
+            
+            // AJAX submission
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Close modal and reload page to show updated data and message
+                    bootstrap.Modal.getInstance(document.getElementById('editRoleModal')).hide();
+                    location.reload();
+                } else {
+                    // Show form errors
+                    let errorMessages = [];
+                    for (const field in data.errors) {
+                        errorMessages.push(...data.errors[field]);
+                    }
+                    errorsDiv.innerHTML = errorMessages.join('<br>');
+                    errorsDiv.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                errorsDiv.innerHTML = 'An error occurred. Please try again.';
+                errorsDiv.style.display = 'block';
+            })
+            .finally(() => {
+                // Reset button state
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+    }
+
+    // Clear form when add modal is closed
+    const addRoleModal = document.getElementById('addRoleModal');
+    if (addRoleModal) {
+        addRoleModal.addEventListener('hidden.bs.modal', function() {
+            const form = document.getElementById('addRoleForm');
+            if (form) {
+                form.reset();
+                // Clear validation states
+                document.getElementById('addFormErrors').style.display = 'none';
+                const invalidFields = form.querySelectorAll('.is-invalid');
+                invalidFields.forEach(field => {
+                    field.classList.remove('is-invalid');
+                });
+            }
+        });
+    }
+
+    // Clear form when edit modal is closed
+    const editRoleModalElement = document.getElementById('editRoleModal');
+    if (editRoleModalElement) {
+        editRoleModalElement.addEventListener('hidden.bs.modal', function() {
+            document.getElementById('editFormErrors').style.display = 'none';
+            const invalidFields = document.querySelectorAll('#editRoleForm .is-invalid');
+            invalidFields.forEach(field => {
+                field.classList.remove('is-invalid');
+            });
+        });
+    }
+
+    // Real-time validation for add form
+    const nameField = document.getElementById('id_name');
+    if (nameField) {
+        nameField.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+                document.getElementById('addFormErrors').style.display = 'none';
+            }
+        });
+    }
+
+    // Real-time validation for edit form
+    const editNameField = document.getElementById('edit_id_name');
+    if (editNameField) {
+        editNameField.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+                document.getElementById('editFormErrors').style.display = 'none';
+            }
+        });
+    }
+});
+</script>
+
+<style>
+.search-box {
+    position: relative;
+}
+
+.search-box input {
+    padding-left: 40px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #2c3e50;
+    background-color: #f8f9fa;
+    padding: 12px 16px;
+}
+
+.table td {
+    padding: 12px 16px;
+    vertical-align: middle;
+}
+
+.form-label {
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.form-control, .form-select {
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    padding: 8px 12px;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+.form-check-input:checked {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+.btn-group .btn {
+    border-radius: 4px;
+    margin-right: 4px;
+}
+
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+.invalid-feedback {
+    display: block;
+}
+
+.modal-header {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-footer {
+    border-top: 1px solid #dee2e6;
+}
+
+/* Loading spinner */
+.fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}

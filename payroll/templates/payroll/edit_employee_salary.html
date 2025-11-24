@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load payroll_filters %} 
+{% block title %}Edit Employee Salary - HRMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h3 mb-0">Edit Employee Salary</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'employee_salaries' %}">Employee Salaries</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'view_employee_salary' salary.id %}">Salary Details</a></li>
+                        <li class="breadcrumb-item active">Edit Salary</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'view_employee_salary' salary.id %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Details
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="custom-card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Edit Salary Structure</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="salaryForm">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Employee</label>
+                                <input type="text" class="form-control" 
+                                       value="{{ salary.employee.first_name }} {{ salary.employee.last_name }} ({{ salary.employee.employee_id }})" 
+                                       readonly style="background-color: #f8f9fa;">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Effective Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="effective_date" 
+                                       value="{{ salary.effective_date|date:'Y-m-d' }}" required>
+                            </div>
+                        </div>
+
+                        <!-- Basic Salary -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label class="form-label">Basic Salary <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" name="basic_salary" id="basicSalary" 
+                                       value="{{ salary.basic_salary }}" step="0.01" required>
+                            </div>
+                        </div>
+
+                        <!-- Salary Components -->
+                        <div class="mb-4">
+                            <h6 class="mb-3">Salary Components</h6>
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Component</th>
+                                            <th>Type</th>
+                                            <th>Calculation</th>
+                                            <th>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for component in components %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ component.name }}</strong>
+                                                {% if component.calculation_type == 'percentage' %}
+                                                <br><small class="text-muted">{{ component.value }}% of Basic</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge {% if component.component_type == 'earning' %}bg-success{% else %}bg-danger{% endif %}">
+                                                    {{ component.get_component_type_display }}
+                                                </span>
+                                            </td>
+                                            <td>{{ component.get_calculation_type_display }}</td>
+                                            <td>
+                                                {% if component.calculation_type == 'percentage' %}
+                                                <div class="input-group input-group-sm">
+                                                    <span class="input-group-text">₹</span>
+                                                    <input type="number" class="form-control" 
+                                                           id="component_{{ component.id }}_calc" 
+                                                           value="{% widthratio salary.basic_salary 1 component.value %}" 
+                                                           readonly style="background-color: #f8f9fa;">
+                                                </div>
+                                                <input type="hidden" name="component_{{ component.id }}" 
+                                                       id="component_{{ component.id }}" 
+                                                       value="{% widthratio salary.basic_salary 1 component.value %}">
+                                                {% else %}
+                                                <div class="input-group input-group-sm">
+                                                    <span class="input-group-text">₹</span>
+                                                    <input type="number" class="form-control component-input" 
+                                                           name="component_{{ component.id }}" 
+                                                           value="{{ existing_components|get_item:component.id|default:0 }}" 
+                                                           step="0.01" 
+                                                           data-component-type="{{ component.component_type }}">
+                                                </div>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Salary Summary -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="custom-card bg-light">
+                                    <h6 class="mb-3">Salary Summary</h6>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Basic Salary:</span>
+                                        <strong id="summaryBasic">₹{{ salary.basic_salary }}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Total Earnings:</span>
+                                        <strong class="text-success" id="summaryEarnings">₹{{ salary.gross_salary|add:"-salary.basic_salary" }}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Total Deductions:</span>
+                                        <strong class="text-danger" id="summaryDeductions">₹{{ salary.gross_salary|add:"-salary.net_salary" }}</strong>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <span><strong>Net Salary:</strong></span>
+                                        <strong class="text-primary" id="summaryNet">₹{{ salary.net_salary }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Update Salary Structure
+                            </button>
+                            <a href="{% url 'view_employee_salary' salary.id %}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function calculateSalary() {
+        const basicSalary = parseFloat(document.getElementById('basicSalary').value) || 0;
+        let totalEarnings = 0;
+        let totalDeductions = 0;
+
+        // Calculate percentage-based components
+        {% for component in components %}
+            {% if component.calculation_type == 'percentage' %}
+                const {{ component.name|slugify }}Amount = basicSalary * {{ component.value }} / 100;
+                document.getElementById('component_{{ component.id }}_calc').value = {{ component.name|slugify }}Amount.toFixed(2);
+                document.getElementById('component_{{ component.id }}').value = {{ component.name|slugify }}Amount.toFixed(2);
+                
+                {% if component.component_type == 'earning' %}
+                    totalEarnings += {{ component.name|slugify }}Amount;
+                {% else %}
+                    totalDeductions += {{ component.name|slugify }}Amount;
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+
+        // Calculate fixed amount components
+        document.querySelectorAll('.component-input').forEach(input => {
+            const amount = parseFloat(input.value) || 0;
+            const componentType = input.getAttribute('data-component-type');
+            
+            if (componentType === 'earning') {
+                totalEarnings += amount;
+            } else {
+                totalDeductions += amount;
+            }
+        });
+
+        // Update summary
+        document.getElementById('summaryBasic').textContent = '₹' + basicSalary.toFixed(2);
+        document.getElementById('summaryEarnings').textContent = '₹' + totalEarnings.toFixed(2);
+        document.getElementById('summaryDeductions').textContent = '₹' + totalDeductions.toFixed(2);
+        
+        const netSalary = basicSalary + totalEarnings - totalDeductions;
+        document.getElementById('summaryNet').textContent = '₹' + netSalary.toFixed(2);
+    }
+
+    // Event listeners
+    document.getElementById('basicSalary').addEventListener('input', calculateSalary);
+    document.querySelectorAll('.component-input').forEach(input => {
+        input.addEventListener('input', calculateSalary);
+    });
+
+    // Initial calculation
+    calculateSalary();
+</script>
+{% endblock %}

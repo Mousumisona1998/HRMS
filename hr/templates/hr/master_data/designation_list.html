@@ -1,0 +1,820 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <h1 class="mb-3"><i class="fas fa-user-tie me-2"></i>Designation Management</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'designation_list' %}">Master Data</a></li>
+                <li class="breadcrumb-item active">Designations</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Django Messages Framework -->
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>{{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Search and Filter Card -->
+    <div class="card custom-card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" 
+                               class="form-control" 
+                               id="search" 
+                               name="search" 
+                               placeholder="Search designations..."
+                               value="{{ search_query }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select filter-select" id="status" name="status">
+                        <option value="">All Status</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDesignationModal">
+                            <i class="fas fa-plus me-2"></i>Add New Designation
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Designations Table Card -->
+    <div class="card custom-card">
+        <div class="card-body p-0">
+            {% if designations %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Title</th>
+                            <th>Department</th>
+                            <th>Level</th>
+                            <th>Status</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for designation in designations %}
+                        <tr>
+                            <td>
+                                <strong>{{ designation.title }}</strong>
+                            </td>
+                            <td>{{ designation.department.name }}</td>
+                            <td>
+                                <span class="badge bg-info">Level {{ designation.level }}</span>
+                            </td>
+                            <td>
+                                <span class="badge {% if designation.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {{ designation.is_active|yesno:"Active,Inactive" }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-muted">{{ designation.created_at|date:"Y-m-d" }}</span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-primary edit-designation-btn" 
+                                            title="Edit"
+                                            data-designation-id="{{ designation.pk }}"
+                                            data-designation-title="{{ designation.title }}"
+                                            data-designation-department="{{ designation.department.id }}"
+                                            data-designation-level="{{ designation.level }}"
+                                            data-designation-is-active="{{ designation.is_active|yesno:'true,false' }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger delete-designation-btn" 
+                                            title="Delete"
+                                            data-designation-id="{{ designation.pk }}"
+                                            data-designation-title="{{ designation.title }}"
+                                            data-designation-department="{{ designation.department.name }}"
+                                            data-employee-count="{{ designation.employees.count }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-user-tie fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No designations found</h5>
+                <p class="text-muted">Get started by adding your first designation.</p>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDesignationModal">
+                    <i class="fas fa-plus me-2"></i>Add New Designation
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Designation Modal -->
+<div class="modal fade" id="addDesignationModal" tabindex="-1" aria-labelledby="addDesignationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="addDesignationModalLabel">
+                    <i class="fas fa-plus-circle me-2"></i>Add New Designation
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'designation_create' %}" id="addDesignationForm" novalidate>
+                {% csrf_token %}
+                <div class="modal-body">
+                    <!-- Form Errors Display -->
+                    <div id="addFormErrors" class="alert alert-danger" style="display: none;"></div>
+                    
+                    {% if form.non_field_errors and show_add_modal %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="row g-3">
+                        <!-- Designation Title -->
+                        <div class="col-12">
+                            <label for="id_title" class="form-label">
+                                Designation Title <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" 
+                                   class="form-control {% if form.title.errors and show_add_modal %}is-invalid{% endif %}" 
+                                   id="id_title" 
+                                   name="title" 
+                                   value="{% if form.title.value %}{{ form.title.value }}{% endif %}"
+                                   placeholder="Enter designation title"
+                                   required>
+                            {% if form.title.errors and show_add_modal %}
+                            <div class="invalid-feedback">
+                                {% for error in form.title.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Department -->
+                        <div class="col-12">
+                            <label for="id_department" class="form-label">
+                                Department <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select {% if form.department.errors and show_add_modal %}is-invalid{% endif %}" 
+                                    id="id_department" 
+                                    name="department"
+                                    required>
+                                <option value="">Select Department</option>
+                                {% for department in departments %}
+                                <option value="{{ department.id }}" {% if form.department.value == department.id %}selected{% endif %}>
+                                    {{ department.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.department.errors and show_add_modal %}
+                            <div class="invalid-feedback">
+                                {% for error in form.department.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Level -->
+                        <div class="col-12">
+                            <label for="id_level" class="form-label">
+                                Level <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" 
+                                   class="form-control {% if form.level.errors and show_add_modal %}is-invalid{% endif %}" 
+                                   id="id_level" 
+                                   name="level" 
+                                   value="{% if form.level.value %}{{ form.level.value }}{% else %}1{% endif %}"
+                                   placeholder="Enter level (1 = entry level)"
+                                   min="1"
+                                   max="10"
+                                   required>
+                            {% if form.level.errors and show_add_modal %}
+                            <div class="invalid-feedback">
+                                {% for error in form.level.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Hierarchy level (1 = entry level)</div>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       id="id_is_active" 
+                                       name="is_active" 
+                                       {% if form.is_active.value or not form.is_active.value %}checked{% endif %}>
+                                <label class="form-check-label" for="id_is_active">
+                                    Active Designation
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Designation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Designation Modal -->
+<div class="modal fade" id="editDesignationModal" tabindex="-1" aria-labelledby="editDesignationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="editDesignationModalLabel">
+                    <i class="fas fa-edit me-2"></i>Edit Designation
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="" id="editDesignationForm" novalidate>
+                {% csrf_token %}
+                <div class="modal-body">
+                    <!-- Form Errors Display -->
+                    <div id="editFormErrors" class="alert alert-danger" style="display: none;"></div>
+                    
+                    {% if form.non_field_errors and editing_designation_id %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="row g-3">
+                        <!-- Designation Title -->
+                        <div class="col-12">
+                            <label for="edit_id_title" class="form-label">
+                                Designation Title <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" 
+                                   class="form-control {% if form.title.errors and editing_designation_id %}is-invalid{% endif %}" 
+                                   id="edit_id_title" 
+                                   name="title" 
+                                   placeholder="Enter designation title"
+                                   required>
+                            {% if form.title.errors and editing_designation_id %}
+                            <div class="invalid-feedback">
+                                {% for error in form.title.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Department -->
+                        <div class="col-12">
+                            <label for="edit_id_department" class="form-label">
+                                Department <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select {% if form.department.errors and editing_designation_id %}is-invalid{% endif %}" 
+                                    id="edit_id_department" 
+                                    name="department"
+                                    required>
+                                <option value="">Select Department</option>
+                                {% for department in departments %}
+                                <option value="{{ department.id }}">
+                                    {{ department.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.department.errors and editing_designation_id %}
+                            <div class="invalid-feedback">
+                                {% for error in form.department.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Level -->
+                        <div class="col-12">
+                            <label for="edit_id_level" class="form-label">
+                                Level <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" 
+                                   class="form-control {% if form.level.errors and editing_designation_id %}is-invalid{% endif %}" 
+                                   id="edit_id_level" 
+                                   name="level" 
+                                   placeholder="Enter level (1 = entry level)"
+                                   min="1"
+                                   max="10"
+                                   required>
+                            {% if form.level.errors and editing_designation_id %}
+                            <div class="invalid-feedback">
+                                {% for error in form.level.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Hierarchy level (1 = entry level)</div>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       id="edit_id_is_active" 
+                                       name="is_active">
+                                <label class="form-check-label" for="edit_id_is_active">
+                                    Active Designation
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Update Designation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Designation Modal -->
+<div class="modal fade" id="deleteDesignationModal" tabindex="-1" aria-labelledby="deleteDesignationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteDesignationModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Designation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-4">
+                    <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                    <h4>Are you sure?</h4>
+                    <p class="text-muted">
+                        You are about to delete the designation <strong id="delete-designation-title"></strong> 
+                        from department <strong id="delete-designation-department"></strong>. 
+                        This action cannot be undone.
+                    </p>
+                    <div class="alert alert-warning" id="employee-warning" style="display: none;">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        This designation has <span id="employee-count"></span> employee(s). 
+                        Deleting it will remove the designation association from these employees.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <form method="post" action="" id="deleteDesignationForm">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Delete Designation
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-show modals if there are form errors
+    {% if show_add_modal %}
+    var addModal = new bootstrap.Modal(document.getElementById('addDesignationModal'));
+    addModal.show();
+    {% endif %}
+
+    {% if editing_designation_id %}
+    var editModal = new bootstrap.Modal(document.getElementById('editDesignationModal'));
+    
+    // Populate edit form with existing data and errors
+    document.getElementById('edit_id_title').value = "{{ editing_designation.title }}";
+    document.getElementById('edit_id_department').value = "{{ editing_designation.department.id }}";
+    document.getElementById('edit_id_level').value = "{{ editing_designation.level }}";
+    document.getElementById('edit_id_is_active').checked = {{ editing_designation.is_active|yesno:"true,false" }};
+    
+    // Set form action
+    document.getElementById('editDesignationForm').action = "{% url 'designation_edit' editing_designation_id %}";
+    
+    // Update modal title
+    document.getElementById('editDesignationModalLabel').innerHTML = 
+        '<i class="fas fa-edit me-2"></i>Edit Designation: {{ editing_designation.title }}';
+    
+    editModal.show();
+    {% endif %}
+
+    // Search functionality
+    const searchInput = document.getElementById('search');
+    const statusSelect = document.getElementById('status');
+    
+    function applyFilters() {
+        const search = searchInput.value;
+        const status = statusSelect.value;
+        
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        if (status) params.append('status', status);
+        
+        window.location.href = '{% url "designation_list" %}' + (params.toString() ? '?' + params.toString() : '');
+    }
+    
+    // Debounce search input
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(applyFilters, 500);
+    });
+    
+    statusSelect.addEventListener('change', applyFilters);
+
+    // Edit designation modal functionality
+    const editButtons = document.querySelectorAll('.edit-designation-btn');
+    const editDesignationModal = new bootstrap.Modal(document.getElementById('editDesignationModal'));
+    const editDesignationForm = document.getElementById('editDesignationForm');
+
+    editButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const designationId = this.getAttribute('data-designation-id');
+            const designationTitle = this.getAttribute('data-designation-title');
+            const designationDepartment = this.getAttribute('data-designation-department');
+            const designationLevel = this.getAttribute('data-designation-level');
+            const designationIsActive = this.getAttribute('data-designation-is-active');
+            
+            // Populate form fields
+            document.getElementById('edit_id_title').value = designationTitle;
+            document.getElementById('edit_id_department').value = designationDepartment;
+            document.getElementById('edit_id_level').value = designationLevel;
+            document.getElementById('edit_id_is_active').checked = designationIsActive === 'true';
+            
+            // Set form action for update
+            editDesignationForm.action = "{% url 'designation_edit' 0 %}".replace('0', designationId);
+            
+            // Update modal title
+            document.getElementById('editDesignationModalLabel').innerHTML = 
+                '<i class="fas fa-edit me-2"></i>Edit Designation: ' + designationTitle;
+            
+            // Clear previous errors
+            document.getElementById('editFormErrors').style.display = 'none';
+            const invalidFields = document.querySelectorAll('#editDesignationForm .is-invalid');
+            invalidFields.forEach(field => {
+                field.classList.remove('is-invalid');
+            });
+            
+            // Show modal
+            editDesignationModal.show();
+        });
+    });
+
+    // Delete designation modal functionality
+    const deleteButtons = document.querySelectorAll('.delete-designation-btn');
+    const deleteDesignationModal = new bootstrap.Modal(document.getElementById('deleteDesignationModal'));
+    const deleteDesignationForm = document.getElementById('deleteDesignationForm');
+    const deleteDesignationTitle = document.getElementById('delete-designation-title');
+    const deleteDesignationDepartment = document.getElementById('delete-designation-department');
+    const employeeWarning = document.getElementById('employee-warning');
+    const employeeCount = document.getElementById('employee-count');
+
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const designationId = this.getAttribute('data-designation-id');
+            const designationTitle = this.getAttribute('data-designation-title');
+            const designationDepartment = this.getAttribute('data-designation-department');
+            const empCount = this.getAttribute('data-employee-count');
+            
+            // Update modal content
+            deleteDesignationTitle.textContent = '"' + designationTitle + '"';
+            deleteDesignationDepartment.textContent = '"' + designationDepartment + '"';
+            
+            // Show/hide employee warning
+            if (empCount > 0) {
+                employeeCount.textContent = empCount;
+                employeeWarning.style.display = 'block';
+            } else {
+                employeeWarning.style.display = 'none';
+            }
+            
+            // Set form action
+            deleteDesignationForm.action = "{% url 'designation_delete' 0 %}".replace('0', designationId);
+            
+            // Show modal
+            deleteDesignationModal.show();
+        });
+    });
+
+    // Form validation for add designation
+    const addDesignationForm = document.getElementById('addDesignationForm');
+    if (addDesignationForm) {
+        addDesignationForm.addEventListener('submit', function(e) {
+            // Basic validation
+            const titleField = document.getElementById('id_title');
+            const departmentField = document.getElementById('id_department');
+            const levelField = document.getElementById('id_level');
+            const errorsDiv = document.getElementById('addFormErrors');
+            
+            let isValid = true;
+            let errorMessages = [];
+            
+            if (!titleField.value.trim()) {
+                titleField.classList.add('is-invalid');
+                errorMessages.push('Designation title is required.');
+                isValid = false;
+            } else {
+                titleField.classList.remove('is-invalid');
+            }
+            
+            if (!departmentField.value) {
+                departmentField.classList.add('is-invalid');
+                errorMessages.push('Department is required.');
+                isValid = false;
+            } else {
+                departmentField.classList.remove('is-invalid');
+            }
+            
+            if (!levelField.value || levelField.value < 1) {
+                levelField.classList.add('is-invalid');
+                errorMessages.push('Level must be at least 1.');
+                isValid = false;
+            } else {
+                levelField.classList.remove('is-invalid');
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                errorsDiv.innerHTML = errorMessages.join('<br>');
+                errorsDiv.style.display = 'block';
+                return false;
+            }
+        });
+    }
+
+    // Form validation for edit designation
+    const editDesignationFormElement = document.getElementById('editDesignationForm');
+    if (editDesignationFormElement) {
+        editDesignationFormElement.addEventListener('submit', function(e) {
+            // Basic validation
+            const titleField = document.getElementById('edit_id_title');
+            const departmentField = document.getElementById('edit_id_department');
+            const levelField = document.getElementById('edit_id_level');
+            const errorsDiv = document.getElementById('editFormErrors');
+            
+            let isValid = true;
+            let errorMessages = [];
+            
+            if (!titleField.value.trim()) {
+                titleField.classList.add('is-invalid');
+                errorMessages.push('Designation title is required.');
+                isValid = false;
+            } else {
+                titleField.classList.remove('is-invalid');
+            }
+            
+            if (!departmentField.value) {
+                departmentField.classList.add('is-invalid');
+                errorMessages.push('Department is required.');
+                isValid = false;
+            } else {
+                departmentField.classList.remove('is-invalid');
+            }
+            
+            if (!levelField.value || levelField.value < 1) {
+                levelField.classList.add('is-invalid');
+                errorMessages.push('Level must be at least 1.');
+                isValid = false;
+            } else {
+                levelField.classList.remove('is-invalid');
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                errorsDiv.innerHTML = errorMessages.join('<br>');
+                errorsDiv.style.display = 'block';
+                return false;
+            }
+        });
+    }
+
+    // Clear form when add modal is closed
+    const addDesignationModal = document.getElementById('addDesignationModal');
+    if (addDesignationModal) {
+        addDesignationModal.addEventListener('hidden.bs.modal', function() {
+            const form = document.getElementById('addDesignationForm');
+            if (form) {
+                form.reset();
+                // Clear validation states
+                document.getElementById('addFormErrors').style.display = 'none';
+                const invalidFields = form.querySelectorAll('.is-invalid');
+                invalidFields.forEach(field => {
+                    field.classList.remove('is-invalid');
+                });
+            }
+        });
+    }
+
+    // Clear form when edit modal is closed
+    const editDesignationModalElement = document.getElementById('editDesignationModal');
+    if (editDesignationModalElement) {
+        editDesignationModalElement.addEventListener('hidden.bs.modal', function() {
+            document.getElementById('editFormErrors').style.display = 'none';
+            const invalidFields = document.querySelectorAll('#editDesignationForm .is-invalid');
+            invalidFields.forEach(field => {
+                field.classList.remove('is-invalid');
+            });
+        });
+    }
+
+    // Real-time validation for add form
+    const titleField = document.getElementById('id_title');
+    const departmentField = document.getElementById('id_department');
+    const levelField = document.getElementById('id_level');
+    
+    if (titleField) {
+        titleField.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+                document.getElementById('addFormErrors').style.display = 'none';
+            }
+        });
+    }
+    
+    if (departmentField) {
+        departmentField.addEventListener('change', function() {
+            if (this.value) {
+                this.classList.remove('is-invalid');
+                document.getElementById('addFormErrors').style.display = 'none';
+            }
+        });
+    }
+    
+    if (levelField) {
+        levelField.addEventListener('input', function() {
+            if (this.value && this.value >= 1) {
+                this.classList.remove('is-invalid');
+                document.getElementById('addFormErrors').style.display = 'none';
+            }
+        });
+    }
+
+    // Real-time validation for edit form
+    const editTitleField = document.getElementById('edit_id_title');
+    const editDepartmentField = document.getElementById('edit_id_department');
+    const editLevelField = document.getElementById('edit_id_level');
+    
+    if (editTitleField) {
+        editTitleField.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+                document.getElementById('editFormErrors').style.display = 'none';
+            }
+        });
+    }
+    
+    if (editDepartmentField) {
+        editDepartmentField.addEventListener('change', function() {
+            if (this.value) {
+                this.classList.remove('is-invalid');
+                document.getElementById('editFormErrors').style.display = 'none';
+            }
+        });
+    }
+    
+    if (editLevelField) {
+        editLevelField.addEventListener('input', function() {
+            if (this.value && this.value >= 1) {
+                this.classList.remove('is-invalid');
+                document.getElementById('editFormErrors').style.display = 'none';
+            }
+        });
+    }
+});
+</script>
+
+<style>
+.search-box {
+    position: relative;
+}
+
+.search-box input {
+    padding-left: 40px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #2c3e50;
+    background-color: #f8f9fa;
+    padding: 12px 16px;
+}
+
+.table td {
+    padding: 12px 16px;
+    vertical-align: middle;
+}
+
+.form-label {
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.form-control, .form-select {
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    padding: 8px 12px;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+.form-check-input:checked {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+.btn-group .btn {
+    border-radius: 4px;
+    margin-right: 4px;
+}
+
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+.invalid-feedback {
+    display: block;
+}
+
+.modal-header {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-footer {
+    border-top: 1px solid #dee2e6;
+}
+
+.alert {
+    border-radius: 8px;
+    border: none;
+}
+
+.badge {
+    font-size: 0.75em;
+    padding: 0.35em 0.65em;
+}
+</style>
+{% endblock %}

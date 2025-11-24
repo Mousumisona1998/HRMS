@@ -1,0 +1,1002 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - HR System{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <!-- Header -->
+    <div class="dash-header">
+        <div class="header-left">
+            <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+            <p>Welcome to HR Management System</p>
+        </div>
+        <div class="header-right">
+            <div class="date-card">
+                <i class="fas fa-calendar-day"></i>
+                <span>{{ today_date }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Stats Cards -->
+    <div class="stats-grid">
+        <!-- Employees Card -->
+        <div class="stat-card employee">
+            <div class="card-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="card-content">
+                <div class="card-value">{{ total_employees }}</div>
+                <div class="card-label">Total Employees</div>
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'all_employee' %}" class="card-link">
+                    View All <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Active Employees Card -->
+        <div class="stat-card active">
+            <div class="card-icon">
+                <i class="fas fa-user-check"></i>
+            </div>
+            <div class="card-content">
+                <div class="card-value">{{ active_employees }}</div>
+                <div class="card-label">Active Now</div>
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'active_employee' %}" class="card-link">
+                    View Active <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Branches Card -->
+        <div class="stat-card branch">
+            <div class="card-icon">
+                <i class="fas fa-code-branch"></i>
+            </div>
+            <div class="card-content">
+                <div class="card-value">{{ total_location }}</div>
+                <div class="card-label">Total Branches</div>
+            </div>
+            <div class="card-footer">
+                <span>Locations</span>
+            </div>
+        </div>
+
+        <!-- Today Present Card -->
+<div class="stat-card present">
+    <div class="card-icon">
+        <i class="fas fa-user-clock"></i>
+    </div>
+    <div class="card-content">
+        <div class="card-value">{{ today_present }}</div>  <!-- Only present count -->
+        <div class="card-label">Today Present</div>
+    </div>
+    <div class="card-footer">
+        <a href="{% url 'attendance:report' %}" class="card-link">
+            View Attendance <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+</div>
+
+        <!-- Resignations Card -->
+        <div class="stat-card resignation">
+            <div class="card-icon">
+                <i class="fas fa-user-minus"></i>
+            </div>
+            <div class="card-content">
+                <div class="card-value">{{ total_resignations }}</div>
+                <div class="card-label">Total Resignations</div>
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'resignation:all_resignations' %}" class="card-link">
+                    View All <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+
+        
+
+        <!-- Pending Review Card -->
+         <div class="stat-card pending">
+    <div class="card-icon">
+        <i class="fas fa-calendar-alt"></i>
+    </div>
+    <div class="card-content">
+        <div class="card-value">{{ total_leaves }}</div>
+        <div class="card-label">Total Leave</div>
+    </div>
+    <div class="card-footer">
+        <a href="{% url 'leave_dashboard' %}" class="card-link">
+            View All <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>  
+</div>
+    </div>
+
+    <!-- Charts and Data Section -->
+    <div class="dashboard-content">
+        <!-- Left Column -->
+        <div class="content-left">
+            <!-- Location Chart -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3><i class="fas fa-map-marked-alt"></i> Employee Locations</h3>
+                    <div class="total-badge">
+                        <span>{{ total_employees }}</span>
+                        Total
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="locationChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Department Chart -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3><i class="fas fa-network-wired"></i> Department Teams</h3>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="departmentChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Attendance Overview -->
+            <!-- Location-wise Attendance -->
+<div class="chart-container">
+    <div class="chart-header">
+        <h3><i class="fas fa-map-marker-alt"></i> Location-wise Attendance Today</h3>
+        <a href="{% url 'attendance:report' %}" class="view-all">View Report</a>
+    </div>
+    <div class="chart-wrapper">
+        <canvas id="attendanceChart"></canvas>
+    </div>
+</div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="content-right">
+            <!-- Recent Leaves -->
+            <div class="data-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-calendar-times"></i> Recent Leave Requests</h3>
+                    <a href="{% url 'leave_dashboard' %}" class="view-all">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Type</th>
+                                    <th>Duration</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for leave in recent_leaves %}
+                                <tr>
+                                    <td>
+                                        <div class="employee-info">
+                                            <div class="avatar">
+                                                {% if leave.employee.profile_picture %}
+                                                    <img src="{{ leave.employee.profile_picture.url }}" alt="{{ leave.employee.first_name }}">
+                                                {% else %}
+                                                    {{ leave.employee.first_name|first }}{{ leave.employee.last_name|first }}
+                                                {% endif %}
+                                            </div>
+                                            <div class="employee-details">
+                                                <div class="name">{{ leave.employee.first_name }} {{ leave.employee.last_name }}</div>
+                                                <div class="department">{{ leave.employee.department }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="leave-type {{ leave.leave_type.name }}">
+                                            {{ leave.leave_type.name|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if leave.days_requested == 0.5 %}
+                                            0.5 day
+                                        {% else %}
+                                            {{ leave.days_requested|floatformat:"0" }} days
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-{{ leave.status }}">
+                                            {{ leave.status|title }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-3">
+                                        <i class="fas fa-inbox fa-lg text-muted"></i>
+                                        <p class="mt-2 text-muted">No leave requests found</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Resignations -->
+            <div class="data-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-user-minus"></i> Recent Resignations</h3>
+                    <a href="{% url 'resignation:all_resignations' %}" class="view-all">View All</a>
+                </div>
+                <div class="card-body">
+                    {% for resignation in recent_resignations %}
+                    <div class="resignation-item">
+                        <div class="employee-info">
+                            <div class="avatar">
+                                {% if resignation.employee.profile_picture %}
+                                    <img src="{{ resignation.employee.profile_picture.url }}" alt="{{ resignation.employee.first_name }}">
+                                {% else %}
+                                    {{ resignation.employee.first_name|first }}{{ resignation.employee.last_name|first }}
+                                {% endif %}
+                            </div>
+                            <div class="employee-details">
+                                <div class="name">{{ resignation.employee.first_name }} {{ resignation.employee.last_name }}</div>
+                                <div class="department">{{ resignation.employee.department }}</div>
+                            </div>
+                        </div>
+                        <div class="resignation-details">
+                            <div class="date-group">
+                                <div class="label">Resignation Date</div>
+                                <div class="value">{{ resignation.resignation_date }}</div>
+                            </div>
+                            <div class="date-group">
+                                <div class="label">Last Working Day</div>
+                                <div class="value">{{ resignation.last_working_date }}</div>
+                            </div>
+                            <div class="status">
+                                <span class="status-badge status-{{ resignation.status }}">
+                                    {{ resignation.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-user-slash fa-lg text-muted"></i>
+                        <p class="mt-2 text-muted">No recent resignations</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <!-- <div class="data-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+                </div>
+                <div class="card-body">
+                    <div class="quick-actions">
+                        <a href="{% url 'leave_dashboard' %}" class="quick-action">
+                            <i class="fas fa-calendar-plus"></i>
+                            <span>Manage Leaves</span>
+                        </a>
+                        <a href="{% url 'attendance:report' %}" class="quick-action">
+                            <i class="fas fa-user-check"></i>
+                            <span>View Attendance</span>
+                        </a>
+                        <a href="{% url 'resignation:all_resignations' %}" class="quick-action">
+                            <i class="fas fa-door-open"></i>
+                            <span>Resignations</span>
+                        </a>
+                        {% if request.session.user_role in 'ADMIN,HR,MANAGER,SUPER ADMIN' %}
+                        <a href="{% url 'all_employee' %}" class="quick-action">
+                            <i class="fas fa-users-cog"></i>
+                            <span>Employee Management</span>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div> -->
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // Location Chart
+    new Chart(document.getElementById('locationChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ location_labels|safe }},
+            datasets: [{
+                data: {{ location_counts|safe }},
+                backgroundColor: [
+                    '#667eea', '#764ba2', '#f093fb', '#4facfe',
+                    '#00f2fe', '#43e97b', '#38f9d7', '#fa709a'
+                ],
+                borderWidth: 0,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            cutout: '65%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        font: {
+                            family: 'Inter, sans-serif',
+                            size: 11
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Department Chart
+    new Chart(document.getElementById('departmentChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ department_labels|safe }},
+            datasets: [{
+                data: {{ department_counts|safe }},
+                backgroundColor: '#667eea',
+                borderRadius: 6,
+                borderSkipped: false,
+                hoverBackgroundColor: '#5a67d8'
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    },
+                    grid: {
+                        color: 'rgba(0,0,0,0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            size: 11
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Attendance Chart
+   const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+new Chart(attendanceCtx, {
+    type: 'line',
+    data: {
+        labels: {{ location_attendance_labels|safe }},
+        datasets: [{
+            label: 'Present Today',
+            data: {{ location_present_counts|safe }},
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: '#10b981',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            pointRadius: 6,
+            pointHoverRadius: 8
+        }, {
+            label: 'Absent Today',
+            data: {{ location_absent_counts|safe }},
+            borderColor: '#ef4444',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: '#ef4444',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            pointRadius: 6,
+            pointHoverRadius: 8
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top',
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1,
+                    callback: function(value) {
+                        return value + ' emp';
+                    }
+                }
+            }
+        }
+    }
+});
+});
+</script>
+
+<style>
+/* Base Styles */
+.dashboard-wrapper {
+    padding: 20px;
+    background: #f8fafc;
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Header */
+.dash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding: 0 10px;
+}
+
+.header-left h1 {
+    margin: 0 0 5px 0;
+    color: #2d3748;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+}
+
+.header-left h1 i {
+    color: #667eea;
+}
+
+.header-left p {
+    margin: 0;
+    color: #718096;
+    font-size: 0.9rem;
+}
+
+.date-card {
+    background: white;
+    padding: 10px 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #667eea;
+    font-weight: 500;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: all 0.3s ease;
+    border-left: 4px solid;
+    border: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.stat-card.employee { border-left-color: #667eea; }
+.stat-card.active { border-left-color: #4CAF50; }
+.stat-card.branch { border-left-color: #FF9800; }
+.stat-card.present { border-left-color: #2196F3; }
+.stat-card.resignation { border-left-color: #F44336; }
+.stat-card.pending { border-left-color: #FFC107; }
+
+.stat-card .card-icon {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.employee .card-icon { 
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+.active .card-icon { 
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+}
+.branch .card-icon { 
+    background: linear-gradient(135deg, #FF9800, #f57c00);
+}
+.present .card-icon { 
+    background: linear-gradient(135deg, #2196F3, #1976D2);
+}
+.resignation .card-icon { 
+    background: linear-gradient(135deg, #F44336, #D32F2F);
+}
+.pending .card-icon { 
+    background: linear-gradient(135deg, #FFC107, #FFA000);
+}
+
+.card-content {
+    margin-bottom: 15px;
+}
+
+.card-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #2d3748;
+    line-height: 1;
+    margin-bottom: 5px;
+}
+
+.card-label {
+    color: #718096;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    font-size: 0.8rem;
+    color: #718096;
+}
+
+.card-link {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s ease;
+    font-size: 0.8rem;
+}
+
+.card-link:hover {
+    color: #5a67d8;
+    transform: translateX(2px);
+}
+
+/* Dashboard Content */
+.dashboard-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 25px;
+}
+
+.content-left {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.content-right {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+/* Chart Containers */
+.chart-container {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.chart-header h3 {
+    margin: 0;
+    color: #2d3748;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.chart-header h3 i {
+    color: #667eea;
+}
+
+.total-badge {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 500;
+}
+
+.total-badge span {
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.chart-wrapper {
+    position: relative;
+    height: 250px;
+}
+
+.chart-container:first-child .chart-wrapper {
+    padding-left: 80px;
+}
+
+/* Data Cards */
+.data-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border: 1px solid rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.card-header h3 {
+    margin: 0;
+    color: #2d3748;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.card-header h3 i {
+    color: #667eea;
+}
+
+.view-all {
+    color: #667eea;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.view-all:hover {
+    color: #5a67d8;
+}
+
+.card-body {
+    padding: 20px 25px;
+}
+
+/* Table Styles */
+.table-container {
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th {
+    text-align: left;
+    padding: 12px 15px;
+    font-size: 0.85rem;
+    color: #718096;
+    font-weight: 600;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.data-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.85rem;
+}
+
+.data-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Employee Info */
+.employee-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.9rem;
+    overflow: hidden;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.employee-details .name {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 3px;
+}
+
+.employee-details .department {
+    font-size: 0.8rem;
+    color: #718096;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.status-new, .status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-approved, .status-accepted {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-rejected {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.status-serving {
+    background: #d4edda;
+    color: #155724;
+}
+
+/* Leave Types */
+.leave-type {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.leave-type.casual {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.leave-type.maternity {
+    background: #fce4ec;
+    color: #c2185b;
+}
+
+.leave-type.paternity {
+    background: #e8f5e8;
+    color: #2e7d32;
+}
+
+.leave-type.sick {
+    background: #fff3e0;
+    color: #ef6c00;
+}
+
+/* Resignation Items */
+.resignation-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.resignation-item:last-child {
+    border-bottom: none;
+}
+
+.resignation-details {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.date-group {
+    text-align: right;
+}
+
+.date-group .label {
+    font-size: 0.75rem;
+    color: #718096;
+    margin-bottom: 3px;
+}
+
+.date-group .value {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #2d3748;
+}
+
+/* Quick Actions */
+.quick-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.quick-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: #f8fafc;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #4a5568;
+    transition: all 0.3s ease;
+    border: 1px solid #e2e8f0;
+}
+
+.quick-action:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    text-decoration: none;
+}
+
+.quick-action i {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+}
+
+.quick-action span {
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .dashboard-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-wrapper {
+        padding: 15px;
+    }
+    
+    .dash-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+    
+    .resignation-details {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-end;
+    }
+    
+    .chart-wrapper {
+        height: 220px;
+    }
+    
+    .chart-container {
+        padding: 20px;
+    }
+    
+    .quick-actions {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .card-value {
+        font-size: 1.6rem;
+    }
+    
+    .chart-wrapper {
+        height: 200px;
+    }
+    
+    .resignation-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .resignation-details {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+.stat-card.pending { 
+    border-left-color: #E6DF44; /* Your daffodil color */
+}
+
+.stat-card.pending .card-icon { 
+    background: linear-gradient(135deg, #E6DF44, #d4c93d); /* Daffodil gradient */
+}
+</style>
+{% endblock %}

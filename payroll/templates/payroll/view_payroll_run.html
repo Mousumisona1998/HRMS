@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payroll Run Details - HRMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h3 mb-0">Payroll Run: {{ payroll_run.name }}</h1>
+                <p class="text-muted mb-0">{{ payroll_run.get_month_name }} {{ payroll_run.payroll_year }}</p>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'payroll_runs' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Payroll Runs
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payroll Run Summary -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="custom-card text-center">
+                <div class="card-body">
+                    <h3 class="text-primary">{{ payroll_run.total_employees }}</h3>
+                    <p class="text-muted mb-0">Employees</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="custom-card text-center">
+                <div class="card-body">
+                    <h3 class="text-success">₹{{ payroll_run.total_amount }}</h3>
+                    <p class="text-muted mb-0">Total Amount</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="custom-card text-center">
+                <div class="card-body">
+                    <span class="badge 
+                        {% if payroll_run.status == 'draft' %}bg-secondary
+                        {% elif payroll_run.status == 'processing' %}bg-warning
+                        {% elif payroll_run.status == 'completed' %}bg-success
+                        {% else %}bg-danger{% endif %} fs-6">
+                        {{ payroll_run.get_status_display }}
+                    </span>
+                    <p class="text-muted mb-0 mt-1">Status</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="custom-card text-center">
+                <div class="card-body">
+                    <h6 class="text-info">{{ payroll_run.processed_by|default:"Not Processed" }}</h6>
+                    <p class="text-muted mb-0">
+                        {% if payroll_run.processed_at %}
+                        {{ payroll_run.processed_at|date:"d M Y H:i" }}
+                        {% else %}
+                        Not Processed
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Selected Employees (for draft runs) -->
+    {% if payroll_run.status == 'draft' and selected_employees %}
+    <div class="custom-card mb-4">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-users me-2"></i>Selected Employees (Draft)
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                This payroll run is in draft status. Process it to generate payslips for the selected employees.
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Employee ID</th>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Designation</th>
+                            <th>Basic Salary</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for employee in selected_employees %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td class="fw-bold">{{ employee.employee_id }}</td>
+                            <td>{{ employee.first_name }} {{ employee.last_name }}</td>
+                            <td>{{ employee.department }}</td>
+                            <td>{{ employee.designation }}</td>
+                            <td class="fw-bold text-success">
+                                ₹{{ employee.employeesalary_set.first.basic_salary|default:"0" }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Payslips (for completed runs) -->
+    {% if payroll_run.status == 'completed' %}
+    <div class="custom-card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-file-invoice me-2"></i>Generated Payslips
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if payslips %}
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>
+                Payroll run completed successfully! {{ payslips|length }} payslips generated.
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Payslip No</th>
+                            <th>Employee</th>
+                            <th>Department</th>
+                            <th>Basic Salary</th>
+                            <th>Net Salary</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payslip in payslips %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td class="fw-bold">{{ payslip.payslip_number }}</td>
+                            <td>{{ payslip.employee.first_name }} {{ payslip.employee.last_name }}</td>
+                            <td>{{ payslip.employee.department }}</td>
+                            <td>₹{{ payslip.basic_salary }}</td>
+                            <td class="fw-bold text-success">₹{{ payslip.net_salary }}</td>
+                            <td>
+                                <span class="badge bg-success">{{ payslip.get_status_display }}</span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'view_payslip' payslip.id %}" class="btn btn-outline-primary btn-sm" title="View Payslip">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'download_payslip' payslip.id %}" class="btn btn-outline-success btn-sm" title="Download PDF">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-file-invoice fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Payslips Generated</h4>
+                <p class="text-muted">Process the payroll run to generate payslips.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between">
+                {% if payroll_run.status == 'draft' %}
+                <div>
+                    <a href="{% url 'process_payroll_run' payroll_run.id %}" 
+                       class="btn btn-success me-2"
+                       onclick="return confirm('Process this payroll run? This will generate payslips for {{ selected_employees|length }} selected employees.')">
+                        <i class="fas fa-play me-2"></i>Process Payroll Run
+                    </a>
+                    <form method="post" action="{% url 'delete_payroll_run' payroll_run.id %}" class="d-inline"
+                          onsubmit="return confirm('Are you sure you want to delete this payroll run? This action cannot be undone.')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-2"></i>Delete Payroll Run
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+                <a href="{% url 'payroll_runs' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,444 @@
+{% extends 'base.html' %}
+
+{% block title %}My Attendance - HR System{% endblock %}
+
+{% block content %}
+<!-- Include DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+
+<style>
+  .text-danger i {
+    color: #e74c3c;
+    font-size: 1.1rem;
+    transition: transform 0.2s ease;
+  }
+
+  .text-danger i:hover {
+    transform: scale(1.2);
+  }
+  
+  /* Custom styling for DataTable */
+  .dataTables_wrapper .dataTables_length,
+  .dataTables_wrapper .dataTables_filter,
+  .dataTables_wrapper .dataTables_info,
+  .dataTables_wrapper .dataTables_paginate {
+    padding: 1rem;
+  }
+  
+  .table-responsive {
+    border-radius: 12px;
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    overflow-x: auto;
+  }
+  
+  /* Mobile responsiveness fixes */
+  @media (max-width: 768px) {
+    .header-actions {
+      flex-direction: column;
+      gap: 10px;
+      align-items: flex-start !important;
+    }
+    
+    .filter-container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .filter-container form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .filter-container .d-flex {
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .filter-container input {
+      max-width: 100% !important;
+    }
+    
+    .download-btn {
+      width: 100%;
+      text-align: center;
+    }
+    
+    /* Ensure DataTable controls are visible on mobile */
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter {
+      float: none;
+      text-align: left;
+      margin-bottom: 10px;
+    }
+    
+    .dataTables_wrapper .dataTables_length select,
+    .dataTables_wrapper .dataTables_filter input {
+      width: 100%;
+      margin-left: 0;
+    }
+    
+    /* Make buttons stack on mobile */
+    .dt-buttons {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    
+    .dt-buttons .btn {
+      margin-bottom: 5px;
+      width: 100%;
+    }
+    
+    /* Fix for DataTable controls layout on mobile */
+    .dataTables_wrapper .dt-buttons {
+      float: none !important;
+      text-align: center;
+    }
+    
+    .dataTables_wrapper .dataTables_length {
+      float: none !important;
+      margin-bottom: 10px;
+    }
+    
+    .dataTables_wrapper .dataTables_filter {
+      float: none !important;
+      margin-bottom: 10px;
+    }
+  }
+  
+  /* Ensure horizontal scrolling for tables on small screens */
+  @media (max-width: 575px) {
+    .table-responsive {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Make sure table columns don't collapse too much */
+    #attendanceTable {
+      min-width: 600px;
+    }
+  }
+</style>
+
+<div class="page-header">
+  <h2><i class="fas fa-list"></i> My Attendance Records</h2>
+  <p class="text-muted">View your attendance history</p>
+</div>
+
+<div class="custom-card">
+  <div class="header-actions d-flex justify-content-between align-items-center mb-3">
+    <h4 class="card-title mb-0">Attendance History</h4>
+    <div class="filter-container d-flex align-items-center">
+
+      <!-- ✅ Month Filter -->
+      <form method="get" class="d-flex align-items-center me-3">
+        <div class="d-flex align-items-center">
+          <input type="month" name="month" class="form-control form-control-sm" value="{{ selected_month }}"
+            style="max-width: 180px; margin-right: 8px;">
+          <button type="submit" class="btn btn-outline-primary btn-sm">
+            <i class="fas fa-calendar-alt me-1"></i> View Month
+          </button>
+        </div>
+      </form>
+
+      <!-- ✅ Download Report Link -->
+      <a href="{% url 'attendance:download_report_excel' %}?month={{ selected_month }}" 
+        class="btn btn-success btn-sm download-btn">
+        <i class="fas fa-file-excel"></i> Download Report (Excel)
+      </a>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table align-middle text-center" id="attendanceTable"
+      style="margin-bottom: 0; border-collapse: separate; border-spacing: 0;">
+      <thead style="background-color: #f8fafc; color: #374151; font-weight: 600;">
+        <tr style="font-size: 14px; text-transform: uppercase;">
+          <th style="padding: 12px;">Date</th>
+          <th>Check-In Time</th>
+          <th>Check-Out Time</th>
+          <th>Status</th>
+          <th>Punctuality</th>
+          <th>Duration</th>
+          <th>Extra Hours</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for attendance in attendances %}
+        <tr style="font-size: 14px; transition: background-color 0.2s ease; border-bottom: 1px solid #f1f5f9;">
+
+          <!-- Date -->
+          <td style="color: #111827; font-weight: 500;">{{ attendance.date|date:"M d, Y" }}</td>
+
+           <!-- Check-In -->
+          <td>
+            {% if attendance.check_in %}
+            {% with ci=attendance.check_in|date:"H:i" %}
+            {% if ci < "09:30" %} <!-- GREEN if before 9:30 -->
+              <span
+                style="background-color:#ecfdf5; color:#065f46; font-weight:600; padding:4px 10px; border-radius:8px;">
+                {{ attendance.check_in|date:"h:i A" }}
+              </span>
+              {% else %}
+              <!-- RED if at/after 9:30 -->
+              <span
+                style="background-color:#fee2e2; color:#b91c1c; font-weight:600; padding:4px 10px; border-radius:8px;">
+                {{ attendance.check_in|date:"h:i A" }}
+              </span>
+              {% endif %}
+              {% endwith %}
+              {% else %}
+              <span style="background-color:#f3f4f6; color:#9ca3af; padding:4px 10px; border-radius:8px;">—</span>
+              {% endif %}
+          </td>
+
+         <!-- Check-Out -->
+          <td>
+            {% if attendance.check_out %}
+            <span
+              style="background-color: #fff7ed; color: #92400e; font-weight: 600; padding: 4px 10px; border-radius: 8px;">
+              {{ attendance.check_out|date:"h:i A" }}
+            </span>
+            {% elif attendance.check_in %}
+            <span
+              style="background-color: #e5e7eb; color: #374151; font-weight: 600; padding: 4px 10px; border-radius: 8px;">Not
+              Yet</span>
+            {% else %}
+            <span style="background-color: #f3f4f6; color: #9ca3af; padding: 4px 10px; border-radius: 8px;">—</span>
+            {% endif %}
+          </td>
+
+          <!-- Status -->
+                  <td>
+                      {% if attendance.day_status == "Present" %}
+                          <span style="background-color:#dcfce7; color:#166534; font-weight:600; padding:4px 12px; border-radius:8px;">
+                              Present
+                          </span>
+
+                      {% elif attendance.day_status == "Half Day" %}
+                          <span style="background-color:#fef9c3; color:#92400e; font-weight:600; padding:4px 12px; border-radius:8px;">
+                              Half Day
+                          </span>
+
+                      {% elif attendance.day_status == "LOP" %}
+                          <span style="background-color:#fee2e2; color:#b91c1c; font-weight:600; padding:4px 12px; border-radius:8px;">
+                              LOP
+                          </span>
+
+                      {% else %}
+                          <span style="background-color:#fee2e2; color:#b91c1c; font-weight:600; padding:4px 12px; border-radius:8px;">
+                              Absent
+                          </span>
+                      {% endif %}
+                  </td>
+
+                  <td>
+              {% if attendance.punctuality == "On Time" %}
+                  <span style="background:#dcfce7; color:#166534; padding:4px 12px; border-radius:8px; font-weight:600;">
+                      On Time
+                  </span>
+
+              {% elif attendance.punctuality == "Late" %}
+                  <span style="background:#fee2e2; color:#b91c1c; padding:4px 12px; border-radius:8px; font-weight:600;">
+                      Late
+                  </span>
+
+              {% else %}
+                  <span style="background:#f3f4f6; color:#9ca3af; padding:4px 12px; border-radius:8px;">
+                      —
+                  </span>
+              {% endif %}
+          </td>
+
+
+
+          <!-- Duration -->
+          <td>
+            {% if attendance.duration_display %}
+            <span
+              style="background-color: #eff6ff; color: #1d4ed8; font-weight: 600; padding: 4px 12px; border-radius: 8px;">
+              {{ attendance.duration_display }}
+            </span>
+            {% else %}
+            <span style="background-color: #f3f4f6; color: #9ca3af; padding: 4px 12px; border-radius: 8px;">—</span>
+            {% endif %}
+          </td>
+
+          <!-- Extra Hours -->
+          <td>
+            {% if attendance.extra_hours_display %}
+            <span
+              style="background-color: #e0f2fe; color: #075985; font-weight: 600; padding: 4px 12px; border-radius: 8px;">
+              {{ attendance.extra_hours_display }}
+            </span>
+            {% else %}
+            <span style="background-color: #f3f4f6; color: #9ca3af; padding: 4px 12px; border-radius: 8px;">—</span>
+            {% endif %}
+          </td>
+
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center" style="padding: 40px; color: #6b7280;">
+            <i class="fas fa-inbox" style="font-size: 24px; color: #9ca3af;"></i>
+            <p style="margin-top: 10px; font-weight: 500;">No attendance records found</p>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Include jQuery and DataTables JS -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize DataTable with corrected DOM structure
+    const table = $('#attendanceTable').DataTable({
+      "pageLength": 30,
+      "lengthMenu": [[30, 60, 90, 120, -1], [30, 60, 90, 120, "All"]],
+      "order": [[0, 'desc']], // Sort by date descending
+      "responsive": true,
+      "dom": "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+             "<'row'<'col-sm-12 col-md-6'B><'col-sm-12 col-md-6'>>" +
+             "<'row'<'col-sm-12'tr>>" +
+             "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+      "buttons": [
+        {
+          extend: 'copy',
+          className: 'btn btn-sm btn-outline-secondary',
+          text: '<i class="fas fa-copy"></i> Copy'
+        },
+        {
+          extend: 'excel',
+          className: 'btn btn-sm btn-outline-success',
+          text: '<i class="fas fa-file-excel"></i> Excel',
+          title: 'Attendance Records - {{ selected_month }}'
+        },
+        {
+          extend: 'pdf',
+          className: 'btn btn-sm btn-outline-danger',
+          text: '<i class="fas fa-file-pdf"></i> PDF',
+          title: 'Attendance Records - {{ selected_month }}'
+        },
+        {
+          extend: 'print',
+          className: 'btn btn-sm btn-outline-info',
+          text: '<i class="fas fa-print"></i> Print',
+          title: 'Attendance Records - {{ selected_month }}',
+          customize: function (win) {
+            $(win.document.body).find('table').addClass('display').css('font-size', '12px');
+            $(win.document.body).find('tr:nth-child(odd) td').css('background-color', '#f9f9f9');
+          }
+        }
+      ],
+      "language": {
+        "search": "Search records:",
+        "lengthMenu": "Show _MENU_ entries",
+        "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+        "infoEmpty": "Showing 0 to 0 of 0 entries",
+        "infoFiltered": "(filtered from _MAX_ total entries)",
+        "paginate": {
+          "first": "First",
+          "last": "Last",
+          "next": "Next",
+          "previous": "Previous"
+        }
+      },
+      "initComplete": function(settings, json) {
+        // Add custom styling after initialization
+        $('.dataTables_filter input').addClass('form-control form-control-sm');
+        $('.dataTables_length select').addClass('form-control form-control-sm');
+        
+        // Ensure DataTable controls are properly displayed on mobile
+        if ($(window).width() < 768) {
+          $('.dataTables_length, .dataTables_filter').css({
+            'float': 'none',
+            'text-align': 'left',
+            'margin-bottom': '10px'
+          });
+          
+          $('.dt-buttons').css({
+            'text-align': 'center',
+            'margin-bottom': '10px'
+          });
+          
+          $('.dt-buttons .btn').css({
+            'margin-bottom': '5px',
+            'width': '100%'
+          });
+        }
+      }
+    });
+
+    // Add custom search for status column
+    $('#statusSearch').on('keyup', function() {
+      table.column(3).search(this.value).draw();
+    });
+
+    // Update the table when month filter changes
+    const monthFilter = document.querySelector('input[name="month"]');
+    if (monthFilter) {
+      monthFilter.addEventListener('change', function() {
+        this.form.submit();
+      });
+    }
+    
+    // Handle window resize to maintain proper mobile layout
+    window.addEventListener('resize', function() {
+      if ($(window).width() < 768) {
+        $('.dataTables_length, .dataTables_filter').css({
+          'float': 'none',
+          'text-align': 'left',
+          'margin-bottom': '10px'
+        });
+        
+        $('.dt-buttons').css({
+          'text-align': 'center',
+          'margin-bottom': '10px'
+        });
+        
+        $('.dt-buttons .btn').css({
+          'margin-bottom': '5px',
+          'width': '100%'
+        });
+      } else {
+        // Reset to default for larger screens
+        $('.dataTables_length, .dataTables_filter').css({
+          'float': '',
+          'text-align': '',
+          'margin-bottom': ''
+        });
+        
+        $('.dt-buttons').css({
+          'text-align': '',
+          'margin-bottom': ''
+        });
+        
+        $('.dt-buttons .btn').css({
+          'margin-bottom': '',
+          'width': ''
+        });
+      }
+    });
+  });
+</script>
+
+{% endblock %}
