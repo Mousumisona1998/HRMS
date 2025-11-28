@@ -124,6 +124,10 @@
       min-width: 600px;
     }
   }
+  #attendanceTable td, 
+  #attendanceTable th {
+      text-align: left !important;
+  }
 </style>
 
 <div class="page-header">
@@ -175,7 +179,10 @@
         <tr style="font-size: 14px; transition: background-color 0.2s ease; border-bottom: 1px solid #f1f5f9;">
 
           <!-- Date -->
-          <td style="color: #111827; font-weight: 500;">{{ attendance.date|date:"M d, Y" }}</td>
+          <td style="color: #111827; font-weight: 500;" 
+              data-order="{{ attendance.date|date:'Y-m-d' }}">
+              {{ attendance.date|date:"M d, Y" }}
+          </td>
 
            <!-- Check-In -->
           <td>

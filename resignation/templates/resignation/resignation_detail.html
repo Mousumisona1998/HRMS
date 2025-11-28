@@ -13,24 +13,12 @@
         {% if status_timeline %}
           <div class="custom-card mb-4">
             <div class="card-header">
-              <h4 class="card-title mb-0"> Resignation Status Timeline</h4>
+              <h4 class="card-title mb-0">📊 Resignation Status Timeline</h4>
             </div>
             <div class="card-body">
               <div class="status-timeline">
                 {% for step in status_timeline %}
-                  <div class="timeline-step {% if step.completed %}
-                      
-                      completed
-
-                    {% elif step.active %}
-                      
-                      active
-
-                    {% else %}
-                      
-                      pending
-
-                    {% endif %}">
+                  <div class="timeline-step {% if step.completed %}completed{% elif step.active %}active{% else %}pending{% endif %}">
                     <div class="step-marker">
                       <i class="{{ step.icon }}"></i>
                     </div>
@@ -39,12 +27,7 @@
                       {% if step.date %}
                         <small class="text-muted">{{ step.date }}</small>
                       {% endif %}
-                      {% if step.progress %}
-                        <div class="progress mt-2" style="height: 8px;">
-                          <div class="progress-bar bg-success" role="progressbar" style="width: {{ step.progress.completion_percentage|floatformat:0 }}%"></div>
-                        </div>
-                        <small class="text-muted">{{ step.progress.days_completed }}/{{ step.progress.total_days }} days completed ({{ step.progress.days_remaining }} days left)</small>
-                      {% endif %}
+                      
                     </div>
                   </div>
                 {% endfor %}
@@ -56,14 +39,14 @@
         <!-- Real-time Status Tracking -->
         <div class="custom-card mb-4">
           <div class="card-header">
-            <h4 class="card-title mb-0"> Real-time Status Tracking</h4>
+            <h4 class="card-title mb-0">📊 Real-time Status Tracking</h4>
           </div>
           <div class="card-body">
             <!-- Notice Period Countdown -->
             {% if notice_progress %}
               <div class="row mb-4">
                 <div class="col-12">
-                  <h6> Notice Period Progress</h6>
+                  <h6>📅 Notice Period Progress</h6>
                   <div class="progress mb-2" style="height: 25px;">
                     <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: {{ notice_progress.completion_percentage|floatformat:0 }}%" aria-valuenow="{{ notice_progress.completion_percentage|floatformat:0 }}" aria-valuemin="0" aria-valuemax="100">{{ notice_progress.completion_percentage|floatformat:0 }}%</div>
                   </div>
@@ -101,89 +84,29 @@
             {% if exit_status %}
               <div class="row">
                 <div class="col-12">
-                  <h6> Exit Process Status</h6>
+                  <h6>🚪 Exit Process Status</h6>
                   <div class="row">
                     <div class="col-md-4 mb-2">
-                      <div class="d-flex justify-content-between align-items-center p-2 border rounded {% if exit_status.no_due_certificate %}
-                          
-                          bg-success text-white
-
-                        {% else %}
-                          
-                          bg-warning
-
-                        {% endif %}">
+                      <div class="d-flex justify-content-between align-items-center p-2 border rounded {% if exit_status.no_due_certificate %}bg-success text-white{% else %}bg-warning{% endif %}">
                         <span>No Due Certificate</span>
-                        <span class="badge {% if exit_status.no_due_certificate %}
-                            
-                            bg-light text-dark
-
-                          {% else %}
-                            
-                            bg-dark
-
-                          {% endif %}">
-                          {% if exit_status.no_due_certificate %}
-                             Done
-                          {% else %}
-                             Pending
-                          {% endif %}
+                        <span class="badge {% if exit_status.no_due_certificate %}bg-light text-dark{% else %}bg-dark{% endif %}">
+                          {% if exit_status.no_due_certificate %}✅ Done{% else %}⏳ Pending{% endif %}
                         </span>
                       </div>
                     </div>
                     <div class="col-md-4 mb-2">
-                      <div class="d-flex justify-content-between align-items-center p-2 border rounded {% if exit_status.exit_interview %}
-                          
-                          bg-success text-white
-
-                        {% else %}
-                          
-                          bg-warning
-
-                        {% endif %}">
+                      <div class="d-flex justify-content-between align-items-center p-2 border rounded {% if exit_status.exit_interview %}bg-success text-white{% else %}bg-warning{% endif %}">
                         <span>Exit Interview</span>
-                        <span class="badge {% if exit_status.exit_interview %}
-                            
-                            bg-light text-dark
-
-                          {% else %}
-                            
-                            bg-dark
-
-                          {% endif %}">
-                          {% if exit_status.exit_interview %}
-                             Done
-                          {% else %}
-                             Pending
-                          {% endif %}
+                        <span class="badge {% if exit_status.exit_interview %}bg-light text-dark{% else %}bg-dark{% endif %}">
+                          {% if exit_status.exit_interview %}✅ Done{% else %}⏳ Pending{% endif %}
                         </span>
                       </div>
                     </div>
                     <div class="col-md-4 mb-2">
-                      <div class="d-flex justify-content-between align-items-center p-2 border rounded {% if exit_status.final_settlement %}
-                          
-                          bg-success text-white
-
-                        {% else %}
-                          
-                          bg-warning
-
-                        {% endif %}">
+                      <div class="d-flex justify-content-between align-items-center p-2 border rounded {% if exit_status.final_settlement %}bg-success text-white{% else %}bg-warning{% endif %}">
                         <span>Final Settlement</span>
-                        <span class="badge {% if exit_status.final_settlement %}
-                            
-                            bg-light text-dark
-
-                          {% else %}
-                            
-                            bg-dark
-
-                          {% endif %}">
-                          {% if exit_status.final_settlement %}
-                             Done
-                          {% else %}
-                             Pending
-                          {% endif %}
+                        <span class="badge {% if exit_status.final_settlement %}bg-light text-dark{% else %}bg-dark{% endif %}">
+                          {% if exit_status.final_settlement %}✅ Done{% else %}⏳ Pending{% endif %}
                         </span>
                       </div>
                     </div>
@@ -200,11 +123,7 @@
                     </div>
                     {% if exit_status.days_until_exit > 0 %}
                       <small class="text-muted">
-                        {{ exit_status.days_until_exit }} days until exit "{% if exit_status.is_on_track %}
-                          <span class="text-success"> On track</span>
-                        {% else %}
-                          <span class="text-warning"> Needs attention</span>
-                        {% endif %}
+                        {{ exit_status.days_until_exit }} days until exit • {% if exit_status.is_on_track %}<span class="text-success">✅ On track</span>{% else %}<span class="text-warning">⚠️ Needs attention</span>{% endif %}
                       </small>
                     {% endif %}
                   </div>
@@ -217,30 +136,10 @@
         <!-- Resignation Details -->
         <div class="custom-card">
           <div class="card-header">
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex justify-content-between align-items-center" style="gap: 10px;">
               <h4 class="card-title mb-0">Resignation Details</h4>
               <div>
-                <span class="badge bg-{% if resignation.status == 'accepted' %}
-                    
-                    success
-
-                  {% elif resignation.status == 'rejected' %}
-                    
-                    danger
-
-                  {% elif resignation.status == 'applied' %}
-                    
-                    warning
-
-                  {% elif resignation.status == 'withdrawn' %}
-                    
-                    secondary
-
-                  {% else %}
-                    
-                    info
-
-                  {% endif %} fs-6">
+                <span class="badge bg-{% if resignation.status == 'accepted' %}success{% elif resignation.status == 'rejected' %}danger{% elif resignation.status == 'applied' %}warning{% elif resignation.status == 'withdrawn' %}secondary{% else %}info{% endif %} fs-6">
                   {{ resignation.get_status_display }}
                 </span>
                 <span class="badge bg-secondary fs-6 ms-2">{{ resignation.get_exit_status_display }}</span>
@@ -259,7 +158,7 @@
                   {% endif %}
                   <div>
                     <h5 class="mb-1">{{ resignation.employee.first_name }} {{ resignation.employee.last_name }}</h5>
-                    <p class="text-muted mb-0">{{ resignation.employee.designation }} " {{ resignation.employee.department }}</p>
+                    <p class="text-muted mb-0">{{ resignation.employee.designation }} • {{ resignation.employee.department }}</p>
                     <small class="text-muted">ID: {{ resignation.employee.employee_id }}</small>
                   </div>
                 </div>
@@ -335,19 +234,6 @@
               </div>
             {% endif %}
 
-            <!-- Withdrawal Section -->
-            <!-- {% if resignation.status == 'applied' or resignation.status == 'under_review' and user_role == 'EMPLOYEE' and resignation.employee.email == request.session.user_email %}
-              <div class="row mt-4">
-                <div class="col-12">
-                  <div class="alert alert-warning">
-                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Want to withdraw your resignation?</h6>
-                    <p class="mb-2">You can withdraw your resignation as it's still under review.</p>
-                    <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#withdrawModal"><i class="fas fa-undo me-1"></i>Withdraw Resignation</button>
-                  </div>
-                </div>
-              </div>
-            {% endif %} -->
-
             <!-- Action Buttons -->
             <div class="row mt-4">
               <div class="col-12">
@@ -406,7 +292,7 @@
         {% if resignation.status == 'accepted' %}
           <div class="custom-card mt-4">
             <div class="card-header">
-              <h4 class="card-title mb-0"> Exit Checklist</h4>
+              <h4 class="card-title mb-0">📋 Exit Checklist</h4>
               <div>
                 <span class="badge bg-success">{{ exit_status.checklist_completed }}/{{ exit_status.checklist_total }} completed</span>
               </div>
@@ -457,8 +343,29 @@
                           {% endif %}
                         </td>
                         <td>
-                          {% if user_role in 'ADMIN,HR,SUPER ADMIN' and not item.completed %}
-                            <button class="btn btn-sm btn-success" onclick="updateChecklist({{ item.id }}, true)"><i class="fas fa-check"></i></button>
+                          {% if user_role in 'ADMIN,HR,SUPER ADMIN' %}
+                          <div class="btn-group">
+                              {% if item.completed %}
+                              <button class="btn btn-sm btn-warning" 
+                                      onclick="updateChecklist({{ item.id }}, false)" 
+                                      title="Mark as Incomplete">
+                                  <i class="fas fa-undo"></i>
+                              </button>
+                              {% else %}
+                              <button class="btn btn-sm btn-success" 
+                                      onclick="updateChecklist({{ item.id }}, true)" 
+                                      title="Mark as Complete">
+                                  <i class="fas fa-check"></i>
+                              </button>
+                              {% endif %}
+                              
+                              <!-- Toggle Button for Easy Switching -->
+                              <!-- <button class="btn btn-sm btn-outline-secondary" 
+                                      onclick="toggleChecklist({{ item.id }})" 
+                                      title="Toggle Status">
+                                  <i class="fas fa-sync-alt"></i>
+                              </button> -->
+                          </div>
                           {% endif %}
                         </td>
                       </tr>
@@ -483,7 +390,7 @@
         <!-- Quick Actions Card -->
         <div class="custom-card mb-4">
           <div class="card-header">
-            <h5 class="card-title mb-0"> Quick Actions</h5>
+            <h5 class="card-title mb-0">⚡ Quick Actions</h5>
           </div>
           <div class="card-body">
             <div class="d-grid gap-2">
@@ -511,29 +418,13 @@
         <!-- Status Summary -->
         <div class="custom-card">
           <div class="card-header">
-            <h5 class="card-title mb-0"> Status Summary</h5>
+            <h5 class="card-title mb-0">📈 Status Summary</h5>
           </div>
           <div class="card-body">
             <div class="status-summary">
               <div class="status-item">
                 <span class="status-label">Current Status</span>
-                <span class="status-value badge bg-{% if resignation.status == 'accepted' %}
-                    
-                    success
-
-                  {% elif resignation.status == 'rejected' %}
-                    
-                    danger
-
-                  {% elif resignation.status == 'applied' %}
-                    
-                    warning
-
-                  {% else %}
-                    
-                    info
-
-                  {% endif %}">
+                <span class="status-value badge bg-{% if resignation.status == 'accepted' %}success{% elif resignation.status == 'rejected' %}danger{% elif resignation.status == 'applied' %}warning{% else %}info{% endif %}">
                   {{ resignation.get_status_display }}
                 </span>
               </div>
@@ -569,38 +460,10 @@
     </div>
   </div>
 
-  <!-- Withdrawal Modal -->
-  <!-- <div class="modal fade" id="withdrawModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Withdraw Resignation</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <form method="POST" action="{% url 'resignation:withdraw_resignation' resignation.id %}">
-          {% csrf_token %}
-          <div class="modal-body">
-            <div class="alert alert-warning">
-              <i class="fas fa-exclamation-triangle me-2"></i>
-              Are you sure you want to withdraw your resignation? This action cannot be undone.
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Reason for Withdrawal</label>
-              <textarea class="form-control" name="withdrawal_reason" rows="3" placeholder="Please provide reason for withdrawal..." required></textarea>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-danger">Withdraw Resignation</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div> -->
   <!-- Documents Section -->
   <div class="custom-card mt-4">
     <div class="card-header">
-      <h5 class="card-title mb-0"> Uploaded Forms</h5>
+      <h5 class="card-title mb-0">📎 Uploaded Forms</h5>
       <a href="{% url 'resignation:upload_document' resignation.id %}" class="btn btn-sm btn-primary"><i class="fas fa-upload me-1"></i>Upload Form</a>
     </div>
     <div class="card-body">
@@ -614,9 +477,9 @@
                     <div>
                       <h6 class="card-title">
                         {% if doc.document_type == 'exit_interview' %}
-                          = Exit Interview
+                          🗣️ Exit Interview
                         {% else %}
-                          = No Due Certificate
+                          📄 No Due Certificate
                         {% endif %}
                       </h6>
                       <p class="text-muted small mb-1">Uploaded: {{ doc.uploaded_at|date:'M d, Y' }}</p>
@@ -645,6 +508,7 @@
       {% endif %}
     </div>
   </div>
+
   <style>
     .status-timeline {
       display: flex;
@@ -706,68 +570,121 @@
     .status-value {
       font-weight: bold;
     }
+   
     @keyframes pulse {
-      0% {
-        transform: scale(1);
-      }
-      50% {
-        transform: scale(1.05);
-      }
-      100% {
-        transform: scale(1);
-      }
-    }
-    .bg-warning {
-      margin-left: 10px;
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
     }
   </style>
 {% endblock %}
 
 {% block extra_js %}
   <script>
+    // Update checklist with explicit status
     function updateChecklist(checklistId, completed) {
-      if (confirm('Are you sure you want to mark this task as completed?')) {
-        fetch(`/resignation/checklist/${checklistId}/update/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-          },
-          body: `completed=${completed}&remarks=Marked as completed by {{ user_name }}`
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.success) {
-              location.reload()
-            } else {
-              alert('Error updating checklist: ' + data.error)
-            }
-          })
-          .catch((error) => {
-            alert('Error updating checklist')
-            console.error('Error:', error)
-          })
-      }
+        const action = completed ? 'complete' : 'incomplete';
+        
+        if (confirm(`Are you sure you want to mark this task as ${action}?`)) {
+            fetch(`/resignation/checklist/${checklistId}/update/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: `completed=${completed}&remarks=Status updated by {{ user_name }}`
+            })
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.success) {
+                    showNotification(`Task marked as ${action} successfully!`, 'success');
+                    // Auto refresh after 1 second
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    showNotification('Error updating task: ' + data.error, 'error');
+                }
+            })
+            .catch((error) => {
+                showNotification('Error updating task', 'error');
+                console.error('Error:', error);
+            });
+        }
     }
-    
+
+    // Toggle checklist status
+    // function toggleChecklist(checklistId) {
+    //     fetch(`/resignation/checklist/${checklistId}/update/`, {
+    //         method: 'POST',
+    //         headers: {
+    //             'Content-Type': 'application/x-www-form-urlencoded',
+    //             'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+    //         },
+    //         body: `remarks=Status toggled by {{ user_name }}`
+    //     })
+    //     .then((response) => response.json())
+    //     .then((data) => {
+    //         if (data.success) {
+    //             const action = data.completed ? 'completed' : 'incomplete';
+    //             showNotification(`Task marked as ${action}!`, 'success');
+    //             // Auto refresh after 1 second
+    //             setTimeout(() => {
+    //                 location.reload();
+    //             }, 1000);
+    //         } else {
+    //             showNotification('Error updating task: ' + data.error, 'error');
+    //         }
+    //     })
+    //     .catch((error) => {
+    //         showNotification('Error updating task', 'error');
+    //         console.error('Error:', error);
+    //     });
+    // }
+
+    // Notification function
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+                <span>${message}</span>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
+        // Add to page
+        document.body.appendChild(notification);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 3000);
+    }
+
     // Auto-refresh status every 30 seconds
     function refreshStatus() {
-      const progressBars = document.querySelectorAll('.progress-bar')
-      progressBars.forEach((bar) => {
-        const currentWidth = bar.style.width
-        bar.style.width = '0%'
-        setTimeout(() => {
-          bar.style.width = currentWidth
-        }, 100)
-      })
+        const progressBars = document.querySelectorAll('.progress-bar')
+        progressBars.forEach((bar) => {
+            const currentWidth = bar.style.width
+            bar.style.width = '0%'
+            setTimeout(() => {
+                bar.style.width = currentWidth
+            }, 100)
+        })
     }
-    
+
     // Refresh every 30 seconds
     setInterval(refreshStatus, 30000)
-    
+
     // Initial refresh after page load
     document.addEventListener('DOMContentLoaded', function () {
-      setTimeout(refreshStatus, 2000)
+        setTimeout(refreshStatus, 2000)
     })
   </script>
 {% endblock %}

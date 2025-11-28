@@ -841,8 +841,12 @@ class PayslipPDF(FPDF):
         self.cell(w, 7, f"{label}:", align="L")
         self.cell(w + 25, 7, f"{value}", align="L")
 
-    def salary_table(self, title, data, total_label, total_amount, payslip=None):
-        """Salary components (no borders, includes Basic Salary in total)"""
+    def salary_table(self, title, data, total_label, payslip=None):
+        """
+        Salary components (no borders)
+        - For EARNINGS: includes Basic Salary (from payslip.basic_salary) + earning components
+        - For DEDUCTIONS: includes only deduction components
+        """
         self.section_box(title)
         self.set_font("DejaVu", "B", 9)
         self.cell(100, 8, "Component", align="L")
@@ -850,25 +854,28 @@ class PayslipPDF(FPDF):
 
         self.set_font("DejaVu", "", 9)
 
-        # ✅ Initialize total with current total_amount
-        total = float(total_amount or 0)
+        total = 0.0
 
-        # ✅ Show Basic Salary first (if available)
-        if payslip and hasattr(payslip, "basic_salary"):
+        # Show Basic Salary only in EARNINGS table
+        if (
+            payslip
+            and hasattr(payslip, "basic_salary")
+            and title.strip().upper() == "EARNINGS"
+        ):
             basic_salary = float(payslip.basic_salary or 0)
             self.cell(100, 7, "Basic Salary", align="L")
             self.cell(50, 7, f"{basic_salary:,.2f}", align="R", ln=True)
-            total += basic_salary  # ✅ Add Basic Salary to total
+            total += basic_salary
 
-        # ✅ Show all components
+        # Show all components
         for comp in data:
             comp_name = comp.component.name
             comp_amount = float(comp.amount or 0)
             self.cell(100, 7, comp_name, align="L")
             self.cell(50, 7, f"{comp_amount:,.2f}", align="R", ln=True)
-            total += comp_amount  # ✅ Add each earning to total
+            total += comp_amount
 
-        # ✅ Total row
+        # Total row
         self.set_font("DejaVu", "B", 9)
         self.cell(100, 8, total_label, align="L")
         self.cell(50, 8, f"{total:,.2f}", align="R", ln=True)

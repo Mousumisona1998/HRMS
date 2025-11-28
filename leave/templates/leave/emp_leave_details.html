@@ -435,19 +435,19 @@
             <div class="col-md-6">
                 <div class="rule-item">
                     <h6><i class="fas fa-sync-alt"></i> Carry Forward</h6>
-                    <p class="mb-0">Max 18 days annual leave </p>
+                    <p class="mb-0">Max 12 days Earned leave </p>
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="rule-item">
                     <h6><i class="fas fa-calendar-times"></i> Optional Leave</h6>
-                    <p class="mb-0">4 days per year • Max 2 usable</p>
+                    <p class="mb-0">Max 2 usable</p>
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="rule-item">
                     <h6><i class="fas fa-user-clock"></i> Probation Period</h6>
-                    <p class="mb-0">3 months no leave • Salary deduction for violations</p>
+                    <p class="mb-0">3 months no leave</p>
                 </div>
             </div>
         </div>
@@ -460,7 +460,7 @@
         <div class="row">
             <div class="col-md-3">
                 <div class="balance-item">
-                    <div class="balance-number">{{ leave_stats.Earned.remaining}}</div>
+                    <div class="balance-number">{{ leave_stats.Earned.remaining|floatformat:1}}</div>
                     <div class="balance-label">Earned Leave</div>
                     <small>1.5 days/month</small>
                 </div>
@@ -468,7 +468,7 @@
             <div class="col-md-3">
                 <div class="balance-item"style="padding: 32px">
                     {% if leave_stats.Optional %}
-                    <div class="balance-number">{{ leave_stats.Optional.remaining }}</div>
+                    <div class="balance-number">{{ leave_stats.Optional.remaining|floatformat:1 }}</div>
                     <div class="balance-label">Optional Leave</div>
                     
                     {% else %}
@@ -488,7 +488,7 @@
             <div class="col-md-3">
     <div class="balance-item">
         {% if annual_leave_info %}
-        <div class="balance-number">{{ annual_leave_info.current_carry_forward }}</div>
+        <div class="balance-number">{{ annual_leave_info.current_carry_forward|floatformat:1 }}</div>
         <div class="balance-label">Carry Forward</div>
         <small>Max {{ annual_leave_info.max_carry_forward }}</small>
         {% else %}
@@ -520,11 +520,11 @@
                     </div>
                     {% if leave_type != 'Unpaid' %}
                 <span class="badge {% if stats.remaining > 0 %}bg-success{% else %}bg-danger{% endif %}">
-                    {{ stats.remaining }}/{{ stats.total }}
+                    {{ stats.remaining|floatformat:1 }}/{{ stats.total|floatformat:1 }}
                 </span>
                 {% else %}
                 <span class="badge bg-warning">
-                    {{ stats.taken }} Taken
+                    {{ stats.taken|floatformat:1 }} Taken
                 </span>
                 {% endif %}
                 </div>
@@ -534,8 +534,8 @@
                 </div>
                 
                 <div class="leave-stats">
-                    <span><i class="fas fa-check-circle text-success"></i> Taken: {{ stats.taken }}</span>
-                    <span><i class="fas fa-layer-group text-info"></i> Total: {{ stats.total }}</span>
+                    <span><i class="fas fa-check-circle text-success"></i> Taken: {{ stats.taken|floatformat:1 }}</span>
+                    <span><i class="fas fa-layer-group text-info"></i> Total: {{ stats.total|floatformat:1 }}</span>
                 </div>
                 
                 <!-- Additional Info for Each Leave Type -->
@@ -680,7 +680,7 @@
                     </div>
                    <div class="timeline-title">
                         {{ leave.leave_type.name }}
-                        <span class="badge bg-secondary">{{ leave.days_requested }} Day{{ leave.days_requested|pluralize }}</span>
+                        <span class="badge bg-secondary">{{ leave.days_requested|floatformat:1 }} Day{{ leave.days_requested|pluralize }}</span>
                         
                         <!-- SIMPLE WITHDRAW BUTTON CONDITION -->
                         {% if leave.status in 'pending,approved' and can_withdraw and leave.start_date > today_date %}

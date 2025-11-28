@@ -68,20 +68,20 @@
         </div>
 
         <!-- Today Present Card -->
-<div class="stat-card present">
-    <div class="card-icon">
-        <i class="fas fa-user-clock"></i>
-    </div>
-    <div class="card-content">
-        <div class="card-value">{{ today_present }}</div>  <!-- Only present count -->
-        <div class="card-label">Today Present</div>
-    </div>
-    <div class="card-footer">
-        <a href="{% url 'attendance:report' %}" class="card-link">
-            View Attendance <i class="fas fa-arrow-right"></i>
-        </a>
-    </div>
-</div>
+        <div class="stat-card present">
+            <div class="card-icon">
+                <i class="fas fa-user-clock"></i>
+            </div>
+            <div class="card-content">
+                <div class="card-value">{{ today_present }}</div>
+                <div class="card-label">Today Present</div>
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'attendance:report' %}" class="card-link">
+                    View Attendance <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
 
         <!-- Resignations Card -->
         <div class="stat-card resignation">
@@ -99,23 +99,21 @@
             </div>
         </div>
 
-        
-
         <!-- Pending Review Card -->
-         <div class="stat-card pending">
-    <div class="card-icon">
-        <i class="fas fa-calendar-alt"></i>
-    </div>
-    <div class="card-content">
-        <div class="card-value">{{ total_leaves }}</div>
-        <div class="card-label">Total Leave</div>
-    </div>
-    <div class="card-footer">
-        <a href="{% url 'leave_dashboard' %}" class="card-link">
-            View All <i class="fas fa-arrow-right"></i>
-        </a>
-    </div>  
-</div>
+        <div class="stat-card pending">
+            <div class="card-icon">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div class="card-content">
+                <div class="card-value">{{ total_leaves }}</div>
+                <div class="card-label">Total Leave</div>
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'leave_dashboard' %}" class="card-link">
+                    View All <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>  
+        </div>
     </div>
 
     <!-- Charts and Data Section -->
@@ -147,16 +145,15 @@
             </div>
 
             <!-- Attendance Overview -->
-            <!-- Location-wise Attendance -->
-<div class="chart-container">
-    <div class="chart-header">
-        <h3><i class="fas fa-map-marker-alt"></i> Location-wise Attendance Today</h3>
-        <a href="{% url 'attendance:report' %}" class="view-all">View Report</a>
-    </div>
-    <div class="chart-wrapper">
-        <canvas id="attendanceChart"></canvas>
-    </div>
-</div>
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3><i class="fas fa-map-marker-alt"></i> Location-wise Attendance Today</h3>
+                    <a href="{% url 'attendance:report' %}" class="view-all">View Report</a>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="attendanceChart"></canvas>
+                </div>
+            </div>
         </div>
 
         <!-- Right Column -->
@@ -274,35 +271,6 @@
                     {% endfor %}
                 </div>
             </div>
-
-            <!-- Quick Actions -->
-            <!-- <div class="data-card">
-                <div class="card-header">
-                    <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
-                </div>
-                <div class="card-body">
-                    <div class="quick-actions">
-                        <a href="{% url 'leave_dashboard' %}" class="quick-action">
-                            <i class="fas fa-calendar-plus"></i>
-                            <span>Manage Leaves</span>
-                        </a>
-                        <a href="{% url 'attendance:report' %}" class="quick-action">
-                            <i class="fas fa-user-check"></i>
-                            <span>View Attendance</span>
-                        </a>
-                        <a href="{% url 'resignation:all_resignations' %}" class="quick-action">
-                            <i class="fas fa-door-open"></i>
-                            <span>Resignations</span>
-                        </a>
-                        {% if request.session.user_role in 'ADMIN,HR,MANAGER,SUPER ADMIN' %}
-                        <a href="{% url 'all_employee' %}" class="quick-action">
-                            <i class="fas fa-users-cog"></i>
-                            <span>Employee Management</span>
-                        </a>
-                        {% endif %}
-                    </div>
-                </div>
-            </div> -->
         </div>
     </div>
 </div>
@@ -340,7 +308,9 @@ document.addEventListener("DOMContentLoaded", function () {
                         }
                     }
                 }
-            }
+            },
+            responsive: true,
+            maintainAspectRatio: false
         }
     });
 
@@ -383,62 +353,65 @@ document.addEventListener("DOMContentLoaded", function () {
                 legend: {
                     display: false
                 }
-            }
+            },
+            responsive: true,
+            maintainAspectRatio: false
         }
     });
 
     // Attendance Chart
-   const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
-new Chart(attendanceCtx, {
-    type: 'line',
-    data: {
-        labels: {{ location_attendance_labels|safe }},
-        datasets: [{
-            label: 'Present Today',
-            data: {{ location_present_counts|safe }},
-            borderColor: '#10b981',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-            tension: 0.4,
-            fill: true,
-            pointBackgroundColor: '#10b981',
-            pointBorderColor: '#ffffff',
-            pointBorderWidth: 2,
-            pointRadius: 6,
-            pointHoverRadius: 8
-        }, {
-            label: 'Absent Today',
-            data: {{ location_absent_counts|safe }},
-            borderColor: '#ef4444',
-            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-            tension: 0.4,
-            fill: true,
-            pointBackgroundColor: '#ef4444',
-            pointBorderColor: '#ffffff',
-            pointBorderWidth: 2,
-            pointRadius: 6,
-            pointHoverRadius: 8
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: {
-                position: 'top',
-            }
+    const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+    new Chart(attendanceCtx, {
+        type: 'line',
+        data: {
+            labels: {{ location_attendance_labels|safe }},
+            datasets: [{
+                label: 'Present Today',
+                data: {{ location_present_counts|safe }},
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#10b981',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 6,
+                pointHoverRadius: 8
+            }, {
+                label: 'Absent Today',
+                data: {{ location_absent_counts|safe }},
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#ef4444',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 6,
+                pointHoverRadius: 8
+            }]
         },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    stepSize: 1,
-                    callback: function(value) {
-                        return value + ' emp';
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function(value) {
+                            return value + ' emp';
+                        }
                     }
                 }
             }
         }
-    }
-});
+    });
 });
 </script>
 
@@ -449,6 +422,8 @@ new Chart(attendanceCtx, {
     background: #f8fafc;
     min-height: 100vh;
     font-family: 'Inter', sans-serif;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* Header */
@@ -458,6 +433,8 @@ new Chart(attendanceCtx, {
     align-items: center;
     margin-bottom: 25px;
     padding: 0 10px;
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
 .header-left h1 {
@@ -525,7 +502,7 @@ new Chart(attendanceCtx, {
 .stat-card.branch { border-left-color: #FF9800; }
 .stat-card.present { border-left-color: #2196F3; }
 .stat-card.resignation { border-left-color: #F44336; }
-.stat-card.pending { border-left-color: #FFC107; }
+.stat-card.pending { border-left-color: #E6DF44; }
 
 .stat-card .card-icon {
     position: absolute;
@@ -557,7 +534,7 @@ new Chart(attendanceCtx, {
     background: linear-gradient(135deg, #F44336, #D32F2F);
 }
 .pending .card-icon { 
-    background: linear-gradient(135deg, #FFC107, #FFA000);
+    background: linear-gradient(135deg, #E6DF44, #d4c93d);
 }
 
 .card-content {
@@ -636,6 +613,8 @@ new Chart(attendanceCtx, {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .chart-header h3 {
@@ -672,10 +651,7 @@ new Chart(attendanceCtx, {
 .chart-wrapper {
     position: relative;
     height: 250px;
-}
-
-.chart-container:first-child .chart-wrapper {
-    padding-left: 80px;
+    width: 100%;
 }
 
 /* Data Cards */
@@ -693,6 +669,8 @@ new Chart(attendanceCtx, {
     align-items: center;
     padding: 20px 25px;
     border-bottom: 1px solid rgba(0,0,0,0.05);
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .card-header h3 {
@@ -728,11 +706,13 @@ new Chart(attendanceCtx, {
 /* Table Styles */
 .table-container {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .data-table {
     width: 100%;
     border-collapse: collapse;
+    min-width: 500px;
 }
 
 .data-table th {
@@ -773,6 +753,7 @@ new Chart(attendanceCtx, {
     font-weight: 600;
     font-size: 0.9rem;
     overflow: hidden;
+    flex-shrink: 0;
 }
 
 .avatar img {
@@ -856,6 +837,8 @@ new Chart(attendanceCtx, {
     align-items: center;
     padding: 15px 0;
     border-bottom: 1px solid #f1f5f9;
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
 .resignation-item:last-child {
@@ -866,6 +849,7 @@ new Chart(attendanceCtx, {
     display: flex;
     align-items: center;
     gap: 20px;
+    flex-wrap: wrap;
 }
 
 .date-group {
@@ -884,73 +868,28 @@ new Chart(attendanceCtx, {
     color: #2d3748;
 }
 
-/* Quick Actions */
-.quick-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
+/* ============================================
+   RESPONSIVE DESIGN FOR ALL MOBILE DEVICES
+============================================ */
+
+/* Large Desktop */
+@media (min-width: 1200px) {
+    .dashboard-content {
+        grid-template-columns: 2fr 1fr;
+    }
 }
 
-.quick-action {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    background: #f8fafc;
-    border-radius: 10px;
-    text-decoration: none;
-    color: #4a5568;
-    transition: all 0.3s ease;
-    border: 1px solid #e2e8f0;
-}
-
-.quick-action:hover {
-    background: #667eea;
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-    text-decoration: none;
-}
-
-.quick-action i {
-    font-size: 1.5rem;
-    margin-bottom: 8px;
-}
-
-.quick-action span {
-    font-size: 0.85rem;
-    font-weight: 500;
-    text-align: center;
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
+/* Tablet and Small Desktop */
+@media (max-width: 1199px) {
     .dashboard-content {
         grid-template-columns: 1fr;
     }
 }
 
-@media (max-width: 768px) {
+/* Tablet */
+@media (max-width: 992px) {
     .dashboard-wrapper {
         padding: 15px;
-    }
-    
-    .dash-header {
-        flex-direction: column;
-        gap: 15px;
-        text-align: center;
-    }
-    
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
-    }
-    
-    .resignation-details {
-        flex-direction: column;
-        gap: 10px;
-        align-items: flex-end;
     }
     
     .chart-wrapper {
@@ -961,22 +900,149 @@ new Chart(attendanceCtx, {
         padding: 20px;
     }
     
-    .quick-actions {
-        grid-template-columns: 1fr;
+    .card-header, .card-body {
+        padding: 15px 18px;
     }
-}
-
-@media (max-width: 480px) {
+    
     .stats-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+    
+    .stat-card {
+        padding: 15px;
     }
     
     .card-value {
         font-size: 1.6rem;
     }
+}
+
+/* Mobile - Most Common Breakpoint */
+@media (max-width: 768px) {
+    .dashboard-wrapper {
+        padding: 12px;
+    }
+    
+    .dash-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+        text-align: left;
+        margin-bottom: 20px;
+    }
+    
+    .header-left h1 {
+        font-size: 1.3rem;
+    }
+    
+    .date-card {
+        width: 100%;
+        justify-content: center;
+        padding: 12px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .stat-card {
+        padding: 15px;
+    }
+    
+    .card-value {
+        font-size: 1.5rem;
+    }
+    
+    .resignation-details {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+        width: 100%;
+    }
+    
+    .date-group {
+        text-align: left;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+    }
     
     .chart-wrapper {
         height: 200px;
+    }
+    
+    .chart-container {
+        padding: 15px;
+    }
+    
+    .chart-header h3 {
+        font-size: 1rem;
+    }
+    
+    .employee-info {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+    }
+    
+    .avatar {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .data-table {
+        min-width: 400px;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 10px;
+        font-size: 0.75rem;
+    }
+    
+    .card-header h3 {
+        font-size: 1rem;
+    }
+    
+    .view-all {
+        font-size: 0.8rem;
+    }
+}
+
+/* Small Mobile */
+@media (max-width: 576px) {
+    .dashboard-wrapper {
+        padding: 10px;
+    }
+    
+    .stats-grid {
+        gap: 10px;
+    }
+    
+    .stat-card {
+        padding: 12px;
+    }
+    
+    .card-value {
+        font-size: 1.4rem;
+    }
+    
+    .chart-container {
+        padding: 12px;
+    }
+    
+    .chart-wrapper {
+        height: 180px;
+    }
+    
+    .card-header, .card-body {
+        padding: 12px 15px;
+    }
+    
+    .data-table {
+        min-width: 350px;
     }
     
     .resignation-item {
@@ -989,14 +1055,108 @@ new Chart(attendanceCtx, {
         width: 100%;
         justify-content: space-between;
     }
+    
+    .header-left h1 {
+        font-size: 1.2rem;
+    }
+    
+    .header-left p {
+        font-size: 0.8rem;
+    }
 }
 
-.stat-card.pending { 
-    border-left-color: #E6DF44; /* Your daffodil color */
+/* Extra Small Mobile */
+@media (max-width: 400px) {
+    .dashboard-wrapper {
+        padding: 8px;
+    }
+    
+    .stats-grid {
+        gap: 8px;
+    }
+    
+    .stat-card {
+        padding: 10px;
+    }
+    
+    .card-value {
+        font-size: 1.3rem;
+    }
+    
+    .chart-container {
+        padding: 10px;
+    }
+    
+    .chart-wrapper {
+        height: 160px;
+    }
+    
+    .card-header, .card-body {
+        padding: 10px 12px;
+    }
+    
+    .data-table {
+        min-width: 320px;
+    }
+    
+    .employee-details .name {
+        font-size: 0.9rem;
+    }
+    
+    .employee-details .department {
+        font-size: 0.7rem;
+    }
 }
 
-.stat-card.pending .card-icon { 
-    background: linear-gradient(135deg, #E6DF44, #d4c93d); /* Daffodil gradient */
+/* Fix for very small screens (iPhone SE, etc.) */
+@media (max-width: 320px) {
+    .dashboard-wrapper {
+        padding: 5px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .data-table {
+        min-width: 280px;
+        font-size: 0.7rem;
+    }
+    
+    .chart-wrapper {
+        height: 150px;
+    }
+    
+    .card-value {
+        font-size: 1.2rem;
+    }
+    
+    .header-left h1 {
+        font-size: 1.1rem;
+    }
+}
+
+/* Ensure proper scrolling on mobile */
+@media (max-width: 768px) {
+    .table-container {
+        -webkit-overflow-scrolling: touch;
+        overflow-x: auto;
+    }
+    
+    .dashboard-wrapper {
+        overflow-x: hidden;
+    }
+}
+
+/* Fix for chart responsiveness */
+.chart-container:first-child .chart-wrapper {
+    padding-left: 0;
+}
+
+@media (max-width: 768px) {
+    .chart-container:first-child .chart-wrapper {
+        padding-left: 0;
+    }
 }
 </style>
 {% endblock %}

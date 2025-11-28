@@ -22,14 +22,14 @@
         body {
             background-color: #f5f6fa;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow-x: hidden;
         }
 
-        /* Sidebar Styles - FIXED */
+        /* Sidebar Styles */
         .sidebar {
+            /* background: linear-gradient(180deg, #2c3e50 0%, #3498db 100%); */
             background: linear-gradient(180deg, #081018 0%, #075f99 100%);
             color: white;
-            height: 100vh;
+            min-height: 100vh;
             width: 250px;
             position: fixed;
             left: 0;
@@ -37,35 +37,27 @@
             z-index: 1000;
             transition: all 0.3s ease;
             padding: 0;
+            height: 100vh; /* Fixed height */
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: hidden; /* Hide overflow from main sidebar */
         }
-
         .sidebar-content {
             flex: 1;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
-        }
-
+            overflow: hidden; /* Create a flex container */
+}
         .sidebar .logo {
             padding: 15px;
             text-align: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            flex-shrink: 0;
         }
 
         .sidebar .logo h4 {
             color: white;
             margin: 0;
             font-weight: 600;
-        }
-
-        .sidebar-nav-container {
-            flex: 1;
-            overflow-y: auto;
-            padding-bottom: 20px;
         }
 
         .nav-section {
@@ -87,10 +79,6 @@
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            border: none;
-            background: transparent;
-           
-            text-align: left;
         }
 
         .sidebar .nav-link:hover,
@@ -104,53 +92,6 @@
             width: 20px;
             margin-right: 10px;
             text-align: center;
-        }
-
-        /* Dropdown submenus with scrolling - FIXED */
-        .sidebar .nav-item {
-            position: relative;
-        }
-
-        .sidebar .collapse {
-            max-height: 300px;
-           
-        }
-
-        .sidebar .collapse::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .sidebar .collapse::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-        }
-
-        .sidebar .collapse::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 3px;
-        }
-
-        .sidebar .collapse::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.5);
-        }
-
-        /* Custom scrollbar for main sidebar */
-        .sidebar-nav-container::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .sidebar-nav-container::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-        }
-
-        .sidebar-nav-container::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 4px;
-        }
-
-        .sidebar-nav-container::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.5);
         }
 
         /* Top Navbar Styles */
@@ -180,7 +121,7 @@
             width: 38px;
             height: 38px;
             border-radius: 50%;
-            background: white;
+            background:white;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -464,9 +405,9 @@
             align-items: center;
             margin-top: 30px;
             padding: 15px 20px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            /* background: white; */
+            /* border-radius: 12px; */
+            /* box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); */
         }
 
         .pagination-info {
@@ -547,6 +488,8 @@
         .table-responsive {
             border-radius: 8px;
             overflow: hidden;
+            padding: 23px;
+            overflow-x: auto;
         }
 
         .table {
@@ -580,28 +523,23 @@
             display: none;
         }
 
-        /* Mobile Sidebar Toggle Styles */
+        /* Responsive Design */
         @media (max-width: 768px) {
-            .sidebar-toggle {
-                display: inline-block !important;
-            }
-           
             .sidebar {
-                transform: translateX(-100%);
-                transition: transform 0.3s ease-in-out;
-                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+                margin-left: -250px;
             }
-           
+
             .sidebar.show {
-                transform: translateX(0);
+                margin-left: 0;
             }
-           
-            .main-content {
-                margin-left: 0 !important;
-            }
-           
+
+            .main-content,
             .top-navbar {
-                margin-left: 0 !important;
+                margin-left: 0;
+            }
+
+            .sidebar-toggle {
+                display: block;
             }
 
             .search-box {
@@ -612,40 +550,1119 @@
                 width: 100%;
             }
         }
+        /* Mobile Sidebar Toggle Styles */
+@media (max-width: 768px) {
+    .sidebar-toggle {
+        display: inline-block !important;
+    }
+    
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    .sidebar.show {
+        transform: translateX(0);
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+    }
+    
+    .top-navbar {
+        margin-left: 0 !important;
+    }
+}
 
-        .sidebar-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            display: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.show {
+    display: block;
+    opacity: 1;
+}
+
+.sidebar {
+    z-index: 1000;
+}
+
+.sidebar-toggle {
+    border: 1px solid #dee2e6;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: white;
+    transition: all 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+    background: #f8f9fa;
+    border-color: #667eea;
+    color: #667eea;
+}
+
+/* Profile Dropdown Fix */
+.navbar-nav .dropdown-menu {
+    position: absolute !important;
+    top: 100% !important;
+    right: 0 !important;
+    left: auto !important;
+    margin-top: 8px !important;
+    transform: none !important;
+}
+
+.navbar-nav .nav-item.dropdown {
+    position: relative;
+}
+
+/* Remove the default Bootstrap dropdown arrow spacing */
+.navbar-nav .dropdown-toggle::after {
+    margin-left: 0.5em;
+}
+
+/* Ensure the dropdown trigger doesn't have extra padding */
+.navbar-nav .nav-link.dropdown-toggle {
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.navbar-nav .nav-link.dropdown-toggle:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Dropdown menu styling */
+.dropdown-menu {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 8px 0;
+    min-width: 200px;
+}
+
+.dropdown-item {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+}
+
+.dropdown-item i {
+    width: 16px;
+    text-align: center;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .navbar-nav .dropdown-menu {
+        position: fixed !important;
+        top: auto !important;
+        right: 10px !important;
+        left: auto !important;
+        margin-top: 5px !important;
+        width: 200px;
+    }
+    
+    .navbar-nav .nav-link.dropdown-toggle {
+        padding: 6px 10px;
+    }
+}
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    {% if request.session.user_authenticated %}
+    <!-- Sidebar -->
+        <!-- Dynamic Sidebar -->
+    <!-- Dynamic Sidebar -->
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-content">
+    <div class="logo">
+        <a class="navbar-brand d-flex align-items-center me-3" href="{% url 'dashboard' %}">
+            <img src="{% static 'img/ikontellogot.png' %}" alt="Logo" height="40" class="me-2">
+        </a>
+    </div>
+    
+    <!-- Debug Info -->
+    <!-- <div style="color: white; padding: 10px; font-size: 10px; background: rgba(0,255,0,0.2); margin: 10px; border-radius: 5px; border: 1px solid green;">
+        <strong>✅ DYNAMIC MENU LOADED:</strong><br>
+        Menu Items: {{ menu_data|length }}<br>
+        Current Path: {{ request.path }}
+    </div> -->
+<div class="sidebar-nav-container">
+    <ul class="nav flex-column">
+            {% for menu in menu_data %}
+                {% if menu.submenus %}
+                    <!-- Menu with submenus -->
+                    <li class="nav-item">
+                        <a class="nav-link dropdown-toggle" 
+                           href="#submenu{{ menu.id }}" 
+                           data-bs-toggle="collapse">
+                            {% if menu.icon %}<i class="{{ menu.icon }}"></i>{% endif %}
+                            {{ menu.name }}
+                        </a>
+                        <ul class="collapse list-unstyled ps-3" id="submenu{{ menu.id }}">
+                            {% for sub in menu.submenus %}
+                                <li>
+                                    <a class="nav-link" href="{{ sub.menu_link_url }}">
+                                        {% if sub.menu_link_icon %}<i class="{{ sub.menu_link_icon }}"></i>{% endif %}
+                                        {{ sub.menu_link_name }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                {% else %}
+                    <!-- Single menu item -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ menu.url }}">
+                            {% if menu.icon %}<i class="{{ menu.icon }}"></i>{% endif %}
+                            {{ menu.name }}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </div>
+ </div>    
+</nav>
+
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-expand-lg top-navbar">
+        <div class="container-fluid">
+
+            
+            <button class="btn btn-outline-secondary sidebar-toggle me-3" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+
+<div class="navbar-nav ms-auto d-flex align-items-center" style="flex-direction: row;">
+<!-- Celebration Badge - Always show if there are celebrations -->
+{% if celebrations and celebrations.birthdays_today or celebrations.work_anniversaries_today or celebrations.marriage_anniversaries_today %}
+<li class="nav-item notification-badge me-3">
+    <a class="nav-link celebration-badge-link" href="javascript:void(0)" onclick="openCelebrationModal()">
+        <i class="fas fa-bell"></i>
+        <span class="badge bg-danger">
+            {{ celebrations.total_count }}
+        </span>
+    </a>
+</li>
+{% endif %}
+                
+
+<div class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle d-flex align-items-center p-0" href="#" role="button" 
+       data-bs-toggle="dropdown" aria-expanded="false" style="background: none; border: none;">
+        <div class="user-avatar position-relative">
+            {% if request.session.user_role == 'ADMIN' or request.session.user_role == 'SUPER ADMIN' %}
+                {% if request.session.profile_picture %}
+                    <img src="{{ request.session.profile_picture }}" alt="Profile Picture"
+                         class="profile-img rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                {% else %}
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                         style="width: 40px; height: 40px; font-weight: bold;">
+                        {{ request.session.user_name|slice:":2"|upper }}
+                    </div>
+                {% endif %}
+            {% else %}
+                <img src="{{ request.session.profile_picture }}" alt="Profile Picture"
+                     class="profile-img rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+            {% endif %}
+        </div>
+        <div class="ms-2 d-none d-md-block text-start">
+            <div class="fw-bold text-dark" style="font-size: 0.9rem; line-height: 1.2;">{{ request.session.user_name }}</div>
+            <small class="text-muted" style="font-size: 0.75rem; line-height: 1.2;">{{ request.session.user_role }}</small>
+        </div>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end">
+       {% if request.session.user_role == 'SUPER ADMIN' %}
+        {% if admin and admin.pk %}
+            <li><a class="dropdown-item" href="{% url 'admin_update' admin.pk %}"><i class="fas fa-user me-2"></i>Edit Profile</a></li>
+        {% else %}
+            <!-- Fallback: Use session user_id or show disabled link -->
+            {% if request.session.user_id %}
+                <li><a class="dropdown-item" href="{% url 'admin_update' request.session.user_id %}"><i class="fas fa-user me-2"></i>Edit Profile</a></li>
+            {% else %}
+                <li><a class="dropdown-item text-muted" href="#" onclick="alert('Profile editing not available on this page')"><i class="fas fa-user me-2"></i>Edit Profile</a></li>
+            {% endif %}
+        {% endif %}
+    {% else %}
+        <li><a class="dropdown-item" href="{% url 'update_employee_profile' %}"><i class="fas fa-user me-2"></i>Edit Profile</a></li>
+    {% endif %}
+        <li><a class="dropdown-item" href="{% url 'change_password' %}"><i class="fas fa-key me-2"></i>Change Password</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+    </ul>
+</div>
+                
+
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        {% else %}
+        <div class="container-fluid">
+            {% endif %}
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            {% csrf_token %}
+            {% block content %}{% endblock %}
+        </div>
+
+        <!-- Bootstrap 5 JS -->
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- FullCalendar JS -->
+        <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script> 
+        <script>
+        // Initialize datepicker $(document).ready(function()
+            {
+            $('.datepicker').datepicker({ format: 'dd-mm-yyyy', autoclose: true, todayHighlight: true, orientation: 'bottom auto' });
+            }
+            </script>
+        <script>
+ // Enhanced menu activation script
+document.addEventListener('DOMContentLoaded', function() {
+    const currentPath = window.location.pathname;
+    console.log('Current Path:', currentPath);
+    
+    // Function to normalize URLs for comparison
+    function normalizeUrl(url) {
+        if (!url) return '';
+        // Remove trailing slashes and ensure consistent format
+        return url.replace(/\/+$/, '');
+    }
+    
+    // Function to detect URL patterns
+    function detectUrlPattern(url) {
+        const normalized = normalizeUrl(url);
+        
+        // Employee detail: /employee/123/ or /employee/123/edit/
+        if (normalized.match(/^\/employee\/\d+/) || normalized.match(/^\/employee\/\d+\/edit/)) {
+            return 'employee-detail';
+        }
+        
+        // Leave apply: /leave/apply/
+        if (normalized === '/leave/apply') {
+            return 'leave-apply';
+        }
+        // Resignation related pages - all should activate resignation/dashboard
+        if (normalized.match(/^\/resignation\/(all|analytics|detail|submit|certificate|exit-interview|my-resignation)/)) {
+            return 'resignation-pages';
+        }
+        
+        return null;
+    }
+    
+    // Function to check if two URLs match (exact or parent-child relationship)
+    function urlMatches(menuUrl, currentUrl) {
+        const normalizedMenu = normalizeUrl(menuUrl);
+        const normalizedCurrent = normalizeUrl(currentUrl);
+        
+        // Exact match
+        if (normalizedMenu === normalizedCurrent) {
+            return { match: true, type: 'exact' };
+        }
+        
+        // Special handling for employee detail/edit pages
+        const currentPattern = detectUrlPattern(normalizedCurrent);
+        if (currentPattern === 'employee-detail') {
+            // Match /employees/ menu for /employee/123/ pages
+            if (normalizedMenu === '/employees' || normalizedMenu === '/employees/') {
+                return { match: true, type: 'special-employee' };
+            }
+        }
+        
+        // Special handling for leave apply page
+        if (currentPattern === 'leave-apply') {
+            // Match /leave/leave_details for /leave/apply/ page
+            if (normalizedMenu === '/leave/leave_details' || normalizedMenu === '/leave/leave_details/') {
+                return { match: true, type: 'special-leave-apply' };
+            }
+        }
+        
+        // Special handling for resignation pages
+        if (currentPattern === 'resignation-pages') {
+            // Match /resignation/dashboard for all resignation sub-pages
+            if (normalizedMenu === '/resignation/dashboard' || normalizedMenu === '/resignation/dashboard/') {
+                return { match: true, type: 'special-resignation' };
+            }
         }
 
-        .sidebar-overlay.show {
-            display: block;
-            opacity: 1;
+        // Check if current URL starts with menu URL (parent-child relationship)
+        // But ensure we're matching full path segments, not partial matches
+        if (normalizedMenu && normalizedCurrent.startsWith(normalizedMenu + '/')) {
+            return { match: true, type: 'child' };
         }
-
-        .sidebar-toggle {
-            border: 1px solid #dee2e6;
-            padding: 8px 12px;
-            border-radius: 6px;
-            background: white;
-            transition: all 0.3s ease;
+        
+        return { match: false };
+    }
+    
+    // Function to activate menu items
+    function activateMenus() {
+        console.log('Activating menus for:', currentPath);
+        
+        // Reset all active states
+        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+            link.classList.remove('active');
+        });
+        document.querySelectorAll('.sidebar .collapse').forEach(collapse => {
+            collapse.classList.remove('show');
+        });
+        
+        let exactMatchFound = false;
+        let parentDropdownToActivate = null;
+        
+        // STEP 1: Check for special patterns first
+        const currentPattern = detectUrlPattern(currentPath);
+        
+        if (currentPattern === 'employee-detail' || currentPattern === 'leave-apply'|| currentPattern === 'resignation-pages') {
+            document.querySelectorAll('.sidebar .nav-link:not(.dropdown-toggle)').forEach(link => {
+                const href = link.getAttribute('href');
+                const matchResult = urlMatches(href, currentPath);
+                
+                if (matchResult.match && (matchResult.type === 'special-employee' || matchResult.type === 'special-leave-apply'|| matchResult.type === 'special-resignation')) {
+                    link.classList.add('active');
+                    exactMatchFound = true;
+                    console.log('✅ Special pattern match found:', href, 'for pattern:', currentPattern);
+                    
+                    // Expand parent dropdown if this is a submenu item
+                    const parentCollapse = link.closest('.collapse');
+                    if (parentCollapse) {
+                        parentCollapse.classList.add('show');
+                        const parentToggle = parentCollapse.previousElementSibling;
+                        if (parentToggle && parentToggle.classList.contains('dropdown-toggle')) {
+                            parentToggle.classList.add('active');
+                            parentDropdownToActivate = parentToggle;
+                            console.log('👆 Activated parent dropdown');
+                        }
+                    }
+                }
+            });
         }
-
-        .sidebar-toggle:hover {
-            background: #f8f9fa;
-            border-color: #667eea;
-            color: #667eea;
+        
+        // STEP 2: Find exact matches (if no special pattern matched)
+        if (!exactMatchFound) {
+            document.querySelectorAll('.sidebar .nav-link:not(.dropdown-toggle)').forEach(link => {
+                const href = link.getAttribute('href');
+                const matchResult = urlMatches(href, currentPath);
+                
+                if (matchResult.match && matchResult.type === 'exact') {
+                    link.classList.add('active');
+                    exactMatchFound = true;
+                    console.log('✅ Exact match found:', href);
+                    
+                    // Expand parent dropdown if this is a submenu item
+                    const parentCollapse = link.closest('.collapse');
+                    if (parentCollapse) {
+                        parentCollapse.classList.add('show');
+                        const parentToggle = parentCollapse.previousElementSibling;
+                        if (parentToggle && parentToggle.classList.contains('dropdown-toggle')) {
+                            parentToggle.classList.add('active');
+                            parentDropdownToActivate = parentToggle;
+                            console.log('👆 Activated parent dropdown');
+                        }
+                    }
+                }
+            });
         }
+        
+        // STEP 3: If no exact match, check for child URLs
+        if (!exactMatchFound) {
+            console.log('⚠️ No exact match found, checking for parent matches');
+            
+            let bestMatch = { link: null, specificity: 0 };
+            
+            // Find the most specific parent match
+            document.querySelectorAll('.sidebar .nav-link:not(.dropdown-toggle)').forEach(link => {
+                const href = link.getAttribute('href');
+                const matchResult = urlMatches(href, currentPath);
+                
+                if (matchResult.match && matchResult.type === 'child') {
+                    const specificity = normalizeUrl(href).split('/').length;
+                    if (specificity > bestMatch.specificity) {
+                        bestMatch = { link: link, specificity: specificity };
+                    }
+                }
+            });
+            
+            // Activate the best match
+            if (bestMatch.link) {
+                bestMatch.link.classList.add('active');
+                console.log('✅ Parent match found:', bestMatch.link.getAttribute('href'));
+                
+                // Expand parent dropdown
+                const parentCollapse = bestMatch.link.closest('.collapse');
+                if (parentCollapse) {
+                    parentCollapse.classList.add('show');
+                    const parentToggle = parentCollapse.previousElementSibling;
+                    if (parentToggle && parentToggle.classList.contains('dropdown-toggle')) {
+                        parentToggle.classList.add('active');
+                        parentDropdownToActivate = parentToggle;
+                        console.log('👆 Activated parent dropdown');
+                    }
+                }
+                exactMatchFound = true;
+            }
+        }
+        
+        // STEP 4: If still no match, check dropdown toggles themselves
+        if (!exactMatchFound) {
+            document.querySelectorAll('.sidebar .dropdown-toggle').forEach(toggle => {
+                const href = toggle.getAttribute('href');
+                
+                // Skip if href is just an anchor (like #submenu-something)
+                if (href && href.startsWith('#')) {
+                    return;
+                }
+                
+                const matchResult = urlMatches(href, currentPath);
+                
+                if (matchResult.match) {
+                    toggle.classList.add('active');
+                    const submenuId = toggle.getAttribute('href');
+                    if (submenuId && submenuId.startsWith('#')) {
+                        const submenu = document.querySelector(submenuId);
+                        if (submenu) {
+                            submenu.classList.add('show');
+                        }
+                    }
+                    exactMatchFound = true;
+                    console.log('✅ Dropdown match found:', href);
+                }
+            });
+        }
+        
+        // STEP 5: Dashboard fallback
+        if (!exactMatchFound && (currentPath === '/' || currentPath === '/dashboard' || currentPath === '/dashboard/')) {
+            const dashboardLink = document.querySelector('.sidebar .nav-link[href*="dashboard"]');
+            if (dashboardLink) {
+                dashboardLink.classList.add('active');
+                console.log('🏠 Activated dashboard');
+            }
+        }
+        
+        console.log('🎯 Menu activation completed. Match found:', exactMatchFound);
+    }
+    
+    // Initialize menu activation
+    activateMenus();
+    
+    // Add click handlers to maintain active state
+    document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            // Don't handle dropdown toggles
+            if (this.classList.contains('dropdown-toggle')) {
+                return;
+            }
+            
+            console.log('🖱️ Menu item clicked:', this.getAttribute('href'));
+            
+            // Remove active class from all non-dropdown links
+            document.querySelectorAll('.sidebar .nav-link:not(.dropdown-toggle)').forEach(l => {
+                l.classList.remove('active');
+            });
+            
+            // Add active class to clicked link
+            this.classList.add('active');
+            
+            // Activate parent dropdown if exists
+            const parentCollapse = this.closest('.collapse');
+            if (parentCollapse) {
+                const parentToggle = parentCollapse.previousElementSibling;
+                if (parentToggle && parentToggle.classList.contains('dropdown-toggle')) {
+                    // Remove active from other dropdowns
+                    document.querySelectorAll('.sidebar .dropdown-toggle').forEach(dt => {
+                        if (dt !== parentToggle) {
+                            dt.classList.remove('active');
+                        }
+                    });
+                    parentToggle.classList.add('active');
+                }
+            }
+        });
+    });
+});
+</script>
 
-        /* Celebration Styles */
+        {% if messages %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                setTimeout(function () {
+                    var alerts = document.querySelectorAll('.alert');
+                    alerts.forEach(function (alert) {
+                        var bsAlert = new bootstrap.Alert(alert);
+                        bsAlert.close();
+                    });
+                }, 5000);
+            });
+        </script>
+        {% endif %}
+<script>
+// Create overlay for mobile sidebar
+document.addEventListener('DOMContentLoaded', function() {
+    if (!document.querySelector('.sidebar-overlay')) {
+        const overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        overlay.id = 'sidebarOverlay';
+        document.body.appendChild(overlay);
+        
+        overlay.addEventListener('click', function() {
+            toggleSidebar();
+        });
+    }
+});
+
+// Toggle sidebar function
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    
+    if (sidebar && overlay) {
+        sidebar.classList.toggle('show');
+        overlay.classList.toggle('show');
+        
+        if (sidebar.classList.contains('show')) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+    }
+}
+
+// Close sidebar when clicking menu item on mobile
+document.addEventListener('DOMContentLoaded', function() {
+    const navLinks = document.querySelectorAll('.sidebar .nav-link:not(.dropdown-toggle)');
+    
+    navLinks.forEach(function(link) {
+        link.addEventListener('click', function() {
+            if (window.innerWidth <= 768) {
+                setTimeout(function() {
+                    toggleSidebar();
+                }, 300);
+            }
+        });
+    });
+});
+
+// Close sidebar on window resize to desktop
+window.addEventListener('resize', function() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    
+    if (window.innerWidth > 768 && sidebar && sidebar.classList.contains('show')) {
+        sidebar.classList.remove('show');
+        if (overlay) {
+            overlay.classList.remove('show');
+        }
+        document.body.style.overflow = '';
+    }
+});
+</script>
+        {% block extra_js %}{% endblock %}
+
+            <!-- Celebration Popup Modal -->
+        {% if celebrations and celebrations.birthdays_today or celebrations.work_anniversaries_today or celebrations.marriage_anniversaries_today %}
+<div class="modal fade" id="celebrationModal" tabindex="-1" aria-labelledby="celebrationModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title" id="celebrationModalLabel">
+                            <i class="fas fa-party-horn me-2"></i>Today's Celebrations! 🎉
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Birthdays -->
+                        {% if celebrations.birthdays_today %}
+                        <div class="celebration-section mb-4">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-birthday-cake me-2"></i>Birthdays Today
+                            </h6>
+                            {% for birthday in celebrations.birthdays_today %}
+                            <div class="celebration-item mb-3 p-3 border rounded bg-light position-relative {% if birthday.is_current_user %}current-user-celebration{% endif %}">
+                                <div class="d-flex align-items-center">
+                                    <div class="celebration-icon me-3">
+                                        <i class="fas fa-birthday-cake fa-2x text-warning"></i>
+                                        {% if birthday.is_current_user %}
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-info">
+                                            You!
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="celebration-details flex-grow-1">
+                                        <strong class="h6 mb-1">
+                                            {{ birthday.name }}
+                                            {% if birthday.is_current_user %}(You){% endif %}
+                                        </strong>
+                                        <p class="mb-1 text-muted">{{ birthday.designation }} - {{ birthday.department }}</p>
+                                        {% if birthday.years_old %}
+                                        <small class="text-success">Turning {{ birthday.years_old }} today! 🎂</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <!-- Wish Button - Hide for current user -->
+                                {% if not birthday.is_current_user %}
+                                <button class="btn btn-sm btn-outline-primary wish-btn position-absolute top-0 end-0 m-2" 
+                                        data-celebrant-id="{{ birthday.id }}"
+                                        data-celebrant-name="{{ birthday.name }}"
+                                        data-wish-type="birthday">
+                                    <i class="fas fa-gift me-1"></i>Send Wish
+                                </button>
+                                {% else %}
+                                <!-- View Wishes Button for current user -->
+                                <button class="btn btn-sm btn-outline-info view-wishes-btn position-absolute top-0 end-0 m-2" 
+                                        data-celebrant-id="{{ birthday.id }}"
+                                        data-celebrant-name="{{ birthday.name }}"
+                                        data-wish-type="birthday">
+                                    <i class="fas fa-eye me-1"></i>View Wishes
+                                </button>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Work Anniversaries -->
+                        {% if celebrations.work_anniversaries_today %}
+                        <div class="celebration-section mb-4">
+                            <h6 class="text-success mb-3">
+                                <i class="fas fa-briefcase me-2"></i>Work Anniversaries
+                            </h6>
+                            {% for anniversary in celebrations.work_anniversaries_today %}
+                            <div class="celebration-item mb-3 p-3 border rounded bg-light position-relative {% if anniversary.is_current_user %}current-user-celebration{% endif %}">
+                                <div class="d-flex align-items-center">
+                                    <div class="celebration-icon me-3">
+                                        <i class="fas fa-briefcase fa-2x text-success"></i>
+                                        {% if anniversary.is_current_user %}
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-info">
+                                            You!
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="celebration-details flex-grow-1">
+                                        <strong class="h6 mb-1">
+                                            {{ anniversary.name }}
+                                            {% if anniversary.is_current_user %}(You){% endif %}
+                                        </strong>
+                                        <p class="mb-1 text-muted">{{ anniversary.designation }} - {{ anniversary.department }}</p>
+                                        <small class="text-success">
+                                            {{ anniversary.years }} year{{ anniversary.years|pluralize }} of dedicated service! 🏆
+                                        </small>
+                                    </div>
+                                </div>
+                                <!-- Wish Button - Hide for current user -->
+                                {% if not anniversary.is_current_user %}
+                                <button class="btn btn-sm btn-outline-success wish-btn position-absolute top-0 end-0 m-2"
+                                        data-celebrant-id="{{ anniversary.id }}"
+                                        data-celebrant-name="{{ anniversary.name }}"
+                                        data-wish-type="work_anniversary">
+                                    <i class="fas fa-gift me-1"></i>Send Wish
+                                </button>
+                                {% else %}
+                                <!-- View Wishes Button for current user -->
+                                <button class="btn btn-sm btn-outline-info view-wishes-btn position-absolute top-0 end-0 m-2" 
+                                        data-celebrant-id="{{ anniversary.id }}"
+                                        data-celebrant-name="{{ anniversary.name }}"
+                                        data-wish-type="work_anniversary">
+                                    <i class="fas fa-eye me-1"></i>View Wishes
+                                </button>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Marriage Anniversaries -->
+                        {% if celebrations.marriage_anniversaries_today %}
+                        <div class="celebration-section mb-4">
+                            <h6 class="text-danger mb-3">
+                                <i class="fas fa-heart me-2"></i>Marriage Anniversaries
+                            </h6>
+                            {% for anniversary in celebrations.marriage_anniversaries_today %}
+                            <div class="celebration-item mb-3 p-3 border rounded bg-light position-relative {% if anniversary.is_current_user %}current-user-celebration{% endif %}">
+                                <div class="d-flex align-items-center">
+                                    <div class="celebration-icon me-3">
+                                        <i class="fas fa-heart fa-2x text-danger"></i>
+                                        {% if anniversary.is_current_user %}
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-info">
+                                            You!
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="celebration-details flex-grow-1">
+                                        <strong class="h6 mb-1">
+                                            {{ anniversary.name }}
+                                            {% if anniversary.is_current_user %}(You){% endif %}
+                                        </strong>
+                                        <p class="mb-1 text-muted">{{ anniversary.designation }} - {{ anniversary.department }}</p>
+                                        <small class="text-danger">
+                                            {{ anniversary.years }} year{{ anniversary.years|pluralize }} of togetherness! 💖
+                                        </small>
+                                    </div>
+                                </div>
+                                <!-- Wish Button - Hide for current user -->
+                                {% if not anniversary.is_current_user %}
+                                <button class="btn btn-sm btn-outline-danger wish-btn position-absolute top-0 end-0 m-2"
+                                        data-celebrant-id="{{ anniversary.id }}"
+                                        data-celebrant-name="{{ anniversary.name }}"
+                                        data-wish-type="marriage_anniversary">
+                                    <i class="fas fa-gift me-1"></i>Send Wish
+                                </button>
+                                {% else %}
+                                <!-- View Wishes Button for current user -->
+                                <button class="btn btn-sm btn-outline-info view-wishes-btn position-absolute top-0 end-0 m-2" 
+                                        data-celebrant-id="{{ anniversary.id }}"
+                                        data-celebrant-name="{{ anniversary.name }}"
+                                        data-wish-type="marriage_anniversary">
+                                    <i class="fas fa-eye me-1"></i>View Wishes
+                                </button>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Wish Modal -->
+        <div class="modal fade" id="wishModal" tabindex="-1" aria-labelledby="wishModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="wishModalLabel">
+                            <i class="fas fa-gift me-2"></i>Send Your Wish
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="wishForm">
+                            <input type="hidden" id="celebrantId" name="celebrant_id">
+                            <input type="hidden" id="wishType" name="wish_type">
+                            
+                            <div class="mb-3">
+                                <label class="form-label">To: <strong id="celebrantName"></strong></label>
+                                <label class="form-label float-end" id="wishTypeLabel"></label>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="wishMessage" class="form-label">Your Message:</label>
+                                <textarea class="form-control" id="wishMessage" name="message" rows="4" 
+                                          placeholder="Write your warm wishes here..." required></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Your message will be visible to the celebrant and administrators.
+                                </small>
+                            </div>
+                        </form>
+                        
+                        <!-- Previous Wishes Section -->
+                        <div id="previousWishes" class="mt-4" style="display: none;">
+                            <h6 class="border-bottom pb-2">Recent Wishes:</h6>
+                            <div id="wishesList" class="previous-wishes-container" style="max-height: 200px; overflow-y: auto;">
+                                <!-- Wishes will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="sendWishBtn">
+                            <i class="fas fa-paper-plane me-1"></i>Send Wish
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Celebration Popup JavaScript -->
+        <script>
+        // Celebration Popup JavaScript
+// Celebration Popup JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if we should auto-show the celebration modal
+    const celebrationModalElement = document.getElementById('celebrationModal');
+    
+    if (celebrationModalElement) {
+        // Check if we've already shown the modal in this session
+        const hasSeenCelebrations = sessionStorage.getItem('celebrationModalShown');
+        
+        if (!hasSeenCelebrations) {
+            // First time visiting - auto-show modal after delay
+            setTimeout(function() {
+                showCelebrationModal();
+                // Mark as shown for this session
+                sessionStorage.setItem('celebrationModalShown', 'true');
+            }, 1500);
+        }
+        
+        // Always initialize wish buttons
+        initializeWishButtons();
+    }
+});
+
+// Function to open celebration modal manually
+function openCelebrationModal() {
+    showCelebrationModal();
+}
+
+// Safe function to show celebration modal
+function showCelebrationModal() {
+    const celebrationModalElement = document.getElementById('celebrationModal');
+    
+    if (celebrationModalElement) {
+        const celebrationModal = new bootstrap.Modal(celebrationModalElement);
+        celebrationModal.show();
+    } else {
+        console.warn('Celebration modal not found on this page');
+        // Optional: Redirect to dashboard where modal exists
+        // window.location.href = "{% url 'dashboard' %}";
+    }
+}
+
+function initializeWishButtons() {
+    // Add click handlers to wish buttons
+    document.querySelectorAll('.wish-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const celebrantId = this.getAttribute('data-celebrant-id');
+            const celebrantName = this.getAttribute('data-celebrant-name');
+            const wishType = this.getAttribute('data-wish-type');
+            
+            openWishModal(celebrantId, celebrantName, wishType);
+        });
+    });
+
+    // Add click handlers to view wishes buttons
+    document.querySelectorAll('.view-wishes-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const celebrantId = this.getAttribute('data-celebrant-id');
+            const celebrantName = this.getAttribute('data-celebrant-name');
+            const wishType = this.getAttribute('data-wish-type');
+            
+            openViewWishesModal(celebrantId, celebrantName, wishType);
+        });
+    });
+}
+
+function openWishModal(celebrantId, celebrantName, wishType) {
+    const wishModalElement = document.getElementById('wishModal');
+    if (!wishModalElement) {
+        console.error('Wish modal not found');
+        return;
+    }
+    
+    // Set modal content
+    document.getElementById('celebrantId').value = celebrantId;
+    document.getElementById('celebrantName').textContent = celebrantName;
+    document.getElementById('wishType').value = wishType;
+    
+    // Set wish type label
+    const wishTypeLabels = {
+        'birthday': '🎂 Birthday',
+        'work_anniversary': '🏆 Work Anniversary', 
+        'marriage_anniversary': '💖 Marriage Anniversary'
+    };
+    document.getElementById('wishTypeLabel').textContent = wishTypeLabels[wishType];
+    
+    // Clear previous message
+    document.getElementById('wishMessage').value = '';
+    
+    // Show send wish form and hide view-only mode
+    document.getElementById('wishMessage').disabled = false;
+    document.getElementById('sendWishBtn').style.display = 'block';
+    document.querySelector('label[for="wishMessage"]').textContent = 'Your Message:';
+    document.getElementById('wishMessage').style.display = 'block';
+    document.querySelector('label[for="wishMessage"]').style.display = 'block';
+    
+    // Reset modal title
+    document.getElementById('wishModalLabel').innerHTML = '<i class="fas fa-gift me-2"></i>Send Your Wish';
+    
+    // Load previous wishes WITH TYPE FILTER
+    loadPreviousWishes(celebrantId, wishType);
+    
+    // Show modal
+    const wishModal = new bootstrap.Modal(wishModalElement);
+    wishModal.show();
+}
+function openViewWishesModal(celebrantId, celebrantName, wishType) {
+    const wishModalElement = document.getElementById('wishModal');
+    if (!wishModalElement) {
+        console.error('Wish modal not found');
+        return;
+    }
+    
+    // Set modal content for view-only mode
+    document.getElementById('celebrantId').value = celebrantId;
+    document.getElementById('celebrantName').textContent = celebrantName;
+    document.getElementById('wishType').value = wishType;
+    
+    // Set wish type label
+    const wishTypeLabels = {
+        'birthday': '🎂 Your Birthday Wishes',
+        'work_anniversary': '🏆 Your Work Anniversary Wishes', 
+        'marriage_anniversary': '💖 Your Marriage Anniversary Wishes'
+    };
+    document.getElementById('wishModalLabel').innerHTML = '<i class="fas fa-eye me-2"></i>Your Wishes';
+    document.getElementById('wishTypeLabel').textContent = wishTypeLabels[wishType];
+    
+    // Hide send form and show view-only mode
+    document.getElementById('wishMessage').style.display = 'none';
+    document.querySelector('label[for="wishMessage"]').style.display = 'none';
+    document.getElementById('sendWishBtn').style.display = 'none';
+    
+    // Load wishes WITH TYPE FILTER
+    loadPreviousWishes(celebrantId, wishType);
+    
+    // Show modal
+    const wishModal = new bootstrap.Modal(wishModalElement);
+    wishModal.show();
+}
+function loadPreviousWishes(celebrantId, wishType = null,) {
+    // Build URL with wish type filter
+    let url = `/celebration-wishes/${celebrantId}/`;
+    if (wishType) {
+        url += `?wish_type=${wishType}`;
+    }
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            const wishesList = document.getElementById('wishesList');
+            const previousWishes = document.getElementById('previousWishes');
+            
+            if (wishesList && previousWishes) {
+                if (data.wishes && data.wishes.length > 0) {
+                    wishesList.innerHTML = '';
+                    data.wishes.forEach(wish => {
+                        const wishElement = document.createElement('div');
+                        wishElement.className = 'wish-item mb-3 p-2 border rounded bg-light';
+                        wishElement.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-start">
+                                <strong class="wisher-name">${wish.wisher_name}</strong>
+                                <small class="text-muted">${wish.time_ago}</small>
+                            </div>
+                            <small class="text-muted d-block">${wish.wisher_designation}</small>
+                            <p class="mb-0 mt-1">${wish.message}</p>
+                        `;
+                        wishesList.appendChild(wishElement);
+                    });
+                    previousWishes.style.display = 'block';
+                } else {
+                    wishesList.innerHTML = '<div class="text-center text-muted py-3">No wishes yet. Be the first to send one!</div>';
+                    previousWishes.style.display = 'block';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error loading wishes:', error);
+            const previousWishes = document.getElementById('previousWishes');
+            if (previousWishes) {
+                previousWishes.style.display = 'none';
+            }
+        });
+}
+
+// Initialize send wish button if it exists
+document.addEventListener('DOMContentLoaded', function() {
+    const sendWishBtn = document.getElementById('sendWishBtn');
+    if (sendWishBtn) {
+        sendWishBtn.addEventListener('click', function() {
+            const formData = {
+                celebrant_id: document.getElementById('celebrantId').value,
+                wish_type: document.getElementById('wishType').value,
+                message: document.getElementById('wishMessage').value
+            };
+            
+            if (!formData.message.trim()) {
+                alert('Please write a message before sending.');
+                return;
+            }
+            
+            // Disable button and show loading
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Sending...';
+            
+            // Send wish
+            fetch('/send-celebration-wish/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    alert('🎉 Wish sent successfully!');
+                    
+                    // Close modals
+                    const wishModalElement = document.getElementById('wishModal');
+                    if (wishModalElement) {
+                        const wishModal = bootstrap.Modal.getInstance(wishModalElement);
+                        if (wishModal) {
+                            wishModal.hide();
+                        }
+                    }
+                    
+                    // Reload wishes if needed
+                    loadPreviousWishes(formData.celebrant_id);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error sending wish. Please try again.');
+            })
+            .finally(() => {
+                // Reset button
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Send Wish';
+            });
+        });
+    }
+});
+        </script>
+        <!-- Celebration Styles -->
+        <style>
         .celebration-item {
             transition: all 0.3s ease;
             border-left: 4px solid #28a745 !important;
@@ -699,977 +1716,7 @@
             font-size: 0.6rem;
             padding: 0.25em 0.4em;
         }
-    </style>
-
-    {% block extra_css %}{% endblock %}
-</head>
-
-<body>
-    {% if request.session.user_authenticated %}
-    <!-- Sidebar Overlay -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-   
-    <!-- Dynamic Sidebar -->
-    <nav class="sidebar" id="sidebar">
-        <div class="sidebar-content">
-            <div class="logo">
-                <a class="navbar-brand d-flex align-items-center me-3" href="{% url 'dashboard' %}">
-                    <img src="{% static 'img/ikontellogot.png' %}" alt="Logo" height="40" class="me-2">
-                </a>
-            </div>
-           
-            <div class="sidebar-nav-container">
-                <ul class="nav flex-column">
-                    {% for menu in menu_data %}
-                        {% if menu.submenus %}
-                            <!-- Menu with submenus -->
-                            <li class="nav-item">
-                                <a class="nav-link dropdown-toggle"
-                                   href="#submenu{{ menu.id }}"
-                                   data-bs-toggle="collapse">
-                                    {% if menu.icon %}<i class="{{ menu.icon }}"></i>{% endif %}
-                                    {{ menu.name }}
-                                </a>
-                                <ul class="collapse list-unstyled ps-3" id="submenu{{ menu.id }}">
-                                    {% for sub in menu.submenus %}
-                                        <li>
-                                            <a class="nav-link" href="{{ sub.menu_link_url }}">
-                                                {% if sub.menu_link_icon %}<i class="{{ sub.menu_link_icon }}"></i>{% endif %}
-                                                {{ sub.menu_link_name }}
-                                            </a>
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            </li>
-                        {% else %}
-                            <!-- Single menu item -->
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ menu.url }}">
-                                    {% if menu.icon %}<i class="{{ menu.icon }}"></i>{% endif %}
-                                    {{ menu.name }}
-                                </a>
-                            </li>
-                        {% endif %}
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Top Navigation Bar -->
-    <nav class="navbar navbar-expand-lg top-navbar">
-        <div class="container-fluid">
-            <button class="btn btn-outline-secondary sidebar-toggle me-3" onclick="toggleSidebar()">
-                <i class="fas fa-bars"></i>
-            </button>
-
-            <div class="navbar-nav ms-auto d-flex align-items-center">
-                <div class="user-info dropdown">
-                    <a href="#" class="d-flex align-items-center text-decoration-none" data-bs-toggle="dropdown">
-                        <div class="user-avatar position-relative">
-                            {% if request.session.user_role == 'ADMIN' or request.session.user_role == 'SUPER ADMIN' %}
-                                {% if request.session.profile_picture %}
-                                    <img src="{{ request.session.profile_picture }}" alt="Profile Picture"
-                                        class="profile-img rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
-                                {% else %}
-                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
-                                        style="width: 40px; height: 40px; font-weight: bold;">
-                                        {{ request.session.user_name|slice:":2"|upper }}
-                                    </div>
-                                {% endif %}
-                            {% else %}
-                                <img src="{{ request.session.profile_picture }}" alt="Profile Picture"
-                                    class="profile-img rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
-                            {% endif %}
-                        </div>
-
-                        <div class="ms-2 d-none d-md-block">
-                            <div class="fw-bold text-dark" style="font-size: 0.9rem;">{{ request.session.user_name }}</div>
-                            <small class="text-muted">{{ request.session.user_role }}</small>
-                        </div>
-                    </a>
-
-                <ul class="dropdown-menu dropdown-menu-end">
-                    {% if request.session.user_role == 'SUPER ADMIN' %}
-                        {% if admin and admin.pk %}
-                            <li><a class="dropdown-item" href="{% url 'admin_update' admin.pk %}"><i class="fas fa-user me-2"></i>Edit Profile</a></li>
-                        {% else %}
-                            <!-- Fallback: Use session user_id or show disabled link -->
-                            {% if request.session.user_id %}
-                                <li><a class="dropdown-item" href="{% url 'admin_update' request.session.user_id %}"><i class="fas fa-user me-2"></i>Edit Profile</a></li>
-                            {% else %}
-                                <li><a class="dropdown-item text-muted" href="#" onclick="alert('Profile editing not available on this page')"><i class="fas fa-user me-2"></i>Edit Profile</a></li>
-                            {% endif %}
-                        {% endif %}
-                        <li><a class="dropdown-item" href="{% url 'change_password' %}"><i class="fas fa-key me-2"></i>Change Password</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
-                    {% else %}
-                        <li><a class="dropdown-item" href="{% url 'update_employee_profile' %}"><i class="fas fa-user me-2"></i>Edit Profile</a></li>
-                        <li><a class="dropdown-item" href="{% url 'change_password' %}"><i class="fas fa-key me-2"></i>Change Password</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
-                    {% endif %}
-                    </ul>
-                </div>
-               
-                <!-- Celebration Badge -->
-                {% if celebrations and celebrations.birthdays_today or celebrations.work_anniversaries_today or celebrations.marriage_anniversaries_today %}
-                <li class="nav-item notification-badge me-3">
-                    <a class="nav-link celebration-badge-link" href="javascript:void(0)" onclick="openCelebrationModal()">
-                        <i class="fas fa-bell"></i>
-                        <span class="badge bg-danger">
-                            {{ celebrations.birthdays_today|length|add:celebrations.work_anniversaries_today|length|add:celebrations.marriage_anniversaries_today|length }}
-                        </span>
-                    </a>
-                </li>
-                {% endif %}
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Content Area -->
-    <div class="main-content">
-        {% else %}
-        <div class="container-fluid">
-            {% endif %}
-            {% if messages %}
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-            {% endfor %}
-            {% endif %}
-
-            {% csrf_token %}
-            {% block content %}{% endblock %}
-        </div>
-
-        <!-- Bootstrap 5 JS -->
-        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-        <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
-        <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-        <!-- FullCalendar JS -->
-        <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
-       
-        <script>
-        // Initialize datepicker
-        $(document).ready(function() {
-            $('.datepicker').datepicker({
-                format: 'dd-mm-yyyy',
-                autoclose: true,
-                todayHighlight: true,
-                orientation: 'bottom auto'
-            });
-        });
-
-        // Enhanced menu activation script
-        document.addEventListener('DOMContentLoaded', function() {
-            const currentPath = window.location.pathname;
-            console.log('Current Path:', currentPath);
-           
-            // Function to normalize URLs for comparison
-            function normalizeUrl(url) {
-                if (!url) return '';
-                // Remove trailing slashes and ensure consistent format
-                return url.replace(/\/+$/, '');
-            }
-           
-            // Function to detect URL patterns
-            function detectUrlPattern(url) {
-                const normalized = normalizeUrl(url);
-               
-                // Employee detail: /employee/123/ or /employee/123/edit/
-                if (normalized.match(/^\/employee\/\d+/) || normalized.match(/^\/employee\/\d+\/edit/)) {
-                    return 'employee-detail';
-                }
-               
-                // Leave apply: /leave/apply/
-                if (normalized === '/leave/apply') {
-                    return 'leave-apply';
-                }
-                // Resignation related pages - all should activate resignation/dashboard
-                if (normalized.match(/^\/resignation\/(all|analytics|detail|submit|certificate|exit-interview|my-resignation)/)) {
-                    return 'resignation-pages';
-                }
-               
-                return null;
-            }
-           
-            // Function to check if two URLs match (exact or parent-child relationship)
-            function urlMatches(menuUrl, currentUrl) {
-                const normalizedMenu = normalizeUrl(menuUrl);
-                const normalizedCurrent = normalizeUrl(currentUrl);
-               
-                // Exact match
-                if (normalizedMenu === normalizedCurrent) {
-                    return { match: true, type: 'exact' };
-                }
-               
-                // Special handling for employee detail/edit pages
-                const currentPattern = detectUrlPattern(normalizedCurrent);
-                if (currentPattern === 'employee-detail') {
-                    // Match /employees/ menu for /employee/123/ pages
-                    if (normalizedMenu === '/employees' || normalizedMenu === '/employees/') {
-                        return { match: true, type: 'special-employee' };
-                    }
-                }
-               
-                // Special handling for leave apply page
-                if (currentPattern === 'leave-apply') {
-                    // Match /leave/leave_details for /leave/apply/ page
-                    if (normalizedMenu === '/leave/leave_details' || normalizedMenu === '/leave/leave_details/') {
-                        return { match: true, type: 'special-leave-apply' };
-                    }
-                }
-               
-                // Special handling for resignation pages
-                if (currentPattern === 'resignation-pages') {
-                    // Match /resignation/dashboard for all resignation sub-pages
-                    if (normalizedMenu === '/resignation/dashboard' || normalizedMenu === '/resignation/dashboard/') {
-                        return { match: true, type: 'special-resignation' };
-                    }
-                }
-
-                // Check if current URL starts with menu URL (parent-child relationship)
-                // But ensure we're matching full path segments, not partial matches
-                if (normalizedMenu && normalizedCurrent.startsWith(normalizedMenu + '/')) {
-                    return { match: true, type: 'child' };
-                }
-               
-                return { match: false };
-            }
-           
-            // Function to activate menu items
-            function activateMenus() {
-                console.log('Activating menus for:', currentPath);
-               
-                // Reset all active states
-                document.querySelectorAll('.sidebar .nav-link').forEach(link => {
-                    link.classList.remove('active');
-                });
-                document.querySelectorAll('.sidebar .collapse').forEach(collapse => {
-                    collapse.classList.remove('show');
-                });
-               
-                let exactMatchFound = false;
-                let parentDropdownToActivate = null;
-               
-                // STEP 1: Check for special patterns first
-                const currentPattern = detectUrlPattern(currentPath);
-               
-                if (currentPattern === 'employee-detail' || currentPattern === 'leave-apply'|| currentPattern === 'resignation-pages') {
-                    document.querySelectorAll('.sidebar .nav-link:not(.dropdown-toggle)').forEach(link => {
-                        const href = link.getAttribute('href');
-                        const matchResult = urlMatches(href, currentPath);
-                       
-                        if (matchResult.match && (matchResult.type === 'special-employee' || matchResult.type === 'special-leave-apply'|| matchResult.type === 'special-resignation')) {
-                            link.classList.add('active');
-                            exactMatchFound = true;
-                            console.log('✅ Special pattern match found:', href, 'for pattern:', currentPattern);
-                           
-                            // Expand parent dropdown if this is a submenu item
-                            const parentCollapse = link.closest('.collapse');
-                            if (parentCollapse) {
-                                parentCollapse.classList.add('show');
-                                const parentToggle = parentCollapse.previousElementSibling;
-                                if (parentToggle && parentToggle.classList.contains('dropdown-toggle')) {
-                                    parentToggle.classList.add('active');
-                                    parentDropdownToActivate = parentToggle;
-                                    console.log('👆 Activated parent dropdown');
-                                }
-                            }
-                        }
-                    });
-                }
-               
-                // STEP 2: Find exact matches (if no special pattern matched)
-                if (!exactMatchFound) {
-                    document.querySelectorAll('.sidebar .nav-link:not(.dropdown-toggle)').forEach(link => {
-                        const href = link.getAttribute('href');
-                        const matchResult = urlMatches(href, currentPath);
-                       
-                        if (matchResult.match && matchResult.type === 'exact') {
-                            link.classList.add('active');
-                            exactMatchFound = true;
-                            console.log('✅ Exact match found:', href);
-                           
-                            // Expand parent dropdown if this is a submenu item
-                            const parentCollapse = link.closest('.collapse');
-                            if (parentCollapse) {
-                                parentCollapse.classList.add('show');
-                                const parentToggle = parentCollapse.previousElementSibling;
-                                if (parentToggle && parentToggle.classList.contains('dropdown-toggle')) {
-                                    parentToggle.classList.add('active');
-                                    parentDropdownToActivate = parentToggle;
-                                    console.log('👆 Activated parent dropdown');
-                                }
-                            }
-                        }
-                    });
-                }
-               
-                // STEP 3: If no exact match, check for child URLs
-                if (!exactMatchFound) {
-                    console.log('⚠️ No exact match found, checking for parent matches');
-                   
-                    let bestMatch = { link: null, specificity: 0 };
-                   
-                    // Find the most specific parent match
-                    document.querySelectorAll('.sidebar .nav-link:not(.dropdown-toggle)').forEach(link => {
-                        const href = link.getAttribute('href');
-                        const matchResult = urlMatches(href, currentPath);
-                       
-                        if (matchResult.match && matchResult.type === 'child') {
-                            const specificity = normalizeUrl(href).split('/').length;
-                            if (specificity > bestMatch.specificity) {
-                                bestMatch = { link: link, specificity: specificity };
-                            }
-                        }
-                    });
-                   
-                    // Activate the best match
-                    if (bestMatch.link) {
-                        bestMatch.link.classList.add('active');
-                        console.log('✅ Parent match found:', bestMatch.link.getAttribute('href'));
-                       
-                        // Expand parent dropdown
-                        const parentCollapse = bestMatch.link.closest('.collapse');
-                        if (parentCollapse) {
-                            parentCollapse.classList.add('show');
-                            const parentToggle = parentCollapse.previousElementSibling;
-                            if (parentToggle && parentToggle.classList.contains('dropdown-toggle')) {
-                                parentToggle.classList.add('active');
-                                parentDropdownToActivate = parentToggle;
-                                console.log('👆 Activated parent dropdown');
-                            }
-                        }
-                        exactMatchFound = true;
-                    }
-                }
-               
-                // STEP 4: If still no match, check dropdown toggles themselves
-                if (!exactMatchFound) {
-                    document.querySelectorAll('.sidebar .dropdown-toggle').forEach(toggle => {
-                        const href = toggle.getAttribute('href');
-                       
-                        // Skip if href is just an anchor (like #submenu-something)
-                        if (href && href.startsWith('#')) {
-                            return;
-                        }
-                       
-                        const matchResult = urlMatches(href, currentPath);
-                       
-                        if (matchResult.match) {
-                            toggle.classList.add('active');
-                            const submenuId = toggle.getAttribute('href');
-                            if (submenuId && submenuId.startsWith('#')) {
-                                const submenu = document.querySelector(submenuId);
-                                if (submenu) {
-                                    submenu.classList.add('show');
-                                }
-                            }
-                            exactMatchFound = true;
-                            console.log('✅ Dropdown match found:', href);
-                        }
-                    });
-                }
-               
-                // STEP 5: Dashboard fallback
-                if (!exactMatchFound && (currentPath === '/' || currentPath === '/dashboard' || currentPath === '/dashboard/')) {
-                    const dashboardLink = document.querySelector('.sidebar .nav-link[href*="dashboard"]');
-                    if (dashboardLink) {
-                        dashboardLink.classList.add('active');
-                        console.log('🏠 Activated dashboard');
-                    }
-                }
-               
-                console.log('🎯 Menu activation completed. Match found:', exactMatchFound);
-            }
-           
-            // Initialize menu activation
-            activateMenus();
-           
-            // Add click handlers to maintain active state
-            document.querySelectorAll('.sidebar .nav-link').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    // Don't handle dropdown toggles
-                    if (this.classList.contains('dropdown-toggle')) {
-                        return;
-                    }
-                   
-                    console.log('🖱️ Menu item clicked:', this.getAttribute('href'));
-                   
-                    // Remove active class from all non-dropdown links
-                    document.querySelectorAll('.sidebar .nav-link:not(.dropdown-toggle)').forEach(l => {
-                        l.classList.remove('active');
-                    });
-                   
-                    // Add active class to clicked link
-                    this.classList.add('active');
-                   
-                    // Activate parent dropdown if exists
-                    const parentCollapse = this.closest('.collapse');
-                    if (parentCollapse) {
-                        const parentToggle = parentCollapse.previousElementSibling;
-                        if (parentToggle && parentToggle.classList.contains('dropdown-toggle')) {
-                            // Remove active from other dropdowns
-                            document.querySelectorAll('.sidebar .dropdown-toggle').forEach(dt => {
-                                if (dt !== parentToggle) {
-                                    dt.classList.remove('active');
-                                }
-                            });
-                            parentToggle.classList.add('active');
-                        }
-                    }
-                });
-            });
-        });
-
-        // Create overlay for mobile sidebar
-        document.addEventListener('DOMContentLoaded', function() {
-            if (!document.querySelector('.sidebar-overlay')) {
-                const overlay = document.createElement('div');
-                overlay.className = 'sidebar-overlay';
-                overlay.id = 'sidebarOverlay';
-                document.body.appendChild(overlay);
-               
-                overlay.addEventListener('click', function() {
-                    toggleSidebar();
-                });
-            }
-        });
-
-        // Toggle sidebar function
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-           
-            if (sidebar && overlay) {
-                sidebar.classList.toggle('show');
-                overlay.classList.toggle('show');
-               
-                if (sidebar.classList.contains('show')) {
-                    document.body.style.overflow = 'hidden';
-                } else {
-                    document.body.style.overflow = '';
-                }
-            }
-        }
-
-        // Close sidebar when clicking menu item on mobile
-        document.addEventListener('DOMContentLoaded', function() {
-            const navLinks = document.querySelectorAll('.sidebar .nav-link:not(.dropdown-toggle)');
-           
-            navLinks.forEach(function(link) {
-                link.addEventListener('click', function() {
-                    if (window.innerWidth <= 768) {
-                        setTimeout(function() {
-                            toggleSidebar();
-                        }, 300);
-                    }
-                });
-            });
-        });
-
-        // Close sidebar on window resize to desktop
-        window.addEventListener('resize', function() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-           
-            if (window.innerWidth > 768 && sidebar && sidebar.classList.contains('show')) {
-                sidebar.classList.remove('show');
-                if (overlay) {
-                    overlay.classList.remove('show');
-                }
-                document.body.style.overflow = '';
-            }
-        });
-
-        // Auto close alerts
-        {% if messages %}
-        document.addEventListener('DOMContentLoaded', function () {
-            setTimeout(function () {
-                var alerts = document.querySelectorAll('.alert');
-                alerts.forEach(function (alert) {
-                    var bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                });
-            }, 5000);
-        });
-        {% endif %}
-        </script>
-
-        {% block extra_js %}{% endblock %}
-
-        <!-- Celebration Popup Modal -->
-        {% if celebrations and celebrations.birthdays_today or celebrations.work_anniversaries_today or celebrations.marriage_anniversaries_today %}
-        <div class="modal fade" id="celebrationModal" tabindex="-1" aria-labelledby="celebrationModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header bg-success text-white">
-                        <h5 class="modal-title" id="celebrationModalLabel">
-                            <i class="fas fa-party-horn me-2"></i>Today's Celebrations! 🎉
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <!-- Birthdays -->
-                        {% if celebrations.birthdays_today %}
-                        <div class="celebration-section mb-4">
-                            <h6 class="text-primary mb-3">
-                                <i class="fas fa-birthday-cake me-2"></i>Birthdays Today
-                            </h6>
-                            {% for birthday in celebrations.birthdays_today %}
-                            <div class="celebration-item mb-3 p-3 border rounded bg-light position-relative {% if birthday.is_current_user %}current-user-celebration{% endif %}">
-                                <div class="d-flex align-items-center">
-                                    <div class="celebration-icon me-3">
-                                        <i class="fas fa-birthday-cake fa-2x text-warning"></i>
-                                        {% if birthday.is_current_user %}
-                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-info">
-                                            You!
-                                        </span>
-                                        {% endif %}
-                                    </div>
-                                    <div class="celebration-details flex-grow-1">
-                                        <strong class="h6 mb-1">
-                                            {{ birthday.name }}
-                                            {% if birthday.is_current_user %}(You){% endif %}
-                                        </strong>
-                                        <p class="mb-1 text-muted">{{ birthday.designation }} - {{ birthday.department }}</p>
-                                        {% if birthday.years_old %}
-                                        <small class="text-success">Turning {{ birthday.years_old }} today! 🎂</small>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <!-- Wish Button - Hide for current user -->
-                                {% if not birthday.is_current_user %}
-                                <button class="btn btn-sm btn-outline-primary wish-btn position-absolute top-0 end-0 m-2"
-                                        data-celebrant-id="{{ birthday.id }}"
-                                        data-celebrant-name="{{ birthday.name }}"
-                                        data-wish-type="birthday">
-                                    <i class="fas fa-gift me-1"></i>Send Wish
-                                </button>
-                                {% else %}
-                                <!-- View Wishes Button for current user -->
-                                <button class="btn btn-sm btn-outline-info view-wishes-btn position-absolute top-0 end-0 m-2"
-                                        data-celebrant-id="{{ birthday.id }}"
-                                        data-celebrant-name="{{ birthday.name }}"
-                                        data-wish-type="birthday">
-                                    <i class="fas fa-eye me-1"></i>View Wishes
-                                </button>
-                                {% endif %}
-                            </div>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
-
-                        <!-- Work Anniversaries -->
-                        {% if celebrations.work_anniversaries_today %}
-                        <div class="celebration-section mb-4">
-                            <h6 class="text-success mb-3">
-                                <i class="fas fa-briefcase me-2"></i>Work Anniversaries
-                            </h6>
-                            {% for anniversary in celebrations.work_anniversaries_today %}
-                            <div class="celebration-item mb-3 p-3 border rounded bg-light position-relative {% if anniversary.is_current_user %}current-user-celebration{% endif %}">
-                                <div class="d-flex align-items-center">
-                                    <div class="celebration-icon me-3">
-                                        <i class="fas fa-briefcase fa-2x text-success"></i>
-                                        {% if anniversary.is_current_user %}
-                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-info">
-                                            You!
-                                        </span>
-                                        {% endif %}
-                                    </div>
-                                    <div class="celebration-details flex-grow-1">
-                                        <strong class="h6 mb-1">
-                                            {{ anniversary.name }}
-                                            {% if anniversary.is_current_user %}(You){% endif %}
-                                        </strong>
-                                        <p class="mb-1 text-muted">{{ anniversary.designation }} - {{ anniversary.department }}</p>
-                                        <small class="text-success">
-                                            {{ anniversary.years }} year{{ anniversary.years|pluralize }} of dedicated service! 🏆
-                                        </small>
-                                    </div>
-                                </div>
-                                <!-- Wish Button - Hide for current user -->
-                                {% if not anniversary.is_current_user %}
-                                <button class="btn btn-sm btn-outline-success wish-btn position-absolute top-0 end-0 m-2"
-                                        data-celebrant-id="{{ anniversary.id }}"
-                                        data-celebrant-name="{{ anniversary.name }}"
-                                        data-wish-type="work_anniversary">
-                                    <i class="fas fa-gift me-1"></i>Send Wish
-                                </button>
-                                {% else %}
-                                <!-- View Wishes Button for current user -->
-                                <button class="btn btn-sm btn-outline-info view-wishes-btn position-absolute top-0 end-0 m-2"
-                                        data-celebrant-id="{{ anniversary.id }}"
-                                        data-celebrant-name="{{ anniversary.name }}"
-                                        data-wish-type="work_anniversary">
-                                    <i class="fas fa-eye me-1"></i>View Wishes
-                                </button>
-                                {% endif %}
-                            </div>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
-
-                        <!-- Marriage Anniversaries -->
-                        {% if celebrations.marriage_anniversaries_today %}
-                        <div class="celebration-section mb-4">
-                            <h6 class="text-danger mb-3">
-                                <i class="fas fa-heart me-2"></i>Marriage Anniversaries
-                            </h6>
-                            {% for anniversary in celebrations.marriage_anniversaries_today %}
-                            <div class="celebration-item mb-3 p-3 border rounded bg-light position-relative {% if anniversary.is_current_user %}current-user-celebration{% endif %}">
-                                <div class="d-flex align-items-center">
-                                    <div class="celebration-icon me-3">
-                                        <i class="fas fa-heart fa-2x text-danger"></i>
-                                        {% if anniversary.is_current_user %}
-                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-info">
-                                            You!
-                                        </span>
-                                        {% endif %}
-                                    </div>
-                                    <div class="celebration-details flex-grow-1">
-                                        <strong class="h6 mb-1">
-                                            {{ anniversary.name }}
-                                            {% if anniversary.is_current_user %}(You){% endif %}
-                                        </strong>
-                                        <p class="mb-1 text-muted">{{ anniversary.designation }} - {{ anniversary.department }}</p>
-                                        <small class="text-danger">
-                                            {{ anniversary.years }} year{{ anniversary.years|pluralize }} of togetherness! 💖
-                                        </small>
-                                    </div>
-                                </div>
-                                <!-- Wish Button - Hide for current user -->
-                                {% if not anniversary.is_current_user %}
-                                <button class="btn btn-sm btn-outline-danger wish-btn position-absolute top-0 end-0 m-2"
-                                        data-celebrant-id="{{ anniversary.id }}"
-                                        data-celebrant-name="{{ anniversary.name }}"
-                                        data-wish-type="marriage_anniversary">
-                                    <i class="fas fa-gift me-1"></i>Send Wish
-                                </button>
-                                {% else %}
-                                <!-- View Wishes Button for current user -->
-                                <button class="btn btn-sm btn-outline-info view-wishes-btn position-absolute top-0 end-0 m-2"
-                                        data-celebrant-id="{{ anniversary.id }}"
-                                        data-celebrant-name="{{ anniversary.name }}"
-                                        data-wish-type="marriage_anniversary">
-                                    <i class="fas fa-eye me-1"></i>View Wishes
-                                </button>
-                                {% endif %}
-                            </div>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Wish Modal -->
-        <div class="modal fade" id="wishModal" tabindex="-1" aria-labelledby="wishModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title" id="wishModalLabel">
-                            <i class="fas fa-gift me-2"></i>Send Your Wish
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="wishForm">
-                            <input type="hidden" id="celebrantId" name="celebrant_id">
-                            <input type="hidden" id="wishType" name="wish_type">
-                           
-                            <div class="mb-3">
-                                <label class="form-label">To: <strong id="celebrantName"></strong></label>
-                                <label class="form-label float-end" id="wishTypeLabel"></label>
-                            </div>
-                           
-                            <div class="mb-3">
-                                <label for="wishMessage" class="form-label">Your Message:</label>
-                                <textarea class="form-control" id="wishMessage" name="message" rows="4"
-                                          placeholder="Write your warm wishes here..." required></textarea>
-                            </div>
-                           
-                            <div class="mb-3">
-                                <small class="text-muted">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    Your message will be visible to the celebrant and administrators.
-                                </small>
-                            </div>
-                        </form>
-                       
-                        <!-- Previous Wishes Section -->
-                        <div id="previousWishes" class="mt-4" style="display: none;">
-                            <h6 class="border-bottom pb-2">Recent Wishes:</h6>
-                            <div id="wishesList" class="previous-wishes-container" style="max-height: 200px; overflow-y: auto;">
-                                <!-- Wishes will be loaded here -->
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="sendWishBtn">
-                            <i class="fas fa-paper-plane me-1"></i>Send Wish
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Celebration Popup JavaScript -->
-        <script>
-        // Celebration Popup JavaScript
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if we should auto-show the celebration modal
-            const celebrationModalElement = document.getElementById('celebrationModal');
-           
-            if (celebrationModalElement) {
-                // Check if we've already shown the modal in this session
-                const hasSeenCelebrations = sessionStorage.getItem('celebrationModalShown');
-               
-                if (!hasSeenCelebrations) {
-                    // First time visiting - auto-show modal after delay
-                    setTimeout(function() {
-                        showCelebrationModal();
-                        // Mark as shown for this session
-                        sessionStorage.setItem('celebrationModalShown', 'true');
-                    }, 1500);
-                }
-               
-                // Always initialize wish buttons
-                initializeWishButtons();
-            }
-        });
-
-        // Function to open celebration modal manually
-        function openCelebrationModal() {
-            showCelebrationModal();
-        }
-
-        // Safe function to show celebration modal
-        function showCelebrationModal() {
-            const celebrationModalElement = document.getElementById('celebrationModal');
-           
-            if (celebrationModalElement) {
-                const celebrationModal = new bootstrap.Modal(celebrationModalElement);
-                celebrationModal.show();
-            } else {
-                console.warn('Celebration modal not found on this page');
-            }
-        }
-
-        function initializeWishButtons() {
-            // Add click handlers to wish buttons
-            document.querySelectorAll('.wish-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const celebrantId = this.getAttribute('data-celebrant-id');
-                    const celebrantName = this.getAttribute('data-celebrant-name');
-                    const wishType = this.getAttribute('data-wish-type');
-                   
-                    openWishModal(celebrantId, celebrantName, wishType);
-                });
-            });
-
-            // Add click handlers to view wishes buttons
-            document.querySelectorAll('.view-wishes-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const celebrantId = this.getAttribute('data-celebrant-id');
-                    const celebrantName = this.getAttribute('data-celebrant-name');
-                    const wishType = this.getAttribute('data-wish-type');
-                   
-                    openViewWishesModal(celebrantId, celebrantName, wishType);
-                });
-            });
-        }
-
-        function openWishModal(celebrantId, celebrantName, wishType) {
-            const wishModalElement = document.getElementById('wishModal');
-            if (!wishModalElement) {
-                console.error('Wish modal not found');
-                return;
-            }
-           
-            // Set modal content
-            document.getElementById('celebrantId').value = celebrantId;
-            document.getElementById('celebrantName').textContent = celebrantName;
-            document.getElementById('wishType').value = wishType;
-           
-            // Set wish type label
-            const wishTypeLabels = {
-                'birthday': '🎂 Birthday',
-                'work_anniversary': '🏆 Work Anniversary',
-                'marriage_anniversary': '💖 Marriage Anniversary'
-            };
-            document.getElementById('wishTypeLabel').textContent = wishTypeLabels[wishType];
-           
-            // Clear previous message
-            document.getElementById('wishMessage').value = '';
-           
-            // Show send wish form and hide view-only mode
-            document.getElementById('wishMessage').disabled = false;
-            document.getElementById('sendWishBtn').style.display = 'block';
-            document.querySelector('label[for="wishMessage"]').textContent = 'Your Message:';
-            document.getElementById('wishMessage').style.display = 'block';
-            document.querySelector('label[for="wishMessage"]').style.display = 'block';
-           
-            // Reset modal title
-            document.getElementById('wishModalLabel').innerHTML = '<i class="fas fa-gift me-2"></i>Send Your Wish';
-           
-            // Load previous wishes
-            loadPreviousWishes(celebrantId);
-           
-            // Show modal
-            const wishModal = new bootstrap.Modal(wishModalElement);
-            wishModal.show();
-        }
-
-        function openViewWishesModal(celebrantId, celebrantName, wishType) {
-            const wishModalElement = document.getElementById('wishModal');
-            if (!wishModalElement) {
-                console.error('Wish modal not found');
-                return;
-            }
-           
-            // Set modal content for view-only mode
-            document.getElementById('celebrantId').value = celebrantId;
-            document.getElementById('celebrantName').textContent = celebrantName;
-            document.getElementById('wishType').value = wishType;
-           
-            // Set wish type label
-            const wishTypeLabels = {
-                'birthday': '🎂 Your Birthday Wishes',
-                'work_anniversary': '🏆 Your Work Anniversary Wishes',
-                'marriage_anniversary': '💖 Your Marriage Anniversary Wishes'
-            };
-            document.getElementById('wishModalLabel').innerHTML = '<i class="fas fa-eye me-2"></i>Your Wishes';
-            document.getElementById('wishTypeLabel').textContent = wishTypeLabels[wishType];
-           
-            // Hide send form and show view-only mode
-            document.getElementById('wishMessage').style.display = 'none';
-            document.querySelector('label[for="wishMessage"]').style.display = 'none';
-            document.getElementById('sendWishBtn').style.display = 'none';
-           
-            // Load wishes
-            loadPreviousWishes(celebrantId);
-           
-            // Show modal
-            const wishModal = new bootstrap.Modal(wishModalElement);
-            wishModal.show();
-        }
-
-        function loadPreviousWishes(celebrantId) {
-            fetch(`/celebration-wishes/${celebrantId}/`)
-                .then(response => response.json())
-                .then(data => {
-                    const wishesList = document.getElementById('wishesList');
-                    const previousWishes = document.getElementById('previousWishes');
-                   
-                    if (wishesList && previousWishes) {
-                        if (data.wishes && data.wishes.length > 0) {
-                            wishesList.innerHTML = '';
-                            data.wishes.forEach(wish => {
-                                const wishElement = document.createElement('div');
-                                wishElement.className = 'wish-item mb-3 p-2 border rounded bg-light';
-                                wishElement.innerHTML = `
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <strong class="wisher-name">${wish.wisher_name}</strong>
-                                        <small class="text-muted">${wish.time_ago}</small>
-                                    </div>
-                                    <small class="text-muted d-block">${wish.wisher_designation}</small>
-                                    <p class="mb-0 mt-1">${wish.message}</p>
-                                `;
-                                wishesList.appendChild(wishElement);
-                            });
-                            previousWishes.style.display = 'block';
-                        } else {
-                            wishesList.innerHTML = '<div class="text-center text-muted py-3">No wishes yet. Be the first to send one!</div>';
-                            previousWishes.style.display = 'block';
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading wishes:', error);
-                    const previousWishes = document.getElementById('previousWishes');
-                    if (previousWishes) {
-                        previousWishes.style.display = 'none';
-                    }
-                });
-        }
-
-        // Initialize send wish button if it exists
-        document.addEventListener('DOMContentLoaded', function() {
-            const sendWishBtn = document.getElementById('sendWishBtn');
-            if (sendWishBtn) {
-                sendWishBtn.addEventListener('click', function() {
-                    const formData = {
-                        celebrant_id: document.getElementById('celebrantId').value,
-                        wish_type: document.getElementById('wishType').value,
-                        message: document.getElementById('wishMessage').value
-                    };
-                   
-                    if (!formData.message.trim()) {
-                        alert('Please write a message before sending.');
-                        return;
-                    }
-                   
-                    // Disable button and show loading
-                    const btn = this;
-                    btn.disabled = true;
-                    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Sending...';
-                   
-                    // Send wish
-                    fetch('/send-celebration-wish/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                        },
-                        body: JSON.stringify(formData)
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Show success message
-                            alert('🎉 Wish sent successfully!');
-                           
-                            // Close modals
-                            const wishModalElement = document.getElementById('wishModal');
-                            if (wishModalElement) {
-                                const wishModal = bootstrap.Modal.getInstance(wishModalElement);
-                                if (wishModal) {
-                                    wishModal.hide();
-                                }
-                            }
-                           
-                            // Reload wishes if needed
-                            loadPreviousWishes(formData.celebrant_id);
-                        } else {
-                            alert('Error: ' + data.error);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Error sending wish. Please try again.');
-                    })
-                    .finally(() => {
-                        // Reset button
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Send Wish';
-                    });
-                });
-            }
-        });
-        </script>
+        </style>
 </body>
+
 </html>

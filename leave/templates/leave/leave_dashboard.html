@@ -430,7 +430,7 @@
 
     /* DataTables custom styling */
     .dataTables_wrapper .dataTables_length select {
-        padding: 5px 10px;
+        /* padding: 5px 10px; */
         border-radius: 5px;
         border: 1px solid #ced4da;
     }
@@ -816,13 +816,7 @@
                                         <td>{{ leave.employee.department }}</td>
                                         <td>{{ leave.employee.location }}</td>
                                         <td>
-                                            {% if leave.days_requested == 0.5 %}
-                                                0.5
-                                            {% else %}
-                                                {% with days_int=leave.days_requested|floatformat:"0" %}
-                                                    {{ days_int }}
-                                                {% endwith %}
-                                            {% endif %}
+                                           {{ leave.days_requested |floatformat:"1" }}
                                         </td>
                                         <td>{{ leave.start_date|date:"d M Y" }}</td>
                                         <td>{{ leave.end_date|date:"d M Y" }}</td>

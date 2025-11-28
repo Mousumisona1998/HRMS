@@ -366,6 +366,29 @@
             margin-right: 0;
             margin-bottom: 15px;
         }
+         .attendance-card .d-flex {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px;
+    }
+
+    #attendanceTopInfo {
+        width: 100%;
+        display: flex;
+        justify-content: flex-start;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    #attendanceTopInfo .badge {
+        font-size: 0.85rem;
+        padding: 6px 10px;
+    }
+
+    #workDuration {
+        padding: 6px 10px !important;
+        font-size: 0.85rem !important;
+    }
     }
 
     /* ✅ Professional Attendance Card */
@@ -719,7 +742,23 @@
     <div class="attendance-card">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="text-primary fw-bold mb-0"><i class="fas fa-user-clock me-2"></i>Today’s Attendance</h5>
-            <span class="badge bg-light text-dark border">{{ today_attendance.date|date:"D, M d, Y"|default:"Today" }}</span>
+            <div id="attendanceTopInfo" class="d-flex align-items-center gap-2">
+                <span class="badge bg-light text-dark border">
+                    {% if today_attendance %}
+                        {{ today_attendance.date|date:"D, M d, Y" }}
+                    {% else %}
+                        Today
+                    {% endif %}
+                </span>
+
+                {% if today_attendance and today_attendance.check_in and not today_attendance.check_out %}
+                    <span id="workDuration"
+                        class="badge bg-primary text-white"
+                        data-checkin="{{ today_attendance.check_in|date:'Y-m-d H:i:s' }}"
+                        data-checkedout="false">
+                    </span>
+                {% endif %}
+            </div>
         </div>
 
         {% if today_attendance %}
@@ -929,10 +968,11 @@
 <!-- ✅ Notification Bell Icon -->
 <div class="notification-bell" id="notificationBell">
     <i class="fas fa-bell"></i>
-    {% if recent_warnings_count|add:recent_appreciations_count > 0 %}
-    <span class="badge">{{ recent_warnings_count|add:recent_appreciations_count }}</span>
+    {% if notifications_count > 0 %}
+    <span class="badge">{{ notifications_count }}</span>
     {% endif %}
 </div>
+
 
 <!-- ✅ Notification Popup (Hidden by Default) -->
 <div class="notification-popup" id="notificationPopup">
@@ -949,19 +989,34 @@
         </div>
         {% else %}
         <!-- Show warnings -->
-        {% for warn in recent_warnings %}
+        {% for n in notifications %}
         <div class="notification-item">
-            <div class="notification-icon warning"><i class="fas fa-exclamation-circle"></i></div>
+            <div class="notification-icon 
+        {% if n.message_category == 'Warning' %}
+            warning
+        {% else %}
+            appreciation
+        {% endif %}">
+
+                {% if n.message_category == 'Warning' %}
+                <i class="fas fa-exclamation-circle"></i>
+                {% else %}
+                <i class="fas fa-award"></i>
+                {% endif %}
+            </div>
+
             <div class="notification-content">
-                <h6>{{ warn.subject }}</h6>
-                <p>{{ warn.description|default:"No details provided." }}</p>
+                <h6>{{ n.subject }}</h6>
+                <p>{{ n.description|default:"No details provided." }}</p>
+
                 <div class="notification-meta">
-                    <i class="fas fa-user-tie me-1"></i>{{ warn.issued_by }} &middot;
-                    <i class="far fa-calendar-alt ms-2 me-1"></i>{{ warn.warning_date|date:"M d, Y" }}
+                    <i class="fas fa-user-tie me-1"></i>{{ n.issued_by }} ·
+                    <i class="far fa-calendar-alt ms-2 me-1"></i>{{ n.warning_date|date:"M d, Y" }}
                 </div>
             </div>
         </div>
         {% endfor %}
+
         <!-- Show appreciations -->
         {% for appr in recent_appreciations %}
         <div class="notification-item">
@@ -1183,6 +1238,92 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
     });
+    
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  try {
+    const timerEl = document.getElementById('workDuration');
+    if (!timerEl) {
+      console.log('Timer element not found.');
+      return;
+    }
+
+    // Read data attributes (already escaped from Django)
+    const checkInRaw = timerEl.dataset.checkin || '';
+    const checkedOutRaw = timerEl.dataset.checkedout || 'false';
+
+    console.log('checkInRaw:', checkInRaw, 'checkedOutRaw:', checkedOutRaw);
+
+    // Only run if checkin exists and not checked out
+    if (!checkInRaw || checkedOutRaw === 'true') {
+      console.log('No active timer: either no check-in or already checked out.');
+      return;
+    }
+
+    // Convert 'YYYY-MM-DD HH:MM:SS' -> JS Date safely (replace '-' with '/')
+    // Replace possible timezone differences — treat as local time
+    const checkInIsoLike = checkInRaw.replace(/-/g, '/'); // "2025/11/27 09:30:00"
+    const checkInDate = new Date(checkInIsoLike);
+
+    if (isNaN(checkInDate.getTime())) {
+      console.warn('Parsed check-in is invalid date:', checkInDate, checkInRaw);
+      // try fallback: use Date.parse on ISO if available
+      const fallback = Date.parse(checkInRaw);
+      if (!isNaN(fallback)) {
+        checkInDate = new Date(fallback);
+      } else {
+        return;
+      }
+    }
+
+    // Make badge visible
+    timerEl.classList.remove('d-none');
+
+    // Update function
+    let timerInterval = null;
+    function updateElapsed() {
+      const now = new Date();
+      let diff = now - checkInDate; // milliseconds
+
+      if (diff < 0) diff = 0;
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      const hh = hours < 10 ? '0' + hours : '' + hours;
+      const mm = minutes < 10 ? '0' + minutes : '' + minutes;
+      const ss = seconds < 10 ? '0' + seconds : '' + seconds;
+
+      timerEl.textContent = `${hh}:${mm}:${ss}`;
+    }
+
+    // Start immediately and then every second
+    updateElapsed();
+    timerInterval = setInterval(updateElapsed, 1000);
+
+    // Optional: stop timer automatically if the server later shows checkout (polling)
+    // — If you don't need this, comment it out.
+    const pollForCheckout = true;
+    if (pollForCheckout) {
+      const attendanceTopInfo = document.getElementById('attendanceTopInfo');
+      setInterval(() => {
+        // If template is re-rendered via AJAX later, dataset may change.
+        const checkedOutNow = timerEl.dataset.checkedout || 'false';
+        if (checkedOutNow === 'true') {
+          clearInterval(timerInterval);
+          timerEl.classList.add('d-none');
+          console.log('Timer stopped because checked out detected.');
+        }
+      }, 3000); // every 3 seconds
+    }
+
+  } catch (err) {
+    console.error('Timer script error:', err);
+  }
+});
+</script>
+
 
 {% endblock %}

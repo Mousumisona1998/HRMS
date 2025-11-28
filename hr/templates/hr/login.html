@@ -225,35 +225,39 @@
             </div>
             
             <div class="login-body">
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
+                    {% if messages %}
+                        {% for message in messages %}
+                            {% if message.tags == 'error' %}
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            {% else %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {% endif %}
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                        {% endfor %}
+            {% endif %}
 
                 <form method="post">
                     {% csrf_token %}
                     
-                    <!-- Email Field with User Icon -->
+                    <!-- Email Field -->
                     <div class="mb-3">
                         <label class="form-label">Email Address</label>
                         <div class="input-group">
                             <i class="fas fa-user input-icon"></i>
                             <input type="email" name="username" class="form-control" 
-                                   placeholder="Enter your email" required autofocus>
+                                placeholder="Enter your email" required autofocus>
                         </div>
                     </div>
 
-                    <!-- Password Field with Eye Toggle -->
+                    <!-- Password Field -->
                     <div class="mb-3">
                         <label class="form-label">Password</label>
                         <div class="input-group">
                             <i class="fas fa-lock input-icon"></i>
                             <input type="password" name="password" id="password" class="form-control" 
-                                   placeholder="Enter your password" required>
+                                placeholder="Enter your password" required>
                             <button type="button" class="password-toggle" id="togglePassword">
                                 <i class="fas fa-eye"></i>
                             </button>
@@ -274,53 +278,200 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // Create CSS particles
-        document.addEventListener('DOMContentLoaded', function() {
-            const particlesContainer = document.getElementById('particles');
-            const particleCount = 30;
+    // Create CSS particles
+    document.addEventListener('DOMContentLoaded', function() {
+        const particlesContainer = document.getElementById('particles');
+        const particleCount = 30;
 
-            for (let i = 0; i < particleCount; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                
-                // Random properties
-                const size = Math.random() * 10 + 5;
-                const left = Math.random() * 100;
-                const animationDuration = Math.random() * 20 + 10;
-                const animationDelay = Math.random() * 5;
-                
-                particle.style.width = `${size}px`;
-                particle.style.height = `${size}px`;
-                particle.style.left = `${left}vw`;
-                particle.style.animationDuration = `${animationDuration}s`;
-                particle.style.animationDelay = `${animationDelay}s`;
-                particle.style.opacity = Math.random() * 0.7 + 0.3;
-                
-                particlesContainer.appendChild(particle);
-            }
-
-            // Password toggle functionality
-            const togglePassword = document.querySelector('#togglePassword');
-            const password = document.querySelector('#password');
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
             
-            if (togglePassword && password) {
-                togglePassword.addEventListener('click', function() {
-                    // Toggle the type attribute
-                    const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-                    password.setAttribute('type', type);
-                    
-                    // Toggle the eye icon
-                    const icon = this.querySelector('i');
-                    if (type === 'password') {
-                        icon.classList.remove('fa-eye-slash');
-                        icon.classList.add('fa-eye');
-                    } else {
-                        icon.classList.remove('fa-eye');
-                        icon.classList.add('fa-eye-slash');
-                    }
-                });
+            // Random properties
+            const size = Math.random() * 10 + 5;
+            const left = Math.random() * 100;
+            const animationDuration = Math.random() * 20 + 10;
+            const animationDelay = Math.random() * 5;
+            
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            particle.style.left = `${left}vw`;
+            particle.style.animationDuration = `${animationDuration}s`;
+            particle.style.animationDelay = `${animationDelay}s`;
+            particle.style.opacity = Math.random() * 0.7 + 0.3;
+            
+            particlesContainer.appendChild(particle);
+        }
+
+        // Password toggle functionality
+        const togglePassword = document.querySelector('#togglePassword');
+        const password = document.querySelector('#password');
+        
+        if (togglePassword && password) {
+            togglePassword.addEventListener('click', function() {
+                // Toggle the type attribute
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                
+                // Toggle the eye icon
+                const icon = this.querySelector('i');
+                if (type === 'password') {
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                } else {
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                }
+            });
+        }
+
+        // IMPROVED FORM VALIDATION
+        const loginForm = document.querySelector("form");
+        const emailField = document.querySelector("input[name='username']");
+        const passwordField = document.querySelector("input[name='password']");
+
+        // Real-time validation for EMAIL as user types
+        emailField.addEventListener('input', function() {
+            const email = this.value;
+            
+            // Remove spaces in real-time
+            if (email.includes(' ')) {
+                this.value = email.replace(/\s/g, '');
+                showAlert('Spaces are automatically removed from email.');
             }
         });
+
+        // Real-time validation for PASSWORD as user types
+        passwordField.addEventListener('input', function() {
+            const password = this.value;
+            
+            // Remove spaces in real-time
+            if (password.includes(' ')) {
+                this.value = password.replace(/\s/g, '');
+                showAlert('Spaces are automatically removed from password.');
+            }
+        });
+
+        // Form submission validation
+        loginForm.addEventListener("submit", function(e) {
+            const email = emailField.value.trim();
+            const password = passwordField.value;
+            
+            // Check for spaces in EMAIL (should be handled by real-time removal, but double-check)
+            if (email.includes(' ')) {
+                e.preventDefault();
+                showAlert('Invalid Email: Spaces are not allowed in email address!');
+                emailField.focus();
+                return false;
+            }
+            
+            // Check for leading/trailing spaces in EMAIL
+            if (emailField.value !== email) {
+                e.preventDefault();
+                showAlert('Invalid Email: Remove extra spaces from email address!');
+                emailField.value = email;
+                emailField.focus();
+                return false;
+            }
+            
+            // Check for spaces in PASSWORD
+            if (password.includes(' ')) {
+                e.preventDefault();
+                showAlert('Invalid Password: Spaces are not allowed in password!');
+                passwordField.value = password.replace(/\s/g, '');
+                passwordField.focus();
+                return false;
+            }
+            
+            // Basic email format validation
+            if (email && !email.includes('@')) {
+                e.preventDefault();
+                showAlert('Please enter a valid email address with @ symbol.');
+                emailField.focus();
+                return false;
+            }
+            
+            // Check if password is empty
+            if (!password) {
+                e.preventDefault();
+                showAlert('Please enter your password.');
+                passwordField.focus();
+                return false;
+            }
+        });
+
+        // Function to show beautiful alerts instead of default alert()
+        function showAlert(message) {
+            // Remove existing custom alerts
+            const existingAlert = document.querySelector('.custom-alert');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+
+            // Create custom alert
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'custom-alert alert alert-danger alert-dismissible fade show';
+            alertDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            alertDiv.innerHTML = `
+                <strong>Validation Error!</strong> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.body.appendChild(alertDiv);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // Also add input events to prevent spaces entirely
+        emailField.addEventListener('keydown', function(e) {
+            if (e.key === ' ') {
+                e.preventDefault();
+                showAlert('Spaces are not allowed in email address.');
+            }
+        });
+
+        passwordField.addEventListener('keydown', function(e) {
+            if (e.key === ' ') {
+                e.preventDefault();
+                showAlert('Spaces are not allowed in password.');
+            }
+        });
+
+        // Paste events to handle pasted content with spaces
+        emailField.addEventListener('paste', function(e) {
+            setTimeout(() => {
+                const pastedText = this.value;
+                if (pastedText.includes(' ')) {
+                    this.value = pastedText.replace(/\s/g, '');
+                    showAlert('Spaces were removed from pasted email.');
+                }
+            }, 0);
+        });
+
+        passwordField.addEventListener('paste', function(e) {
+            setTimeout(() => {
+                const pastedText = this.value;
+                if (pastedText.includes(' ')) {
+                    this.value = pastedText.replace(/\s/g, '');
+                    showAlert('Spaces were removed from pasted password.');
+                }
+            }, 0);
+        });
+    });
+
+
     </script>
 </body>
 </html>

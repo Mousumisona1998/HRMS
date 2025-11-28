@@ -20,6 +20,9 @@ import openpyxl
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font, PatternFill, Alignment
 from django.http import HttpResponse
+from itertools import chain
+from operator import attrgetter
+from django.utils.timezone import localtime
 # Authentication decorator
 
 def dynamic_menu(request):
@@ -628,13 +631,21 @@ def employee_dashboard(request):
         employee_code=employee_profile.employee_id,
         message_category='Warning',
         warning_date__gte=seven_days_ago
-    ).order_by('-created_at')
+    )
 
     recent_appreciations = EmployeeWarning.objects.filter(
         employee_code=employee_profile.employee_id,
         message_category='Appreciation',
         warning_date__gte=seven_days_ago
-    ).order_by('-created_at')
+    )
+
+    
+    merged_notifications = list(chain(recent_warnings, recent_appreciations))
+    merged_notifications = sorted(
+        merged_notifications,
+        key=attrgetter('warning_date'),
+        reverse=True
+    )
 
     context = {
         'employee': employee_profile,
@@ -646,13 +657,11 @@ def employee_dashboard(request):
         'total_remaining_leaves': total_remaining_leaves,
         'today_attendance': today_attendance,
         'punctuality_status': punctuality_status,
-        'recent_warnings': recent_warnings,
-        'recent_appreciations': recent_appreciations,
-        'recent_warnings_count': recent_warnings.count(),
-        'recent_appreciations_count': recent_appreciations.count(),
+        'notifications': merged_notifications,
+        'notifications_count': len(merged_notifications),
     }
-
     return render(request, 'hr/employee_dashboard.html', context)
+
 @login_required
 def total_team_members(request):
     user_email = request.session.get('user_email')
@@ -2882,11 +2891,14 @@ def get_celebration_wishes(request, celebrant_id):
     # Serialize wishes data
     wishes_data = []
     for wish in wishes:
+        # Convert UTC time to local timezone
+        local_time = localtime(wish.created_at)
+        
         wishes_data.append({
            'wisher_name': wish.wisher.full_name,
            'wisher_designation': wish.wisher.designation,
            'message': wish.message,
-           'time_ago': wish.created_at.strftime('%I:%M %p'),
+           'time_ago': local_time.strftime('%I:%M %p'),
            'wish_type': wish.get_wish_type_display()      
         })
     

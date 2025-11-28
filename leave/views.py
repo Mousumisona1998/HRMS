@@ -536,11 +536,11 @@ def apply_leave(request):
             print(f"reason: '{reason}'")
             print(f"All POST data: {dict(request.POST)}")
             
-            
-            #For half-day leaves, set end_date to start_date if empty
+            # For half-day leaves, set end_date to start_date if empty
             if is_half_day and (not end_date or end_date.strip() == '' or end_date == 'DD-MM-YYYY'):
                 end_date = start_date
                 print(f"Half-day: Auto-set end_date to start_date: {end_date}")
+            
             # Validate required fields with detailed checks
             missing_fields = []
             if not leave_type_id or leave_type_id.strip() == '' or leave_type_id == 'Select Leave Type':
@@ -555,8 +555,6 @@ def apply_leave(request):
             if missing_fields:
                 messages.error(request, f'Please fill in: {", ".join(missing_fields)}')
                 return redirect('apply_leave')
-            
-            
             
             # Validate and parse dates
             try:
@@ -594,16 +592,16 @@ def apply_leave(request):
                 total_days = Decimal('0.5')
                 print(f"Half-day detected: Forcing total_days to 0.5")
             elif total_days <= 0:
-                    # Backend calculation as fallback
-                    from datetime import timedelta
-                    working_days = 0
-                    current_date = start_date_obj
-                    while current_date <= end_date_obj:
-                        # Monday=0, Sunday=6
-                        if current_date.weekday() < 6:  # Monday to Friday
-                            working_days += 1
-                        current_date += timedelta(days=1)
-                    total_days = Decimal(str(working_days))
+                # Backend calculation as fallback
+                from datetime import timedelta
+                working_days = 0
+                current_date = start_date_obj
+                while current_date <= end_date_obj:
+                    # Monday=0, Sunday=6
+                    if current_date.weekday() < 6:  # Monday to Friday
+                        working_days += 1
+                    current_date += timedelta(days=1)
+                total_days = Decimal(str(working_days))
             
             # Final check
             if total_days <= 0:
@@ -617,51 +615,114 @@ def apply_leave(request):
                 messages.error(request, 'Invalid leave type selected.')
                 return redirect('apply_leave')
             
-            # NEW LOGIC: Check balance and determine if paid or unpaid
-            is_unpaid = False
+            # FIXED: Partial paid/unpaid logic
+            is_partial_unpaid = False
+            paid_days = Decimal('0.00')
+            unpaid_days = Decimal('0.00')
             final_leave_type = requested_leave_type
             
-            try:
-                # Get the balance for requested leave type
-                balance = LeaveBalance.objects.get(
-                    employee=employee, 
-                    leave_type=requested_leave_type,
-                    year=date.today().year
+            # Get balance ONLY for the specific requested leave type
+            balance = LeaveBalance.objects.filter(
+                employee=employee, 
+                leave_type=requested_leave_type,
+                year=date.today().year
+            )
+            
+            print(f"DEBUG: Checking balance for {requested_leave_type.name}")
+            print(f"DEBUG: Found {balance.count()} balance records")
+            
+            if balance.exists():
+                # Calculate total available balance from all records of THIS specific leave type
+                total_available_balance = sum(
+                    Decimal(str(balance.leaves_remaining)) for balance in balance
                 )
                 
-                # Check if sufficient balance exists
-                if Decimal(str(balance.leaves_remaining)) < total_days:
-                    # Insufficient balance - convert to unpaid leave
-                    is_unpaid = True
+                print(f"DEBUG: Total available balance for {requested_leave_type.name}: {total_available_balance}")
+                print(f"DEBUG: Requested days: {total_days}")
+                
+                if total_available_balance >= total_days:
+                    # Sufficient balance - fully paid leave
+                    paid_days = total_days
+                    unpaid_days = Decimal('0.00')
+                    is_partial_unpaid = False
+                    print(f"DEBUG: ✅ Sufficient balance. Fully PAID leave.")
                     
-                    # Get or create unpaid leave type
+                elif total_available_balance > 0:
+                    # Partial balance - part paid, part unpaid
+                    paid_days = total_available_balance
+                    unpaid_days = total_days - total_available_balance
+                    is_partial_unpaid = True
+                    
+                    # Get unpaid leave type
                     unpaid_leave_type = LeaveType.objects.filter(
                         is_active=True,
                         name__icontains='unpaid'
                     ).first()
                     
                     if unpaid_leave_type:
-                        # Use unpaid leave type
-                        final_leave_type = unpaid_leave_type
+                        # For partial unpaid, we need to create TWO leave records
+                        # One for paid portion, one for unpaid portion
                         
-                        # Ensure unpaid leave balance exists
-                        unpaid_balance = AutoLeaveBalanceService.ensure_unpaid_leave_balance(employee)
+                        # Create paid leave record
+                        paid_leave = Leave(
+                            employee=employee,
+                            leave_type=requested_leave_type,
+                            colour=getattr(requested_leave_type, 'colour', '#667eea'),
+                            start_date=start_date_obj,
+                            end_date=end_date_obj,
+                            days_requested=paid_days,
+                            reason=f"{reason} (Paid portion)",
+                            status='pending',
+                            applied_date=timezone.now(),
+                            is_half_day=is_half_day,
+                            half_day_period=half_day_period if is_half_day else None,
+                            is_unpaid=False
+                        )
+                        paid_leave.save()
+                        
+                        # Create unpaid leave record
+                        unpaid_leave = Leave(
+                            employee=employee,
+                            leave_type=unpaid_leave_type,
+                            colour=getattr(unpaid_leave_type, 'colour', '#dc3545'),
+                            start_date=start_date_obj,
+                            end_date=end_date_obj,
+                            days_requested=unpaid_days,
+                            reason=f"{reason} (Unpaid portion)",
+                            status='pending',
+                            applied_date=timezone.now(),
+                            is_half_day=False,  # Unpaid can't be half-day
+                            half_day_period=None,
+                            is_unpaid=True
+                        )
+                        unpaid_leave.save()
                         
                         messages.warning(
                             request, 
-                            f'⚠️ Insufficient {requested_leave_type.name} balance '
-                            f'(Available: {balance.leaves_remaining} days, Requested: {total_days} days). '
-                            f'Application will be submitted as UNPAID LEAVE. Salary will be deducted.'
+                            f'⚠️ Partial balance available! '
+                            f'Application split into: {paid_days} days PAID + {unpaid_days} days UNPAID. '
+                            f'Salary deduction will apply for {unpaid_days} days.'
                         )
+                        print(f"DEBUG: ⚠️ Partial balance. Split into {paid_days} paid + {unpaid_days} unpaid.")
+                        
+                        return redirect('employee_leave_details')
                     else:
                         messages.error(request, 'Unpaid leave type not configured. Please contact HR.')
                         return redirect('apply_leave')
-                        
-            except LeaveBalance.DoesNotExist:
-                # No balance exists for requested leave type - convert to unpaid
-                is_unpaid = True
-                
-                # Get or create unpaid leave type
+                else:
+                    # No available balance - fully unpaid
+                    paid_days = Decimal('0.00')
+                    unpaid_days = total_days
+                    is_partial_unpaid = True
+            else:
+                # No balance exists - fully unpaid
+                paid_days = Decimal('0.00')
+                unpaid_days = total_days
+                is_partial_unpaid = True
+            
+            # If we reach here, it's either fully paid or fully unpaid (not partial)
+            if is_partial_unpaid and unpaid_days > 0:
+                # Fully unpaid leave
                 unpaid_leave_type = LeaveType.objects.filter(
                     is_active=True,
                     name__icontains='unpaid'
@@ -676,8 +737,9 @@ def apply_leave(request):
                     messages.warning(
                         request,
                         f'⚠️ No {requested_leave_type.name} balance available. '
-                        f'Application will be submitted as UNPAID LEAVE. Salary will be deducted.'
+                        f'Application will be submitted as UNPAID LEAVE. Salary will be deducted for {unpaid_days} days.'
                     )
+                    print(f"DEBUG: ❌ No balance. Fully UNPAID leave.")
                 else:
                     messages.error(request, 'Unpaid leave type not configured. Please contact HR.')
                     return redirect('apply_leave')
@@ -687,8 +749,8 @@ def apply_leave(request):
             if not leave_colour:
                 leave_colour = '#667eea'
             
-            # Create leave application with the final leave type (paid or unpaid)
-            print(f"Creating Leave object with days_requested={total_days}, is_half_day={is_half_day}")
+            # Create leave application
+            print(f"Creating Leave object with days_requested={total_days}, is_unpaid={is_partial_unpaid}")
             leave = Leave(
                 employee=employee,
                 leave_type=final_leave_type,
@@ -701,18 +763,15 @@ def apply_leave(request):
                 applied_date=timezone.now(),
                 is_half_day=is_half_day,
                 half_day_period=half_day_period if is_half_day else None,
-                is_unpaid=is_unpaid
+                is_unpaid=is_partial_unpaid
             )
             
             # Save the leave (balance will be deducted upon approval)
             leave.save()
-            print(f"Leave saved! ID={leave.id}, days_requested={leave.days_requested}, is_half_day={leave.is_half_day}")
-            # # If unpaid leave, record it immediately (for tracking purposes)
-            # if is_unpaid:
-            #     AutoLeaveBalanceService.record_unpaid_leave(employee, total_days)
+            print(f"Leave saved! ID={leave.id}, days_requested={leave.days_requested}, is_unpaid={leave.is_unpaid}")
             
             # Success message with details
-            if is_unpaid:
+            if is_partial_unpaid:
                 messages.success(
                     request,
                     f'✅ Leave application submitted as UNPAID LEAVE! '
@@ -802,7 +861,7 @@ def approve_leave(request, leave_id):
                 messages.success(
                     request, 
                     f'✅ Unpaid leave approved for {leave.employee.first_name} {leave.employee.last_name}. '
-                    f'Salary deduction will apply for {leave.days_requested} days.'
+                    f'Salary deduction will apply for {int(leave.days_requested)} days.'
                 )
                 
             else:
@@ -856,7 +915,7 @@ def approve_leave(request, leave_id):
                 )
                 
                 if success:
-                    messages.info(request, f'Leave balance restored for {leave.days_requested} days.')
+                    messages.info(request, f'Leave balance restored for {int(leave.days_requested)} days.')
                 else:
                     messages.warning(
                         request, 
@@ -907,7 +966,7 @@ def update_leave_status(request, leave_id):
                 )
                     
                 if success:
-                    messages.info(request, f'Leave balance restored for {leave.days_requested} days.')
+                    messages.info(request, f'Leave balance restored for {int(leave.days_requested)} days.')
                     print(f"DEBUG: Balance restored successfully")
                 else:
                     messages.warning(request, 'Leave status changed but there was an issue restoring the balance.')
@@ -933,7 +992,7 @@ def update_leave_status(request, leave_id):
                     )
                         
                     if success:
-                        messages.info(request, f'Leave balance deducted for {leave.days_requested} days.')
+                        messages.info(request, f'Leave balance deducted for {int(leave.days_requested)} days.')
                     else:
                         messages.error(request, 'Error deducting leave balance. Status not changed.')
                         return redirect('edit_leave_details', leave_id=leave_id)
@@ -1447,6 +1506,31 @@ def leave_balance_summary(request):
         employees = Employee.objects.filter(department=user_department, status='active').order_by('first_name')
     else:
         employees = Employee.objects.none()
+        
+    # NEW: Get unpaid leave counts from Leave model
+    unpaid_counts = {}
+    for employee in employees:
+        # Count unpaid leaves for this employee in current year
+        unpaid_count = Leave.objects.filter(
+            employee=employee,
+            is_unpaid=True,
+            status='approved',
+            start_date__year=date.today().year
+        ).aggregate(total_unpaid=Sum('days_requested'))['total_unpaid'] or Decimal('0.00')
+        
+        unpaid_counts[employee.id] = unpaid_count
+    # NEW: Get paid leave counts (exclude unpaid leaves from taken count)
+    paid_leave_counts = {}
+    for employee in employees:
+        # Count only paid leaves (non-unpaid) for this employee in current year
+        paid_count = Leave.objects.filter(
+            employee=employee,
+            is_unpaid=False,  # Only paid leaves
+            status='approved',
+            start_date__year=date.today().year
+        ).aggregate(total_paid=Sum('days_requested'))['total_paid'] or Decimal('0.00')
+        
+        paid_leave_counts[employee.id] = paid_count
     
     # Prepare balances list
     balances = []
@@ -1472,9 +1556,15 @@ def leave_balance_summary(request):
                     leaves_taken += balance.leaves_taken or 0
                     carry_forward += balance.carry_forward or 0
         
+        #This ensures we're only counting paid leaves in the "taken" column
+        actual_paid_taken = paid_leave_counts.get(employee.id, Decimal('0.00'))
+        
         # Calculate remaining leaves
-        leaves_remaining = total_leaves - leaves_taken
+        leaves_remaining = total_leaves - actual_paid_taken
         optional_remaining = optional_total - optional_taken
+        
+        # Get unpaid count for this employee
+        unpaid_taken = unpaid_counts.get(employee.id, Decimal('0.00'))
         
         # Add to balances list
         balances.append({
@@ -1482,12 +1572,13 @@ def leave_balance_summary(request):
             'employee__first_name': employee.first_name,
             'employee__last_name': employee.last_name,
             'total_leaves': total_leaves,
-            'leaves_taken': leaves_taken,
+            'leaves_taken': actual_paid_taken,
             'leaves_remaining': leaves_remaining,
             'carry_forward': carry_forward,
             'optional_total': optional_total,
             'optional_taken': optional_taken,
-            'optional_remaining': optional_remaining
+            'optional_remaining': optional_remaining,
+            'unpaid_taken': unpaid_taken
         })
     
     # Get data for modal dropdowns
@@ -1533,40 +1624,105 @@ def add_leave_balance(request):
                 return redirect('leave_balance_list')
             
             # Check if balance already exists
-            existing_balance = LeaveBalance.objects.filter(
-                employee=employee,
-                leave_type=leave_type,
-                year=year
-            ).first()
+            # existing_balance = LeaveBalance.objects.filter(
+            #     employee=employee,
+            #     leave_type=leave_type,
+            #     year=year
+            # ).first()
             
-            if existing_balance:
-                messages.warning(
-                    request, 
-                    f'Leave balance already exists for {employee.first_name} {employee.last_name} '
-                    f'- {leave_type.name} ({year}).'
+            # if existing_balance:
+            #     messages.warning(
+            #         request, 
+            #         f'Leave balance already exists for {employee.first_name} {employee.last_name} '
+            #         f'- {leave_type.name} ({year}).'
+            #     )
+            #     return redirect('leave_balance_list')
+            
+             # Debug: Print leave type info
+            print(f"DEBUG: Processing leave type: '{leave_type.name}' (ID: {leave_type.id})")
+            
+            # Check if this is Comp Off leave
+            comp_off_keywords = ['comp off', 'compensatory', 'compoff', 'comp-off']
+            leave_type_lower = leave_type.name.lower()
+            is_comp_off = any(keyword in leave_type_lower for keyword in comp_off_keywords)
+            
+            print(f"DEBUG: Is Comp Off: {is_comp_off}")
+            
+            # For Comp Off: Update existing balance if exists, otherwise create new
+            if is_comp_off:
+                existing_balance = LeaveBalance.objects.filter(
+                    employee=employee,
+                    leave_type=leave_type,
+                    year=year
+                ).first()
+                
+                if existing_balance:
+                    # Update existing Comp Off balance
+                    existing_balance.total_leaves += total_leaves
+                    existing_balance.leaves_remaining += total_leaves + carry_forward
+                    existing_balance.carry_forward += carry_forward
+                    existing_balance.save()
+                    
+                    messages.success(
+                        request, 
+                        f'Comp Off balance updated for {employee.first_name} {employee.last_name} '
+                        f'- Added {total_leaves} days to existing balance ({year})'
+                    )
+                else:
+                    # Create new Comp Off balance
+                    leaves_remaining = total_leaves + carry_forward
+                    LeaveBalance.objects.create(
+                        employee=employee,
+                        leave_type=leave_type,
+                        total_leaves=total_leaves,
+                        leaves_taken=0,
+                        leaves_remaining=leaves_remaining,
+                        carry_forward=carry_forward,
+                        year=year
+                    )
+                    
+                    messages.success(
+                        request, 
+                        f'Comp Off balance created for {employee.first_name} {employee.last_name} '
+                        f'- {total_leaves} days ({year})'
+                    )
+            
+            else:
+                # For non-Comp Off leaves: Check for duplicates
+                existing_balance = LeaveBalance.objects.filter(
+                    employee=employee,
+                    leave_type=leave_type,
+                    year=year
+                ).first()
+                
+                if existing_balance:
+                    messages.warning(
+                        request, 
+                        f'Leave balance already exists for {employee.first_name} {employee.last_name} '
+                        f'- {leave_type.name} ({year}). Only Comp Off leave can be added multiple times.'
+                    )
+                    return redirect('leave_balance_list')
+                
+                # Calculate remaining leaves
+                leaves_remaining = total_leaves + carry_forward
+                
+                # Create new leave balance
+                LeaveBalance.objects.create(
+                    employee=employee,
+                    leave_type=leave_type,
+                    total_leaves=total_leaves,
+                    leaves_taken=0,
+                    leaves_remaining=leaves_remaining,
+                    carry_forward=carry_forward,
+                    year=year
                 )
-                return redirect('leave_balance_list')
-            
-            # Calculate remaining leaves
-            leaves_remaining = total_leaves + carry_forward
-            
-            # Create new leave balance
-            LeaveBalance.objects.create(
-                employee=employee,
-                leave_type=leave_type,
-                total_leaves=total_leaves,
-                leaves_taken=0,
-                leaves_remaining=leaves_remaining,
-                carry_forward=carry_forward,
-                year=year
-            )
-            
-            messages.success(
-                request, 
-                f'Leave balance added successfully for {employee.first_name} {employee.last_name} '
-                f'- {leave_type.name} ({year})'
-            )
-            
+                
+                messages.success(
+                    request, 
+                    f'Leave balance added successfully for {employee.first_name} {employee.last_name} '
+                    f'- {leave_type.name} ({year})'
+                )
+                
         except ValueError:
             messages.error(request, 'Invalid numeric values provided.')
         except Exception as e:

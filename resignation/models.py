@@ -287,7 +287,10 @@ class ResignationDocument(models.Model):
     document_type = models.CharField(max_length=100)
     document_file = models.FileField(upload_to='resignation_documents/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
+    document_name = models.CharField(max_length=255)
+    description = models.CharField(max_length=500)
     
+
     class Meta:
         db_table = 'resignation_documents'
 

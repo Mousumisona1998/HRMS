@@ -27,8 +27,8 @@
               <a href="{% url 'resignation:submit_resignation' %}" class="btn btn-primary"><i class="fas fa-paper-plane me-2"></i>Apply Resignation</a>
             {% endif %}
           {% else %}
-            <a href="{% url 'resignation:all_resignations' %}" class="btn btn-outline-primary me-2"><i class="fas fa-list me-2"></i>View All</a>
-            <a href="{% url 'resignation:analytics' %}" class="btn btn-outline-info"><i class="fas fa-chart-bar me-2"></i>Analytics</a>
+            <!-- <a href="{% url 'resignation:all_resignations' %}" class="btn btn-outline-primary me-2"><i class="fas fa-list me-2"></i>View All</a> -->
+            <!-- <a href="{% url 'resignation:analytics' %}" class="btn btn-outline-info"><i class="fas fa-chart-bar me-2"></i>Analytics</a> -->
           {% endif %}
         </div>
       </div>
@@ -56,70 +56,79 @@
     {% endif %}
 
     <!-- Statistics Cards -->
+   <!-- Statistics Cards -->
     {% if user_role in 'ADMIN,HR,SUPER ADMIN' %}
       <div class="row">
         <div class="col-xl-3 col-md-6 mb-4">
-          <div class="custom-card">
-            <div class="card-header">
-              <h5 class="card-title">Total Resignations</h5>
-              <div class="card-icon bg-primary">
-                <i class="fas fa-door-open"></i>
+          <a href="{% url 'resignation:all_resignations' %}" class="text-decoration-none">
+            <div class="custom-card card-hover">
+              <div class="card-header">
+                <h5 class="card-title">Total Resignations</h5>
+                <div class="card-icon bg-primary">
+                  <i class="fas fa-door-open"></i>
+                </div>
+              </div>
+              <div class="metric-large">{{ total_resignations }}</div>
+              <div class="metric-change positive">
+                <i class="fas fa-chart-line me-1"></i>
+                All time resignations
               </div>
             </div>
-            <div class="metric-large">{{ total_resignations }}</div>
-            <div class="metric-change positive">
-              <i class="fas fa-chart-line me-1"></i>
-              All time resignations
-            </div>
-          </div>
+          </a>
         </div>
 
         <div class="col-xl-3 col-md-6 mb-4">
-          <div class="custom-card">
-            <div class="card-header">
-              <h5 class="card-title">Pending Review</h5>
-              <div class="card-icon bg-warning">
-                <i class="fas fa-clock"></i>
+          <a href="{% url 'resignation:all_resignations' %}?status=applied" class="text-decoration-none">
+            <div class="custom-card card-hover">
+              <div class="card-header">
+                <h5 class="card-title">Pending Review</h5>
+                <div class="card-icon bg-warning">
+                  <i class="fas fa-clock"></i>
+                </div>
+              </div>
+              <div class="metric-large">{{ pending_resignations }}</div>
+              <div class="metric-change">
+                <i class="fas fa-exclamation-circle me-1"></i>
+                Needs attention
               </div>
             </div>
-            <div class="metric-large">{{ pending_resignations }}</div>
-            <div class="metric-change">
-              <i class="fas fa-exclamation-circle me-1"></i>
-              Needs attention
-            </div>
-          </div>
+          </a>
         </div>
 
         <div class="col-xl-3 col-md-6 mb-4">
-          <div class="custom-card">
-            <div class="card-header">
-              <h5 class="card-title">Active Notice</h5>
-              <div class="card-icon bg-info">
-                <i class="fas fa-user-clock"></i>
+          <a href="{% url 'resignation:all_resignations' %}?status=accepted" class="text-decoration-none">
+            <div class="custom-card card-hover">
+              <div class="card-header">
+                <h5 class="card-title">Active Notice</h5>
+                <div class="card-icon bg-info">
+                  <i class="fas fa-user-clock"></i>
+                </div>
+              </div>
+              <div class="metric-large">{{ active_notice }}</div>
+              <div class="metric-change">
+                <i class="fas fa-running me-1"></i>
+                Serving notice period
               </div>
             </div>
-            <div class="metric-large">{{ active_notice }}</div>
-            <div class="metric-change">
-              <i class="fas fa-running me-1"></i>
-              Serving notice period
-            </div>
-          </div>
+          </a>
         </div>
 
         <div class="col-xl-3 col-md-6 mb-4">
-          <div class="custom-card">
-            <div class="card-header">
-              <h5 class="card-title">Completed This Month</h5>
-              <div class="card-icon bg-success">
-                <i class="fas fa-check-circle"></i>
+          <a href="{% url 'resignation:all_resignations' %}?status=completed&month=current" class="text-decoration-none">
+            <div class="custom-card card-hover">
+              <div class="card-header">
+                <h5 class="card-title">Completed This Month</h5>
+                <div class="card-icon bg-success">
+                  <i class="fas fa-check-circle"></i>
+                </div>
+              </div>
+              <div class="metric-large">{{ completed_this_month }}</div>
+              <div class="metric-change positive">
+                <i class="fas fa-calendar-check me-1"></i>
+                Current month
               </div>
             </div>
-            <div class="metric-large">{{ completed_this_month }}</div>
-            <div class="metric-change positive">
-              <i class="fas fa-calendar-check me-1"></i>
-              Current month
-            </div>
-          </div>
+          </a>
         </div>
       </div>
     {% endif %}
@@ -251,7 +260,7 @@
     {% endif %}
 
     <!-- Quick Actions -->
-    {% if user_role in 'ADMIN,HR,SUPER ADMIN' %}
+    <!-- {% if user_role in 'ADMIN,HR,SUPER ADMIN' %}
       <div class="row">
         <div class="col-12">
           <div class="custom-card">
@@ -293,7 +302,7 @@
           </div>
         </div>
       </div>
-    {% endif %}
+    {% endif %} -->
   </div>
 {% endblock %}
 

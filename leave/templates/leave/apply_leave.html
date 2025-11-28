@@ -375,10 +375,10 @@
                 {% for leave_type in leave_types %}
                 <option value="{{ leave_type.id }}" 
                         data-name="{{ leave_type.name }}"
-                        {% if is_on_probation and leave_type.name not in 'Earned,Unpaid' %}disabled{% endif %}>
+                        {% if is_on_probation and leave_type.name not in 'Unpaid,CompOff' %}disabled{% endif %}>
                   {{ leave_type.name }}
-                  {% if is_on_probation and leave_type.name not in 'sick,maternity' %}
-                  - Not allowed during probation
+                  {% if is_on_probation and leave_type.name not in 'Unpaid,CompOff' %}
+                  -  Not allowed during probation
                   {% endif %}
                 </option>
                 {% endfor %}
@@ -533,11 +533,11 @@
               <span class="badge bg-primary">{{ balance.leaves_remaining }} days</span>
             </div>
             <small class="text-muted">
-              Total: {{ balance.total_leaves }} days | Taken: {{ balance.leaves_taken }} days
+              Total: {{ balance.total_leaves|floatformat:1 }} days | Taken: {{ balance.leaves_taken|floatformat:1 }} days
               {% if balance.leave_type.name == 'Optional' %}
               <br><strong>Max usable: 2 days</strong>
               {% endif %}
-              {% if balance.leave_type.name == 'annual' %}
+              {% if balance.leave_type.name == 'Earned' %}
               <br>Monthly: 1.5 days
               {% endif %}
             </small>

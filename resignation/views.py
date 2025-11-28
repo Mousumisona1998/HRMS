@@ -1,3 +1,6 @@
+# views.py
+import os
+from hrms import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import models
 from django.contrib import messages
@@ -9,8 +12,33 @@ from .models import ExitInterview, NoDueCertificate, Resignation, ResignationChe
 from hr.models import Employee
 from django.template.loader import render_to_string
 from xhtml2pdf import pisa
+from fpdf import FPDF
+
 import io
 import html
+
+# ----------------- Module-level configuration for PDF layout -----------------
+PAGE_LEFT_MARGIN = 15
+PAGE_RIGHT_MARGIN = 15
+PAGE_TOP_MARGIN = 15
+PAGE_BOTTOM_MARGIN = 18
+
+# Exit Interview answer fixed-size box settings
+WORDS_PER_ANSWER = 50         # fixed word limit for each text area
+AVG_WORDS_PER_LINE = 8       # used to estimate lines from words
+LINE_HEIGHT = 4.5              # mm per line (matches your earlier usage)
+ANSWER_LINES = max(2, int((WORDS_PER_ANSWER / AVG_WORDS_PER_LINE) + 0.5))
+ANSWER_BOX_HEIGHT = ANSWER_LINES * LINE_HEIGHT + 4  # adds tiny padding
+
+SIG_IMG_WIDTH = 40
+SIG_IMG_BOX_HEIGHT = 22
+SIG_LABEL_GAP = 6
+SIGNATURE_BLOCK_HEIGHT = SIG_IMG_BOX_HEIGHT + SIG_LABEL_GAP + 12
+
+# Reserve this much vertical space for footer (must be >= the space used in footer())
+# Your footer uses set_y(-22) and some extra content; 28 mm is a safe reserve.
+FOOTER_RESERVED = 28
+# ------------------------------------------------------------------------------
 
 def check_resignation_access(request, resignation):
     """Check if user has access to view this resignation"""
@@ -589,35 +617,318 @@ def no_due_certificate(request, resignation_id):
     }
     return render(request, 'resignation/no_due_certificate.html', context)
 
+# --------------------- PDF helpers and generators ---------------------
+
+class BaseStyledPDF(FPDF):
+    """Utility: page break guard that is aware of bottom margin."""
+    def check_page_break(self, needed_height):
+        bottom_limit = self.h - self.b_margin
+        if (self.get_y() + needed_height) > bottom_limit:
+            self.add_page()
+
+class NoDueCertificatePDF(BaseStyledPDF):
+    def __init__(self):
+        super().__init__()
+        font_path = os.path.join(settings.BASE_DIR, "static", "fonts", "DejaVuSans.ttf")
+        self.add_font("DejaVu", "", font_path, uni=True)
+        self.add_font("DejaVu", "B", font_path, uni=True)
+        self.add_font("DejaVu", "I", font_path, uni=True)
+        # smaller bottom margin to reduce large white gap above footer
+        self.set_auto_page_break(auto=True, margin=18)
+
+    def header(self):
+        # Single header placement (logo + title), set starting Y so content is consistent
+        logo_path = os.path.join(settings.BASE_DIR, "static", "img", "ikontellogot.png")
+        try:
+            img_w = 34
+            x_pos = self.w - self.r_margin - img_w
+            self.image(logo_path, x=x_pos, y=10, w=img_w)
+        except Exception:
+            pass
+        # Title and small gap under it (consistent)
+        self.set_xy(self.l_margin, 12)
+        self.set_font("DejaVu", "B", 16)
+        self.cell(0, 7, "NO DUE CERTIFICATE", ln=True, align="L")
+        # ensure gap is consistent after header
+        self.ln(4)
+
+    def footer(self):
+        # Keep footer compact and at a consistent distance from bottom
+        self.set_y(-22)
+        self.set_font("DejaVu", "", 8)
+        self.set_text_color(128, 128, 128)
+        footer_text = (
+            "IKONTEL SOLUTIONS PVT LTD | "
+            "NO.72, 73 & 74, 1ST FLOOR AMRBP BUILDING, MARGOSA ROAD, 17TH CROSS RD, "
+            "MALLESWARAM, BENGALURU, KARNATAKA"
+        )
+        self.set_draw_color(200, 200, 200)
+        self.line(10, self.get_y(), self.w - 10, self.get_y())
+        self.ln(3)
+        self.multi_cell(0, 4, footer_text, align="C")
+
+    def section_box(self, title):
+        # Clean heading: no left square, consistent spacing
+        self.set_font("DejaVu", "B", 11)
+        self.cell(0, 6, title, ln=True)
+        self.ln(2)
+        self.set_draw_color(220, 220, 220)
+        line_y = self.get_y()
+        self.line(self.l_margin, line_y, self.w - self.r_margin, line_y)
+        self.ln(4)
+
+    def cell_pair(self, label, value, label_w=120, value_w=None, value_line_height=6):
+        """
+        Uniform label/value box across the document.
+        label_w is wide so label and value alignment match UI screenshot style.
+        """
+        # ensure there's room for this pair
+        estimated_h = 18
+        self.check_page_break(estimated_h)
+        page_inner_w = self.w - self.l_margin - self.r_margin
+        if value_w is None:
+            value_w = page_inner_w - label_w
+        # Label (left aligned)
+        self.set_font("DejaVu", "B", 9)
+        # label placed in left column (we emulate two-column layout to match screenshot)
+        self.cell(label_w, value_line_height, f"{label}:", ln=False)
+        x_before = self.get_x()
+        y_before = self.get_y()
+        # Value as boxed region
+        self.set_font("DejaVu", "", 9)
+        self.set_xy(x_before, y_before)
+        self.multi_cell(value_w, value_line_height, value or "N/A")
+        y_after = self.get_y()
+        box_h = y_after - y_before
+        # draw light rectangle around value area
+        self.set_xy(x_before - 1, y_before - 1)
+        self.set_draw_color(210, 210, 210)
+        try:
+            self.rect(x_before - 1, y_before - 1, value_w + 2, box_h + 2)
+        except Exception:
+            pass
+        # move cursor to next line (left margin)
+        self.set_xy(self.l_margin, y_after + 6)
+
+    def boxed_text(self, text, box_width=None, line_height=6, padding=3):
+        # boxed multiline answer with guard
+        if box_width is None:
+            box_width = self.w - self.l_margin - self.r_margin
+        approx_lines = max(2, text.count('\n') + 1)
+        needed = approx_lines * line_height + padding*2 + 12
+        self.check_page_break(needed)
+        x_before = self.get_x()
+        y_before = self.get_y()
+        self.set_font("DejaVu", "", 9)
+        # print text with internal padding
+        self.set_xy(x_before + padding, y_before + padding)
+        inner_w = box_width - 2*padding
+        self.multi_cell(inner_w, line_height, text or "")
+        y_after = self.get_y()
+        used_h = (y_after - y_before) + padding
+        # draw rect around box
+        self.set_xy(x_before, y_before)
+        self.set_draw_color(210, 210, 210)
+        try:
+            self.rect(x_before, y_before, box_width, used_h)
+        except Exception:
+            pass
+        self.set_xy(self.l_margin, y_before + used_h + 8)
+
+    def declaration_content(self, text):
+        self.check_page_break(20)
+        self.set_font("DejaVu", "", 10)
+        self.multi_cell(0, 6, text)
+        self.ln(3)
+
+class ExitInterviewPDF(BaseStyledPDF):
+    def __init__(self):
+        super().__init__()
+        font_path = os.path.join(settings.BASE_DIR, "static", "fonts", "DejaVuSans.ttf")
+        self.add_font("DejaVu", "", font_path, uni=True)
+        self.add_font("DejaVu", "B", font_path, uni=True)
+        # keep footer closer using smaller margin
+        self.set_auto_page_break(auto=True, margin=PAGE_BOTTOM_MARGIN)
+
+    def header(self):
+        # place logo consistently and ensure consistent header->content spacing
+        logo_path = os.path.join(settings.BASE_DIR, "static", "img", "ikontellogot.png")
+        try:
+            img_w = 34
+            x_pos = self.w - self.r_margin - img_w
+            self.image(logo_path, x=x_pos, y=10, w=img_w)
+        except Exception:
+            pass
+        self.set_xy(self.l_margin, 12)
+        self.set_font("DejaVu", "B", 16)
+        self.cell(0, 7, "EXIT INTERVIEW FORM", ln=True, align="L")
+        # **Important:** small consistent gap so first section doesn't get too close to header
+        self.ln(4)
+
+    def footer(self):
+        self.set_y(-22)
+        self.set_font("DejaVu", "", 8)
+        self.set_text_color(128, 128, 128)
+        footer_text = (
+            "IKONTEL SOLUTIONS PVT LTD | "
+            "NO.72, 73 & 74, 1ST FLOOR AMRBP BUILDING, MARGOSA ROAD, 17TH CROSS RD, "
+            "MALLESWARAM, BENGALURU, KARNATAKA"
+        )
+        self.set_draw_color(200, 200, 200)
+        self.line(10, self.get_y(), self.w - 10, self.get_y())
+        self.ln(3)
+        self.multi_cell(0, 4, footer_text, align="C")
+
+    def section_box(self, title):
+        self.set_font("DejaVu", "B", 11)
+        self.cell(0, 6, title, ln=True)
+        self.ln(2)
+        self.set_draw_color(220, 220, 220)
+        line_y = self.get_y()
+        self.line(self.l_margin, line_y, self.w - self.r_margin, line_y)
+        self.ln(4)
+
+    def cell_pair(self, label, value, label_w=120, value_w=None, value_line_height=6):
+        self.check_page_break(20)
+        page_inner_w = self.w - self.l_margin - self.r_margin
+        if value_w is None:
+            value_w = page_inner_w - label_w
+        self.set_font("DejaVu", "B", 9)
+        self.cell(label_w, value_line_height, f"{label}:", ln=False)
+        x_before = self.get_x()
+        y_before = self.get_y()
+        self.set_xy(x_before, y_before)
+        self.set_font("DejaVu", "", 9)
+        self.multi_cell(value_w, value_line_height, value or "N/A")
+        y_after = self.get_y()
+        box_h = y_after - y_before
+        self.set_xy(x_before - 1, y_before - 1)
+        self.set_draw_color(210, 210, 210)
+        try:
+            self.rect(x_before - 1, y_before - 1, value_w + 2, box_h + 2)
+        except Exception:
+            pass
+        self.set_xy(self.l_margin, y_after + 6)
+
+    def boxed_text(self, text, words_limit=WORDS_PER_ANSWER, box_height=ANSWER_BOX_HEIGHT, padding=3):
+        """
+        Draw a bordered box with a fixed height and put the (trimmed) text inside.
+        - Trims text to words_limit (appends " ..." if trimmed).
+        - Ensures the box has fixed height (box_height) so layout stays consistent.
+        - Uses check_page_break to ensure the box won't overflow the page bottom.
+        """
+        if text is None:
+            text = ""
+        # trim by words
+        words = text.split()
+        if len(words) > words_limit:
+            display_text = " ".join(words[:words_limit]) + " ..."
+        else:
+            display_text = " ".join(words)
+
+        # ensure page has room for this fixed box
+        self.check_page_break(box_height + 6)
+
+        box_w = self.w - self.l_margin - self.r_margin
+        x = self.get_x()
+        y = self.get_y()
+
+        # Draw border rectangle
+        self.set_draw_color(210, 210, 210)
+        try:
+            self.rect(x, y, box_w, box_height)
+        except Exception:
+            pass
+
+        # Print text inside with small padding
+        pad_x = padding
+        pad_y = padding
+        inner_x = x + pad_x
+        inner_w = box_w - 2 * pad_x
+        inner_y = y + pad_y
+
+        self.set_xy(inner_x, inner_y)
+        self.set_font("DejaVu", "", 9)
+        # limit lines that can be printed to avoid text spilling visually beyond the box
+        max_lines = int((box_height - 2 * pad_y) / LINE_HEIGHT)
+        # Use multi_cell to print wrapped text; even if it expands cursor, we'll restore to box bottom
+        self.multi_cell(inner_w, LINE_HEIGHT, display_text)
+        # Reset cursor to bottom of the box (so next content always starts after the fixed box)
+        self.set_xy(self.l_margin, y + box_height + 6)
+
+# --------------------- PDF generation endpoints ---------------------
+
 def download_no_due_certificate(request, resignation_id):
-    """Download No Due Certificate as PDF"""
     resignation = get_object_or_404(Resignation, id=resignation_id)
     no_due_cert = get_object_or_404(NoDueCertificate, resignation=resignation)
-    
-    # Check permissions
-    if not check_resignation_access(request, resignation):
-        messages.error(request, 'You do not have access to this certificate.')
-        return redirect('resignation:dashboard')
-    
+    try:
+        pdf = NoDueCertificatePDF()
+        pdf.add_page()
+        pdf.section_box("Declaration")
+        paragraphs = [
+            "Received my salary towards my full and final settlement through online/NEFT/Transfer. All my dues from IKONTEL Solutions Pvt Ltd are cleared.",
+            "I have received all my dues pertaining to earned leave encashment, notice pay, service compensation, leave or any other claim in connection with my employment with the management.",
+            "I have no further claim/Demand for reinstatement or re-employment.",
+            "I will not raise any claim or demand, whatsoever against the Company."
+        ]
+        for p in paragraphs:
+            pdf.declaration_content(p)
+        pdf.ln(4)
+        # Employee details block using uniform cell_pair (label column left, boxed value right)
+        pdf.section_box("Employee Details")
+        pdf.cell_pair("Employee Name", f"{resignation.employee.first_name} {resignation.employee.last_name}")
+        pdf.cell_pair("Employee ID", resignation.employee.employee_id)
+        pdf.cell_pair("Department", resignation.employee.department or "N/A")
+        pdf.cell_pair("Region", resignation.employee.location or "N/A")
+        pdf.ln(4)
+        # Signature area - right aligned visually using cell offsets
+        pdf.check_page_break(40)
+        right_start = 120
+        pdf.set_font("DejaVu", "", 10)
+        pdf.cell(right_start)
+        pdf.cell(0, 6, "_________________________", ln=True)
+        pdf.cell(right_start)
+        pdf.cell(0, 6, "Employee Signature", ln=True)
+        pdf.ln(8)
+        settlement_display_date = no_due_cert.settlement_date.strftime("%d %b %Y") if no_due_cert.settlement_date else datetime.now().strftime("%d %b %Y")
+        pdf.set_font("DejaVu", "B", 10)
+        pdf.cell(right_start)
+        pdf.cell(0, 6, f"Place: Bangalore", ln=True)
+        pdf.cell(right_start)
+        pdf.cell(0, 6, f"Date: {settlement_display_date}", ln=True)
+        # Output
+        pdf_buffer = io.BytesIO()
+        pdf.output(pdf_buffer)
+        pdf_buffer.seek(0)
+        response = HttpResponse(pdf_buffer, content_type="application/pdf")
+        employee_name_safe = f"{resignation.employee.first_name}_{resignation.employee.last_name}".replace(" ", "_")
+        filename = f"No_Due_Certificate_{employee_name_safe}_{datetime.now().strftime('%b_%Y')}.pdf"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+    except Exception as e:
+        import traceback
+        print(f"PDF Error: {str(e)}")
+        print(traceback.format_exc())
+        return download_no_due_certificate_fallback(request, resignation_id)
+
+def download_no_due_certificate_fallback(request, resignation_id):
+    resignation = get_object_or_404(Resignation, id=resignation_id)
+    no_due_cert = get_object_or_404(NoDueCertificate, resignation=resignation)
     context = {
         'resignation': resignation,
         'no_due_cert': no_due_cert,
+        'today_date': datetime.now().strftime('%d-%b-%Y')
     }
-    
-    # Render HTML template
-    html_string = render_to_string('resignation/certificate_pdf.html', context)
-    
-    # Create PDF
+    html_string = render_to_string('resignation/certificate_pdf_fallback.html', context)
     result = io.BytesIO()
-    pdf = pisa.CreatePDF(io.StringIO(html_string), dest=result)
-    
+    pdf = pisa.pisaDocument(io.BytesIO(html_string.encode("UTF-8")), result)
     if not pdf.err:
         response = HttpResponse(result.getvalue(), content_type='application/pdf')
-        filename = f"no_due_certificate_{resignation.employee.employee_id}_{date.today()}.pdf"
+        filename = f"no_due_certificate_{resignation.employee.employee_id}.pdf"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         return response
     else:
-        return HttpResponse('Error generating PDF: ' + str(pdf.err))
+        return HttpResponse('Error generating PDF')
 
 def get_client_ip(request):
     """Get client IP address"""
@@ -719,34 +1030,182 @@ def exit_interview(request, resignation_id):
     return render(request, 'resignation/exit_interview.html', context)
 
 def download_exit_interview(request, resignation_id):
-    """Download Exit Interview as PDF"""
+    if not request.session.get('user_authenticated'):
+        return redirect('login')
+
     resignation = get_object_or_404(Resignation, id=resignation_id)
-    exit_interview_obj = get_object_or_404(ExitInterview, resignation=resignation)
-    
-    # Check permissions
-    if not check_resignation_access(request, resignation):
-        messages.error(request, 'You do not have access to this exit interview.')
-        return redirect('resignation:dashboard')
-    
+    exit_interview = get_object_or_404(ExitInterview, resignation=resignation)
+
+    try:
+        pdf = ExitInterviewPDF()
+        pdf.add_page()
+
+        # Employee Information
+        pdf.section_box("Employee Information")
+        pdf.cell_pair("Employee Name", f"{resignation.employee.first_name} {resignation.employee.last_name}")
+        pdf.cell_pair("Employee ID", resignation.employee.employee_id)
+        pdf.cell_pair("Department", resignation.employee.department or "N/A")
+        pdf.cell_pair("Region", resignation.employee.location or "N/A")
+
+        pdf.ln(6)
+
+        # Questions
+        pdf.section_box("Exit Interview Questions & Answers")
+        questions = [
+            ("1. Why have you decided to leave the company?", exit_interview.reason_for_leaving),
+            ("2. Have you shared your concerns with anyone in the company prior to deciding to leave?", exit_interview.concerns_shared_prior),
+            ("3. Was a single event responsible for your decision to leave?", exit_interview.single_event_responsible),
+            ("4. What does your new company offer that encouraged you to accept their offer and leave this company?", exit_interview.new_company_offer),
+            ("5. What do you value about the company?", exit_interview.valued_about_company),
+            ("6. What did you dislike about the company?", exit_interview.disliked_about_company),
+            ("7. How was your relationship with your manager?", exit_interview.relationship_with_manager),
+            ("8. What could your supervisor do to improve his/her management style and skill?", exit_interview.supervisor_improvement),
+            ("9. What did you like most about your job?", exit_interview.liked_about_job),
+            ("10. What did you dislike about your job? What would you change in that?", exit_interview.disliked_about_job),
+            ("11. Do you feel you had the resources and support necessary to accomplish your job?", exit_interview.resources_support),
+            ("12. What is your experience of employee morale and motivation in the company?", exit_interview.employee_morale),
+            ("13. Did you have clear goals and know what was expected of you in your job?", exit_interview.clear_goals),
+            ("14. Did you receive adequate feedback about your performance?", exit_interview.performance_feedback),
+            ("15. Describe your experience of the company's commitment to quality and customer service.", exit_interview.quality_commitment),
+            ("16. Did the management help you accomplish your personal and professional development?", exit_interview.career_development),
+            ("17. What would you recommend to help us create a better workplace?", exit_interview.workplace_recommendations),
+            ("18. Do the policies and procedures help create a fair workplace?", exit_interview.policies_fairness),
+            ("19. Describe the qualities of person who is most likely to succeed in this company.", exit_interview.success_qualities),
+            ("20. What are the key qualities we should seek in your replacement?", exit_interview.replacement_qualities),
+            ("21. Any recommendations regarding our compensation and benefits?", exit_interview.compensation_feedback),
+            ("22. What would make you consider working for this company again?", exit_interview.future_considerations),
+            ("23. Additional comments:", exit_interview.additional_comments),
+        ]
+
+        # Render each question with a fixed-size box below it.
+        for q, a in questions:
+            # Question label
+            pdf.set_font("DejaVu", "B", 9)
+            pdf.multi_cell(0, LINE_HEIGHT, q)
+            pdf.ln(2)
+            # Boxed (fixed height) trimmed text
+            pdf.boxed_text(a or "", words_limit=WORDS_PER_ANSWER, box_height=ANSWER_BOX_HEIGHT)
+
+        # ----------------------------
+        # SIGNATURE SECTION (IMAGE ON TOP, LABEL BELOW) - Integrated placement
+        # Always align to content area and place on the last page just above the footer.
+        # ----------------------------
+        if exit_interview.employee_signature or exit_interview.hr_signature:
+            # set font for labels
+            try:
+                pdf.set_font("DejaVu", "B", 10)
+            except Exception:
+                pdf.set_font("Helvetica", "B", 10)
+
+            # Temporarily disable auto page break to compute exact positions precisely
+            pdf.set_auto_page_break(False)
+            try:
+                page_height = pdf.h
+                # bottom reserved space for footer: use a safe value large enough not to overlap footer
+                bottom_reserved = max(getattr(pdf, "b_margin", PAGE_BOTTOM_MARGIN), FOOTER_RESERVED)
+
+                # compute top coordinate for signature block so the block bottom stays above reserved footer
+                sig_top_target = page_height - bottom_reserved - SIGNATURE_BLOCK_HEIGHT
+
+                current_y = pdf.get_y()
+                # if current cursor is lower (i.e., too close to bottom/reserved area), add a new page
+                if current_y > sig_top_target:
+                    pdf.add_page()
+                    # recompute (page dimensions unchanged)
+                    sig_top_target = page_height - bottom_reserved - SIGNATURE_BLOCK_HEIGHT
+
+                # set Y to target (so signature images sit in consistent position)
+                pdf.set_y(sig_top_target)
+
+                # compute horizontal positions aligned with content area (l_margin..w-r_margin)
+                content_x = pdf.l_margin
+                content_w = pdf.w - pdf.l_margin - pdf.r_margin
+                half_w = content_w / 2
+                emp_x = content_x + 6
+                hr_x = content_x + half_w + 6
+
+                # Employee Signature (Left)
+                if exit_interview.employee_signature:
+                    try:
+                        pdf.image(exit_interview.employee_signature, x=emp_x, y=sig_top_target, w=SIG_IMG_WIDTH)
+                    except Exception:
+                        # fallback placeholder rectangle + text
+                        pdf.rect(emp_x, sig_top_target, SIG_IMG_WIDTH, SIG_IMG_BOX_HEIGHT)
+                        pdf.set_xy(emp_x, sig_top_target + 6)
+                        pdf.set_font("DejaVu", "", 9)
+                        pdf.cell(SIG_IMG_WIDTH, SIG_IMG_BOX_HEIGHT - 6, "Digitally signed", ln=False)
+                else:
+                    # placeholder rectangle
+                    pdf.rect(emp_x, sig_top_target, SIG_IMG_WIDTH, SIG_IMG_BOX_HEIGHT)
+                    pdf.set_xy(emp_x, sig_top_target + 6)
+                    pdf.set_font("DejaVu", "", 9)
+                    pdf.cell(SIG_IMG_WIDTH, SIG_IMG_BOX_HEIGHT - 6, "No signature", ln=False)
+
+                # label under employee signature
+                pdf.set_xy(emp_x, sig_top_target + SIG_IMG_BOX_HEIGHT + SIG_LABEL_GAP)
+                pdf.set_font("DejaVu", "B", 9)
+                pdf.cell(SIG_IMG_WIDTH, LINE_HEIGHT, "Employee Signature:", ln=False, align="L")
+
+                # HR Signature (Right)
+                if exit_interview.hr_signature:
+                    try:
+                        pdf.image(exit_interview.hr_signature, x=hr_x, y=sig_top_target, w=SIG_IMG_WIDTH)
+                    except Exception:
+                        pdf.rect(hr_x, sig_top_target, SIG_IMG_WIDTH, SIG_IMG_BOX_HEIGHT)
+                        pdf.set_xy(hr_x, sig_top_target + 6)
+                        pdf.set_font("DejaVu", "", 9)
+                        pdf.cell(SIG_IMG_WIDTH, SIG_IMG_BOX_HEIGHT - 6, "Digitally signed", ln=False)
+                else:
+                    pdf.rect(hr_x, sig_top_target, SIG_IMG_WIDTH, SIG_IMG_BOX_HEIGHT)
+                    pdf.set_xy(hr_x, sig_top_target + 6)
+                    pdf.set_font("DejaVu", "", 9)
+                    pdf.cell(SIG_IMG_WIDTH, SIG_IMG_BOX_HEIGHT - 6, "No signature", ln=False)
+
+                # label under HR signature
+                pdf.set_xy(hr_x, sig_top_target + SIG_IMG_BOX_HEIGHT + SIG_LABEL_GAP)
+                pdf.set_font("DejaVu", "B", 9)
+                pdf.cell(SIG_IMG_WIDTH, LINE_HEIGHT, "HR Signature:", ln=False, align="L")
+
+                # move cursor below signature block and add small spacing
+                pdf.set_y(sig_top_target + SIGNATURE_BLOCK_HEIGHT + 6)
+                pdf.ln(2)
+
+            finally:
+                # restore auto page break and bottom margin behavior
+                pdf.set_auto_page_break(True, margin=PAGE_BOTTOM_MARGIN)
+
+        # Output PDF
+        pdf_buffer = io.BytesIO()
+        pdf.output(pdf_buffer)
+        pdf_buffer.seek(0)
+
+        response = HttpResponse(pdf_buffer, content_type="application/pdf")
+        employee_name_safe = f"{resignation.employee.first_name}_{resignation.employee.last_name}".replace(" ", "_")
+        filename = f"Exit_Interview_{employee_name_safe}_{datetime.now().strftime('%b_%Y')}.pdf"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
+    except Exception:
+        return download_exit_interview_fallback(request, resignation_id)
+
+def download_exit_interview_fallback(request, resignation_id):
+    resignation = get_object_or_404(Resignation, id=resignation_id)
+    exit_interview = get_object_or_404(ExitInterview, resignation=resignation)
     context = {
         'resignation': resignation,
-        'exit_interview': exit_interview_obj,
+        'exit_interview': exit_interview,
+        'today_date': datetime.now().strftime('%d-%b-%Y')
     }
-    
-    # Render HTML template
-    html_string = render_to_string('resignation/exit_interview_pdf.html', context)
-    
-    # Create PDF
+    html_string = render_to_string('resignation/exit_interview_pdf_fallback.html', context)
     result = io.BytesIO()
-    pdf = pisa.CreatePDF(io.StringIO(html_string), dest=result)
-    
+    pdf = pisa.pisaDocument(io.BytesIO(html_string.encode("UTF-8")), result)
     if not pdf.err:
         response = HttpResponse(result.getvalue(), content_type='application/pdf')
-        filename = f"exit_interview_{resignation.employee.employee_id}_{date.today()}.pdf"
+        filename = f"exit_interview_{resignation.employee.employee_id}.pdf"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         return response
     else:
-        return HttpResponse('Error generating PDF: ' + str(pdf.err))
+        return HttpResponse('Error generating PDF')
     
     
 def upload_document(request, resignation_id):
