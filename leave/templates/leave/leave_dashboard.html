@@ -781,6 +781,7 @@
                                         <th>Days</th>
                                         <th>Start</th>
                                         <th>End</th>
+                                        <th>Applied date</th>
                                         <th>Status</th>
                                         {% if request.session.user_role == 'MANAGER' or request.session.user_role == 'SUPER ADMIN' or request.session.user_role == 'ADMIN' or request.session.user_role == 'HR' %}
                                         <th>Action</th>
@@ -820,6 +821,7 @@
                                         </td>
                                         <td>{{ leave.start_date|date:"d M Y" }}</td>
                                         <td>{{ leave.end_date|date:"d M Y" }}</td>
+                                        <td>{{ leave.applied_date|date:"d M Y" }}</td>
                                         <td>
                                             {% if leave.status == 'new' %}
                                                 <span class="badge badge-new">New</span>

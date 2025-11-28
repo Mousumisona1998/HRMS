@@ -681,6 +681,15 @@
         padding: 6px 10px;
     }
 }
+/* Simple preloader that hides body until loaded */
+        body:not(.loaded) {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        body.loaded {
+            opacity: 1;
+        }
     </style>
 
     {% block extra_css %}{% endblock %}
@@ -849,6 +858,9 @@
             }
             </script>
         <script>
+            document.addEventListener('DOMContentLoaded', function() {
+            document.body.classList.add('loaded');
+        });
  // Enhanced menu activation script
 document.addEventListener('DOMContentLoaded', function() {
     const currentPath = window.location.pathname;

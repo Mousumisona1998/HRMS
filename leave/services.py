@@ -624,6 +624,7 @@ class AutoLeaveBalanceService:
         from hr.models import Employee
         
         current_year = date.today().year
+        current_date = date.today()
         
         # Get all active employees not on probation
         employees = Employee.objects.filter(status='active')
@@ -643,8 +644,16 @@ class AutoLeaveBalanceService:
             # Check probation status
             is_on_probation = ProbationService.is_on_probation(employee)
             
-            if is_on_probation:
-                continue  # Skip employees on probation
+            # NEW: Check if probation ended in the last month
+            probation_ended_recently = False
+            if employee.probation_end_date:
+                # If probation ended in the last 30 days
+                days_since_probation_end = (current_date - employee.probation_end_date).days
+                probation_ended_recently = 0 <= days_since_probation_end <= 30
+            
+        
+            if is_on_probation and not probation_ended_recently:
+                continue
             
             # Get or create balance for annual leave
             balance, created = LeaveBalance.objects.get_or_create(
@@ -659,45 +668,72 @@ class AutoLeaveBalanceService:
                 }
             )
             
-            # Add monthly accrual (1.5 days)
-            accrual_amount = annual_leave.accrual_rate
-            balance.total_leaves = float(Decimal(str(balance.total_leaves)) + accrual_amount)
-            balance.leaves_remaining = float(Decimal(str(balance.leaves_remaining)) + accrual_amount)
-            balance.save()
+            # # Add monthly accrual (1.5 days)
+            # accrual_amount = annual_leave.accrual_rate
+            # balance.total_leaves = float(Decimal(str(balance.total_leaves)) + accrual_amount)
+            # balance.leaves_remaining = float(Decimal(str(balance.leaves_remaining)) + accrual_amount)
+            # balance.save()
+            # Calculate accrual based on probation status
+            accrual_amount = Decimal('0')
             
-            updated_count += 1
+            if probation_ended_recently:
+                # NEW: If probation ended recently, calculate prorated accrual
+                probation_end_date = employee.probation_end_date
+                
+                # Calculate days from probation end to end of month
+                if probation_end_date.month == current_date.month:
+                    # Probation ended in current month
+                    days_in_month = calendar.monthrange(current_date.year, current_date.month)[1]
+                    days_after_probation = days_in_month - probation_end_date.day + 1
+                    
+                    # Prorate the 1.5 days for remaining days in month
+                    accrual_amount = (Decimal('1.5') * Decimal(str(days_after_probation))) / Decimal(str(days_in_month))
+                else:
+                    # Probation ended in previous month, full accrual for current month
+                    accrual_amount = annual_leave.accrual_rate
+                    
+            elif not is_on_probation:
+                # Regular monthly accrual for non-probation employees
+                accrual_amount = annual_leave.accrual_rate
+            
+            if accrual_amount > 0:
+                balance.total_leaves = float(Decimal(str(balance.total_leaves)) + accrual_amount)
+                balance.leaves_remaining = float(Decimal(str(balance.leaves_remaining)) + accrual_amount)
+                balance.save()
+                
+                updated_count += 1
+            
+            return updated_count
         
-        return updated_count
-    
-    @staticmethod
-    def ensure_unpaid_leave_balance(employee):
-        """
-        Ensure employee has unpaid leave balance
-        Unpaid leave balance starts at 0 and increases when taken
-        """
-        current_year = date.today().year
-        
-        # Get Unpaid Leave type
-        try:
-            unpaid_leave = LeaveType.objects.get(
-                is_active=True,
-                name__icontains='unpaid'
+        @staticmethod
+        def ensure_unpaid_leave_balance(employee):
+            """
+            Ensure employee has unpaid leave balance
+            Unpaid leave balance starts at 0 and increases when taken
+            """
+            current_year = date.today().year
+            
+            # Get Unpaid Leave type
+            try:
+                unpaid_leave = LeaveType.objects.get(
+                    is_active=True,
+                    name__icontains='unpaid'
+                )
+            except LeaveType.DoesNotExist:
+                return None
+            
+            # Get or create unpaid leave balance - STARTS AT 0
+            balance, created = LeaveBalance.objects.get_or_create(
+                employee=employee,
+                leave_type=unpaid_leave,
+                year=current_year,
+                defaults={
+                    'total_leaves': 0,  # Starts at 0
+                    'leaves_taken': 0,
+                    'leaves_remaining': 0,  # Starts at 0
+                    'carry_forward': 0
+                }
             )
-        except LeaveType.DoesNotExist:
-            return None
-        
-        # Get or create unpaid leave balance - STARTS AT 0
-        balance, created = LeaveBalance.objects.get_or_create(
-            employee=employee,
-            leave_type=unpaid_leave,
-            year=current_year,
-            defaults={
-                'total_leaves': 0,  # Starts at 0
-                'leaves_taken': 0,
-                'leaves_remaining': 0,  # Starts at 0
-                'carry_forward': 0
-            }
-        )
         
         return balance
     
@@ -820,7 +856,90 @@ class AutoLeaveBalanceService:
 #             return f"Probation ends in {days_remaining} days ({end_date.strftime('%d %b %Y')})"
         
 #         return "You are currently on probation"
-
+class DailyProbationService:
+    """Service to handle daily probation-related updates"""
+    
+    @staticmethod
+    @transaction.atomic
+    def daily_probation_check():
+        """
+        Daily cron job to check for employees whose probation ended
+        and grant them immediate leave accrual
+        """
+        from hr.models import Employee
+        
+        current_date = date.today()
+        current_year = current_date.year
+        
+        # Find employees whose probation ended yesterday
+        probation_ended_yesterday = current_date - timedelta(days=1)
+        
+        employees_ended_probation = Employee.objects.filter(
+            status='active',
+            probation_end_date=probation_ended_yesterday
+        )
+        
+        # Get Earned Leave type
+        try:
+            annual_leave = LeaveType.objects.get(
+                is_active=True,
+                accrual_rate=Decimal('1.5')
+            )
+        except LeaveType.DoesNotExist:
+            return 0
+        
+        updated_count = 0
+        
+        for employee in employees_ended_probation:
+            # Get or create balance
+            balance, created = LeaveBalance.objects.get_or_create(
+                employee=employee,
+                leave_type=annual_leave,
+                year=current_year,
+                defaults={
+                    'total_leaves': 0,
+                    'leaves_taken': 0,
+                    'leaves_remaining': 0,
+                    'carry_forward': 0
+                }
+            )
+            
+            # FIX: Grant exactly 1.5 days regardless of probation end date
+            accrual_amount = Decimal('1.5')
+            
+            # Add the accrual
+            balance.total_leaves = float(Decimal(str(balance.total_leaves)) + accrual_amount)
+            balance.leaves_remaining = float(Decimal(str(balance.leaves_remaining)) + accrual_amount)
+            balance.save()
+            
+            # Also grant optional leave (2 days)
+            try:
+                optional_leave = LeaveType.objects.get(is_active=True, is_optional=True)
+                optional_balance, _ = LeaveBalance.objects.get_or_create(
+                    employee=employee,
+                    leave_type=optional_leave,
+                    year=current_year,
+                    defaults={
+                        'total_leaves': 2,
+                        'leaves_taken': 0,
+                        'leaves_remaining': 2,
+                        'carry_forward': 0
+                    }
+                )
+                
+                if not created:
+                    optional_balance.total_leaves = 2
+                    optional_balance.leaves_remaining = 2 - optional_balance.leaves_taken
+                    optional_balance.save()
+                    
+            except LeaveType.DoesNotExist:
+                pass
+            
+            updated_count += 1
+            print(f"DEBUG: Granted {accrual_amount} days leave accrual to {employee.first_name} after probation ended")
+        
+        return updated_count
+    
 class CompOffService:
     """Handles compensatory off for working on holidays"""
     
