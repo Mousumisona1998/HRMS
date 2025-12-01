@@ -67,15 +67,45 @@ def resignation_dashboard(request):
         created_at__year=date.today().year
     ).count()
     
-    # Recent resignations with employee details
-    recent_resignations = Resignation.objects.select_related('employee').order_by('-created_at')[:10]
+    if user_role in ["MANAGER", "TL"]:
+        try:
+            current_user_emp = Employee.objects.get(email=user_email)
+            print(f"Current user: {current_user_emp.first_name} {current_user_emp.last_name}")
+            
+            # Check how many team members report to this manager
+            team_members = Employee.objects.filter(
+                Q(reporting_manager_id=current_user_emp.id) |
+                Q(reporting_manager__icontains=current_user_emp.first_name)
+            )
+            print(f"Team members count: {team_members.count()}")
+            
+            # CORRECTED: Use __in to filter by list of employee IDs
+            recent_resignations = Resignation.objects.filter(
+                employee_id__in=team_members.values_list('id', flat=True)
+            ).exclude(employee=current_user_emp).select_related('employee').order_by('-created_at')[:10]
+            
+            print(f"Team resignations found: {recent_resignations.count()}")
+            
+        except Employee.DoesNotExist:
+            print("Current user not found in Employee table")
+            recent_resignations = Resignation.objects.none()
+    else:
+        # For non-manager roles, exclude current user's resignation
+        try:
+            current_user_emp = Employee.objects.get(email=user_email)
+            recent_resignations = Resignation.objects.exclude(
+                employee=current_user_emp
+            ).select_related('employee').order_by('-created_at')[:10]
+        except Employee.DoesNotExist:
+            recent_resignations = Resignation.objects.select_related('employee').order_by('-created_at')[:10]
     
     # For employees, show only their resignation
     my_resignation = None
-    if user_role == 'EMPLOYEE':
+    if user_role != 'SUPER ADMIN':
         try:
             employee = Employee.objects.get(email=user_email)
-            my_resignation = Resignation.objects.filter(employee=employee).first()
+            # my_resignation = Resignation.objects.filter(employee=employee).first()
+            my_resignation = Resignation.objects.filter(employee=employee).order_by('-created_at')
         except Employee.DoesNotExist:
             pass
     
@@ -110,18 +140,18 @@ def submit_resignation(request):
         
         if active_resignations.exists():
             messages.error(request, 
-                'L You already have an active resignation request. '
+                'You already have an active resignation request. '
                 'Please wait for it to be processed or withdraw it first.'
             )
             return redirect('resignation:dashboard')
         
         # Optional: Limit resignation frequency (e.g., once per 30 days)
         recent_resignations = existing_resignations.filter(
-            created_at__gte=timezone.now() - timedelta(days=30)
+            created_at__gte=timezone.now() - timedelta(days=0)
         )
         if recent_resignations.exists():
             messages.error(request,
-                'L You have submitted a resignation recently. '
+                'You have submitted a resignation recently. '
                 'Please wait 30 days before submitting another resignation request.'
             )
             return redirect('resignation:dashboard')
@@ -252,9 +282,50 @@ def all_resignations(request):
     if not request.session.get('user_authenticated'):
         return redirect('login')
     
-    resignations = Resignation.objects.select_related('employee', 'applied_to', 'approved_by').all()
+    user_role = request.session.get('user_role')
+    user_email = request.session.get('user_email')
     
-    # Advanced filters
+    # Base queryset - apply role-based filtering
+    if user_role in ['ADMIN', 'HR', 'SUPER ADMIN']:
+        # Super users can see all resignations except their own
+        try:
+            current_user_emp = Employee.objects.get(email=user_email)
+            resignations = Resignation.objects.select_related('employee', 'applied_to', 'approved_by').exclude(employee=current_user_emp)
+        except Employee.DoesNotExist:
+            resignations = Resignation.objects.select_related('employee', 'applied_to', 'approved_by').all()
+            
+    elif user_role in ['MANAGER', 'TL']:
+        # Managers/TLs can only see their team members' resignations (excluding their own)
+        try:
+            current_user_emp = Employee.objects.get(email=user_email)
+            print(f"Current user: {current_user_emp.first_name} {current_user_emp.last_name}")
+            
+            # Check how many team members report to this manager
+            team_members = Employee.objects.filter(
+                Q(reporting_manager_id=current_user_emp.id) |
+                Q(reporting_manager__icontains=current_user_emp.first_name)
+            )
+            print(f"Team members count: {team_members.count()}")
+            
+            # Filter resignations to only team members, excluding own resignation
+            resignations = Resignation.objects.filter(
+                employee_id__in=team_members.values_list('id', flat=True)
+            ).exclude(employee=current_user_emp).select_related('employee', 'applied_to', 'approved_by')
+            
+            print(f"Team resignations found: {resignations.count()}")
+            
+        except Employee.DoesNotExist:
+            print("Current user not found in Employee table")
+            resignations = Resignation.objects.none()
+    else:
+        # Regular employees can only see their own resignations
+        try:
+            employee = Employee.objects.get(email=user_email)
+            resignations = Resignation.objects.filter(employee=employee).select_related('employee', 'applied_to', 'approved_by')
+        except Employee.DoesNotExist:
+            resignations = Resignation.objects.none()
+    
+    # Advanced filters (applied after role-based filtering)
     status_filter = request.GET.get('status')
     department_filter = request.GET.get('department')
     date_from = request.GET.get('date_from')
@@ -284,29 +355,45 @@ def all_resignations(request):
         'status_choices': Resignation.RESIGNATION_STATUS,
         'departments': Employee.objects.values_list('department', flat=True).distinct(),
         'user_name': request.session.get('user_name'),
-        'user_role': request.session.get('user_role'),
+        'user_role': user_role,
         'today_date': date.today(),
     }
     return render(request, 'resignation/all_resignations.html', context)
 
 def my_resignation(request):
-    """Employee views their own resignation"""
+    """Employee views their own resignation(s)"""
     if not request.session.get('user_authenticated'):
         return redirect('login')
     
     try:
         employee = Employee.objects.get(email=request.session.get('user_email'))
-        resignation = Resignation.objects.filter(employee=employee).first()
-        checklist = ResignationChecklist.objects.filter(resignation=resignation) if resignation else []
-        documents = ResignationDocument.objects.filter(resignation=resignation) if resignation else []
+        # Get ALL resignations for this employee, ordered by most recent first
+        resignations = Resignation.objects.filter(employee=employee).order_by('-created_at')
+        
+        # Get resignation_id from URL parameter to show specific resignation
+        resignation_id = request.GET.get('resignation_id')
+        
+        if resignation_id:
+            # Show specific resignation
+            current_resignation = get_object_or_404(Resignation, id=resignation_id, employee=employee)
+        elif resignations.exists():
+            # Show most recent resignation by default
+            current_resignation = resignations.first()
+        else:
+            current_resignation = None
+        
+        # Get data for the current resignation being viewed
+        checklist = ResignationChecklist.objects.filter(resignation=current_resignation) if current_resignation else []
+        documents = ResignationDocument.objects.filter(resignation=current_resignation) if current_resignation else []
         
         # Get progress data
-        notice_progress = resignation.get_notice_period_progress() if resignation else None
-        exit_status = resignation.get_exit_process_status() if resignation else None
-        status_timeline = resignation.get_status_timeline() if resignation else None
+        notice_progress = current_resignation.get_notice_period_progress() if current_resignation else None
+        exit_status = current_resignation.get_exit_process_status() if current_resignation else None
+        status_timeline = current_resignation.get_status_timeline() if current_resignation else None
         
     except Employee.DoesNotExist:
-        resignation = None
+        resignations = []
+        current_resignation = None
         checklist = []
         documents = []
         notice_progress = None
@@ -314,7 +401,8 @@ def my_resignation(request):
         status_timeline = None
     
     context = {
-        'resignation': resignation,
+        'resignations': resignations,  # All resignations for dropdown
+        'current_resignation': current_resignation,  # The one being viewed
         'checklist': checklist,
         'documents': documents,
         'notice_progress': notice_progress,

@@ -705,35 +705,35 @@ class AutoLeaveBalanceService:
             
             return updated_count
         
-        @staticmethod
-        def ensure_unpaid_leave_balance(employee):
-            """
-            Ensure employee has unpaid leave balance
-            Unpaid leave balance starts at 0 and increases when taken
-            """
-            current_year = date.today().year
+    @staticmethod
+    def ensure_unpaid_leave_balance(employee):
+        """
+        Ensure employee has unpaid leave balance
+        Unpaid leave balance starts at 0 and increases when taken
+        """
+        current_year = date.today().year
             
-            # Get Unpaid Leave type
-            try:
-                unpaid_leave = LeaveType.objects.get(
-                    is_active=True,
-                    name__icontains='unpaid'
-                )
-            except LeaveType.DoesNotExist:
-                return None
-            
-            # Get or create unpaid leave balance - STARTS AT 0
-            balance, created = LeaveBalance.objects.get_or_create(
-                employee=employee,
-                leave_type=unpaid_leave,
-                year=current_year,
-                defaults={
-                    'total_leaves': 0,  # Starts at 0
-                    'leaves_taken': 0,
-                    'leaves_remaining': 0,  # Starts at 0
-                    'carry_forward': 0
-                }
+        # Get Unpaid Leave type
+        try:
+            unpaid_leave = LeaveType.objects.get(
+                is_active=True,
+                name__icontains='unpaid'
             )
+        except LeaveType.DoesNotExist:
+            return None
+            
+        # Get or create unpaid leave balance - STARTS AT 0
+        balance, created = LeaveBalance.objects.get_or_create(
+            employee=employee,
+            leave_type=unpaid_leave,
+            year=current_year,
+            defaults={
+                'total_leaves': 0,  # Starts at 0
+                'leaves_taken': 0,
+                'leaves_remaining': 0,  # Starts at 0
+                'carry_forward': 0
+            }
+        )
         
         return balance
     

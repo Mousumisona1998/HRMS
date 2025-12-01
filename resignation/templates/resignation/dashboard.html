@@ -22,9 +22,15 @@
           </div>
         {% endif %}
         <div class="col-auto">
-          {% if user_role == 'EMPLOYEE' %}
+          {% if user_role != "SUPER ADMIN" %}
             {% if not my_resignation %}
               <a href="{% url 'resignation:submit_resignation' %}" class="btn btn-primary"><i class="fas fa-paper-plane me-2"></i>Apply Resignation</a>
+            {% else %}
+              {% with latest_resignation=my_resignation.0 %}
+                {% if latest_resignation.status == 'withdrawn' %}
+                  <a href="{% url 'resignation:submit_resignation' %}" class="btn btn-primary"><i class="fas fa-paper-plane me-2"></i>Apply Resignation</a>
+                {% endif %}
+              {% endwith %}
             {% endif %}
           {% else %}
             <!-- <a href="{% url 'resignation:all_resignations' %}" class="btn btn-outline-primary me-2"><i class="fas fa-list me-2"></i>View All</a> -->
@@ -49,14 +55,12 @@
               <li> Resignation subject to manager approval</li>
               <li> View your <a href="{% url 'resignation:resignation_history' %}">resignation history</a></li>
             </ul>
-            
           </div>
         </div>
       {% endif %}
     {% endif %}
 
     <!-- Statistics Cards -->
-   <!-- Statistics Cards -->
     {% if user_role in 'ADMIN,HR,SUPER ADMIN' %}
       <div class="row">
         <div class="col-xl-3 col-md-6 mb-4">
@@ -134,48 +138,54 @@
     {% endif %}
 
     <!-- Employee's Resignation Status -->
-    {% if user_role == 'EMPLOYEE' and my_resignation %}
+    {% if user_role != 'SUPER ADMIN' and my_resignation %}
       <div class="row">
-        <div class="col-12">
+        {% for resignation in my_resignation %}
+        <div class="col-12 {% if not forloop.first %}mt-4{% endif %}">
           <div class="custom-card">
             <div class="card-header">
-              <h5 class="card-title">My Resignation Status</h5>
-              <span class="badge bg-{% if my_resignation.status == 'accepted' %}success{% elif my_resignation.status == 'rejected' %}danger{% elif my_resignation.status == 'withdrawn' %}secondary{% else %}warning{% endif %}">
-                {{ my_resignation.get_status_display }}
+              <h5 class="card-title">
+                {% if forloop.first %}My Resignation Status{% else %}Previous Resignation{% endif %}
+              </h5>
+              <span class="badge bg-{% if resignation.status == 'accepted' %}success{% elif resignation.status == 'rejected' %}danger{% elif resignation.status == 'withdrawn' %}secondary{% else %}warning{% endif %}">
+                {{ resignation.get_status_display }}
               </span>
             </div>
             <div class="card-body">
               <div class="row">
                 <div class="col-md-6">
-                  <p><strong>Resignation Date:</strong> {{ my_resignation.resignation_date }}</p>
-                  <p><strong>Last Working Day:</strong> {{ my_resignation.last_working_date }}</p>
-                  <p><strong>Notice Period:</strong> {{ my_resignation.actual_notice_days }} days</p>
+                  <p><strong>Resignation Date:</strong> {{ resignation.resignation_date }}</p>
+                  <p><strong>Last Working Day:</strong> {{ resignation.last_working_date }}</p>
+                  <p><strong>Notice Period:</strong> {{ resignation.actual_notice_days }} days</p>
                 </div>
                 <div class="col-md-6">
                   <p><strong>Applied To:</strong> 
-                    {% if my_resignation.applied_to %}
-                      {{ my_resignation.applied_to.first_name }} {{ my_resignation.applied_to.last_name }}
+                    {% if resignation.applied_to %}
+                      {{ resignation.applied_to.first_name }} {{ resignation.applied_to.last_name }}
                     {% else %}
                       <span class="text-muted">Not assigned</span>
                     {% endif %}
                   </p>
-                  <p><strong>Status:</strong> {{ my_resignation.get_status_display }}</p>
-                  {% if my_resignation.feedback %}
-                    <p><strong>Feedback:</strong> {{ my_resignation.feedback }}</p>
+                  <p><strong>Status:</strong> {{ resignation.get_status_display }}</p>
+                  {% if resignation.feedback %}
+                    <p><strong>Feedback:</strong> {{ resignation.feedback }}</p>
                   {% endif %}
                 </div>
               </div>
               <div class="mt-3">
-                <a href="{% url 'resignation:my_resignation' %}" class="btn btn-outline-primary"><i class="fas fa-eye me-2"></i>View Details</a>
-                {% if my_resignation.status == 'applied' or my_resignation.status == 'under_review' %}
-                  <a href="{% url 'resignation:resignation_detail' my_resignation.id %}" class="btn btn-outline-warning ms-2">
+                 <a href="{% url 'resignation:my_resignation' %}?resignation_id={{ resignation.id }}" class="btn btn-outline-primary">
+        <i class="fas fa-eye me-2"></i>View Details
+    </a>
+                <!-- {% if resignation.status == 'applied' or resignation.status == 'under_review' %}
+                  <a href="{% url 'resignation:resignation_detail' resignation.id %}" class="btn btn-outline-warning ms-2">
                     <i class="fas fa-undo me-2"></i>Withdraw
                   </a>
-                {% endif %}
+                {% endif %} -->
               </div>
             </div>
           </div>
         </div>
+        {% endfor %}
       </div>
     {% endif %}
 

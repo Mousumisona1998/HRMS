@@ -119,8 +119,7 @@ def login_view(request):
             # Redirect based on role
             if user_type in ['ADMIN', 'HR', 'SUPER ADMIN']:
                 return redirect('dashboard')
-            elif user_type == 'MANAGER':
-                return redirect('dashboard')
+            
             else:
                 return redirect('employee_dashboard')
 
@@ -173,10 +172,14 @@ def change_password(request):
                     messages.success(request, 'Password changed successfully!')
                 
                 # Redirect based on user role after successful password change
-                if user_role == 'EMPLOYEE':
-                    return redirect('employee_dashboard')
-                elif user_role in ['ADMIN', 'HR', 'SUPER ADMIN', 'MANAGER']:
+                # if user_role == 'EMPLOYEE':
+                #     return redirect('employee_dashboard')
+                # elif user_role in ['ADMIN', 'HR', 'SUPER ADMIN', 'MANAGER']:
+                #     return redirect('dashboard')
+                if user_role == 'SUPER ADMIN':
                     return redirect('dashboard')
+                else:
+                    return redirect('employee_dashboard')
                     
             except Employee.DoesNotExist:
                 messages.error(request, 'Employee account not found or inactive.')
@@ -1114,7 +1117,7 @@ def employee_page(request):
            
             # Filter by reporting_manager_id OR by reporting_manager name (fallback)
             employees_list = Employee.objects.filter(
-                Q(reporting_manager_id=current_manager.employee_id) |
+                Q(reporting_manager_id=current_manager.id) |
                 Q(reporting_manager__icontains=current_manager.first_name)
             ).order_by('first_name')
            
@@ -1593,10 +1596,10 @@ def admin_delete(request, pk):
 def home(request):
     if request.session.get('user_authenticated'):
         user_role = request.session.get('user_role')
-        if user_role == 'EMPLOYEE':
-            return redirect('employee_dashboard')
-        else:
+        if user_role in ['ADMIN', 'HR', 'SUPER ADMIN','BRANCH MANAGER']:
             return redirect('dashboard')
+        else:
+            return redirect('employee_dashboard')
     return redirect('login')
 
 @login_required
@@ -1953,6 +1956,7 @@ def delete_document(request, document_id):
     return redirect('employee_page')
 # All employee
 @login_required
+@role_required(['ADMIN', 'HR', 'SUPER ADMIN'])
 def all_employee(request):
     employees = Employee.objects.all()
     if request.GET.get('download') == 'excel':
@@ -2953,6 +2957,7 @@ def employee_search_ajax(request):
         data.append({
             "id": emp.id,
             "first_name": emp.first_name,
+            "middle_name": emp.middle_name,
             "last_name": emp.last_name,
             "employee_id": emp.employee_id,
             "email": emp.email,

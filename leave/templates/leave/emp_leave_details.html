@@ -683,7 +683,7 @@
                         <span class="badge bg-secondary">{{ leave.days_requested|floatformat:1 }} Day{{ leave.days_requested|pluralize }}</span>
                         
                         <!-- SIMPLE WITHDRAW BUTTON CONDITION -->
-                        {% if leave.status in 'pending,approved' and can_withdraw and leave.start_date > today_date %}
+                        {% if leave.status in 'pending,approved' and can_withdraw and leave.start_date > today_date or leave.start_date > today_date and is_before_830 %}
                         <button class="btn btn-sm btn-outline-danger ms-2 withdraw-btn" 
                                 onclick="withdrawLeave({{ leave.id }})"
                                 title="Withdraw this leave application">

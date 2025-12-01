@@ -114,7 +114,7 @@
             <!-- Digital Signature Section -->
             <div class="row">
                 <!-- Employee Signature -->
-                {% if user_role == 'EMPLOYEE' and resignation.employee.email == request.session.user_email and not no_due_cert.employee_signature %}
+                {% if user_role != 'SUPER ADMIN' and resignation.employee.email == request.session.user_email and not no_due_cert.employee_signature %}
                 <div class="col-md-6">
                     <div class="custom-card">
                         <div class="card-header">

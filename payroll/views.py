@@ -524,7 +524,7 @@ def payslips(request):
     user_email = request.session.get('user_email')
     
     # Filter payslips based on user role
-    if user_role == 'EMPLOYEE':
+    if user_role not in ['SUPER ADMIN','ACCOUNTS']:
         try:
             employee = Employee.objects.get(email=user_email)
             payslips_list = Payslip.objects.filter(employee=employee).select_related('payroll_run').order_by('-generated_at')

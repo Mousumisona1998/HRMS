@@ -3,7 +3,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.db.models import Count, Q ,Sum
 from django.utils import timezone
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta,time
+
 from django.contrib import messages
 from django.core.paginator import Paginator
 
@@ -114,56 +115,9 @@ def leave_dashboard(request):
     today_present_percentage = int((today_present / total_employees) * 100) if total_employees > 0 else 0
     
     # =============================================
-    # INTEGRATED PLANNED vs SHORT-NOTICE LOGIC
+    # NOTICE THRESHOLD (used later)
     # =============================================
     NOTICE_THRESHOLD = timedelta(days=3)
-    
-    # Base queryset for planned/unplanned leaves
-    if user_role in ['ADMIN', 'HR', 'SUPER ADMIN']:
-        planned_unplanned_base = Leave.objects.filter(
-            status='approved',
-            applied_date__isnull=False
-        )
-    elif user_role == 'BRANCH MANAGER':
-        try:
-            current_branch_manager = Employee.objects.get(email=user_email)
-            if current_branch_manager.location:
-                planned_unplanned_base = Leave.objects.filter(
-                    status='approved',
-                    applied_date__isnull=False,
-                    employee__location__iexact=current_branch_manager.location
-                )
-            else:
-                planned_unplanned_base = Leave.objects.none()
-        except Employee.DoesNotExist:
-            planned_unplanned_base = Leave.objects.none()
-    elif user_role == 'MANAGER':
-        planned_unplanned_base = Leave.objects.filter(
-            status='approved',
-            applied_date__isnull=False,
-            employee__department=request.session.get('user_department')
-        )
-    else:
-        planned_unplanned_base = Leave.objects.none()
-    
-    # Calculate planned vs unplanned
-    planned_leaves = 0
-    unplanned_leaves = 0
-    
-    for leave in planned_unplanned_base.only('start_date', 'applied_date'):
-        try:
-            applied_date = leave.applied_date.date() if hasattr(leave.applied_date, 'date') else leave.applied_date
-            delta = leave.start_date - applied_date
-            
-            if delta >= NOTICE_THRESHOLD:
-                planned_leaves += 1
-            else:
-                unplanned_leaves += 1
-        except Exception:
-            unplanned_leaves += 1
-    
-    planned_leaves_percentage = int((planned_leaves / total_employees) * 100) if total_employees > 0 else 0
-    unplanned_leaves_percentage = int((unplanned_leaves / total_employees) * 100) if total_employees > 0 else 0
     
     # 🔹 Handle date filtering (from query params)
     from_date = request.GET.get('from_date')
@@ -215,10 +169,24 @@ def leave_dashboard(request):
     if from_date_db and to_date_db and not filter_error:
         if from_date_db > to_date_db:
             filter_error = "From date cannot be greater than To date"
-
+    
+    
+     # Get current user employee object for exclusion
+    current_user_emp = None
+    try:
+        current_user_emp = Employee.objects.get(email=user_email)
+    except Employee.DoesNotExist:
+        pass
+    
+    
     # Recent leaves with role-based filtering
-    recent_leaves = Leave.objects.select_related('employee', 'leave_type').exclude(status='withdrawn')
-
+    recent_leaves = Leave.objects.select_related('employee', 'leave_type')
+    
+    # EXCLUDE CURRENT USER'S LEAVES from recent_leaves
+    if current_user_emp:
+        recent_leaves = recent_leaves.exclude(employee=current_user_emp)
+        
+        
     if user_role == 'MANAGER' and request.session.get('user_department'):
         recent_leaves = recent_leaves.filter(employee__department=request.session.get('user_department'))
     elif user_role == 'BRANCH MANAGER' and current_branch_manager_location:
@@ -258,16 +226,95 @@ def leave_dashboard(request):
             ).distinct()
     
     branch_filter = request.GET.get('branch', '')
-    # 🆕 Apply status filter
+    # 🆕 Apply status filter to the table (if provided)
     if status_filter:
         recent_leaves = recent_leaves.filter(status=status_filter)
     if branch_filter:
         recent_leaves = recent_leaves.filter(employee__location=branch_filter)
         
     recent_leaves = recent_leaves.order_by('-applied_date')[:50]  # limit for performance
-    
+
     # =============================================
-    # PENDING REQUESTS WITH DATE FILTERING + ROLE-BASED
+    # INTEGRATED PLANNED vs SHORT-NOTICE LOGIC (FILTERED)
+    # =============================================
+    # Base queryset for approved leaves (role-based)
+    if user_role in ['ADMIN', 'HR', 'SUPER ADMIN']:
+        planned_unplanned_base = Leave.objects.filter(
+            status='approved',
+            applied_date__isnull=False
+        )
+    elif user_role == 'BRANCH MANAGER':
+        try:
+            current_branch_manager = Employee.objects.get(email=user_email)
+            if current_branch_manager.location:
+                planned_unplanned_base = Leave.objects.filter(
+                    status='approved',
+                    applied_date__isnull=False,
+                    employee__location__iexact=current_branch_manager.location
+                )
+            else:
+                planned_unplanned_base = Leave.objects.none()
+        except Employee.DoesNotExist:
+            planned_unplanned_base = Leave.objects.none()
+    elif user_role == 'MANAGER':
+        planned_unplanned_base = Leave.objects.filter(
+            status='approved',
+            applied_date__isnull=False,
+            employee__department=request.session.get('user_department')
+        )
+    else:
+        planned_unplanned_base = Leave.objects.none()
+
+    # Apply date overlap filters to match recent_leaves window (or today's window when no filters)
+    if not filter_error:
+        if from_date_db and to_date_db:
+            planned_unplanned_base = planned_unplanned_base.filter(
+                Q(start_date__lte=to_date_db, end_date__gte=from_date_db)
+            )
+        elif from_date_db:
+            planned_unplanned_base = planned_unplanned_base.filter(
+                Q(end_date__gte=from_date_db)
+            )
+        elif to_date_db:
+            planned_unplanned_base = planned_unplanned_base.filter(
+                Q(start_date__lte=to_date_db)
+            )
+        else:
+            planned_unplanned_base = planned_unplanned_base.filter(
+                Q(start_date__lte=today, end_date__gte=today)
+            )
+
+    # Apply branch filter if present so counts match the table's branch selection
+    if branch_filter:
+        planned_unplanned_base = planned_unplanned_base.filter(employee__location=branch_filter)
+
+    # Compute planned vs unplanned using NOTICE_THRESHOLD
+    planned_leaves = 0
+    unplanned_leaves = 0
+
+    for leave in planned_unplanned_base.only('start_date', 'applied_date'):
+        try:
+            applied_raw = leave.applied_date
+            applied_date = applied_raw.date() if hasattr(applied_raw, 'date') else applied_raw
+
+            if not applied_date or not leave.start_date:
+                unplanned_leaves += 1
+                continue
+
+            delta = leave.start_date - applied_date
+            if delta >= NOTICE_THRESHOLD:
+                planned_leaves += 1
+            else:
+                unplanned_leaves += 1
+        except Exception:
+            unplanned_leaves += 1
+
+    planned_leaves_percentage = int((planned_leaves / total_employees) * 100) if total_employees > 0 else 0
+    unplanned_leaves_percentage = int((unplanned_leaves / total_employees) * 100) if total_employees > 0 else 0
+
+    # =============================================
+    # PENDING REQUESTS WITH DATE FILTERING + ROLE-BASED (FIXED)
+    # -> Now mirrors the table's date/branch scope so counts align
     # =============================================
     if user_role in ['ADMIN', 'HR', 'SUPER ADMIN']:
         pending_base = Leave.objects.filter(
@@ -293,6 +340,7 @@ def leave_dashboard(request):
     else:
         pending_base = Leave.objects.none()
 
+    # Apply SAME date overlap logic as recent_leaves so pending count respects selected range
     if not filter_error:
         if from_date_db and to_date_db:
             pending_base = pending_base.filter(
@@ -300,14 +348,29 @@ def leave_dashboard(request):
                 Q(start_date__lte=to_date_db, end_date__gte=from_date_db) |
                 Q(end_date__gte=from_date_db)
             )
-        elif show_today_filter:
+        elif from_date_db:
+            pending_base = pending_base.filter(
+                Q(applied_date__date__gte=from_date_db) |
+                Q(end_date__gte=from_date_db)
+            )
+        elif to_date_db:
+            pending_base = pending_base.filter(
+                Q(applied_date__date__lte=to_date_db) |
+                Q(start_date__lte=to_date_db)
+            )
+        else:
+            # default -> today's window
             pending_base = pending_base.filter(
                 Q(applied_date__date=today) |
                 Q(start_date__lte=today, end_date__gte=today) |
                 Q(end_date__gte=today)
             )
 
-    pending_requests = pending_base.count()
+    # Apply branch filter to pending count as well
+    if branch_filter:
+        pending_base = pending_base.filter(employee__location=branch_filter)
+
+    pending_requests = pending_base.distinct().count()
     pending_requests_percentage = int((pending_requests / total_employees) * 100) if total_employees > 0 else 0
     
     # =============================================
@@ -360,7 +423,7 @@ def leave_dashboard(request):
         
         'from_date_display': from_date_display,
         'to_date_display': to_date_display,
-        'status_filter': status_filter,  # 🆕 Pass to template
+        'status_filter': status_filter,  
         'filter_error': filter_error,
         'show_today_filter': show_today_filter,
         
@@ -376,14 +439,15 @@ def leave_dashboard(request):
         'pending_requests_total': total_employees,
         'pending_requests_percentage': pending_requests_percentage,
         
-        'recent_leaves': recent_leaves_list,  # Use the list with notice_type
+        'recent_leaves': recent_leaves_list,  
         'current_year': current_year,
         'regions': regions,
         'holidays': holidays,
         'user_region': user_region,
         'default_region_id': default_region_id,
-        'notice_threshold_days': 3,  # Add threshold for template display
+        'notice_threshold_days': 3,  
     }
+    
     
     return render(request, 'leave/leave_dashboard.html', context)
 
@@ -571,6 +635,29 @@ def apply_leave(request):
             
             if start_date_obj < date.today():
                 messages.error(request, 'Cannot apply for leave in the past.')
+                return redirect('apply_leave')
+            
+            # ✅ CHECK FOR OVERLAPPING LEAVES
+            overlapping_leaves = Leave.objects.filter(
+                employee=employee,
+                status__in=['pending', 'approved'],
+                start_date__lte=end_date_obj,
+                end_date__gte=start_date_obj
+            ).exclude(status='rejected')
+
+            if overlapping_leaves.exists():
+                overlap_details = []
+                for leave in overlapping_leaves:
+                    status_display = "Applied" if leave.status == 'pending' else "Approved"
+                    overlap_details.append(
+                        f"{leave.start_date.strftime('%d %b %Y')} to {leave.end_date.strftime('%d %b %Y')} "
+                        f"({leave.leave_type.name} - {status_display})"
+                    )
+                
+                messages.error(
+                    request, 
+                    f'❌ Leave date conflict! You already have leaves on these dates: {", ".join(overlap_details)}'
+                )
                 return redirect('apply_leave')
             
             # Validate half-day period selection
@@ -815,11 +902,16 @@ def apply_leave(request):
     probation_message = None
     if is_on_probation:
         probation_message = "⚠️ You are currently on probation. You have no paid leave balance. Any leave taken will be unpaid."
+     # Check if current time is before 8:30 AM
+    now = timezone.now()
+    cutoff_time = timezone.make_aware(datetime.combine(now.date(), time(8, 30)))
+    is_before_830 = now < cutoff_time
     
     context = {
         'leave_types': leave_types,
         'leave_balances': leave_balances,
         'today_date': date.today(),
+        'is_before_830': is_before_830,
         'min_date': date.today().strftime('%Y-%m-%d'),
         'user_name': request.session.get('user_name'),
         'user_role': user_role,

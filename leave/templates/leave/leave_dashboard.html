@@ -318,15 +318,22 @@
     }
 
     .holiday-indicator {
-        position: absolute;
-        bottom: 3px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 4px;
-        height: 4px;
-        background: #ff6b9d;
-        border-radius: 50%;
-    }
+    position: absolute;
+    bottom: 5px;
+    left:50%;
+    transform: none;
+    width: 5px;
+    height: 13px;
+    background: white;
+    color: #000;
+    border-radius: 50%;
+    padding: 3px 6px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
     .calendar-day.has-holiday .holiday-indicator {
         background: white;
@@ -836,8 +843,9 @@
                                             {% endif %}
                                         </td>
                                          {% if request.session.user_role == 'MANAGER' or request.session.user_role == 'SUPER ADMIN' or request.session.user_role == 'ADMIN' or request.session.user_role == 'HR' %}
+                                         
                                         <td>
-                                            
+                                            {% if leave.status != 'withdrawn'%}
                                             <div class="dropdown">
                                                 <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
                                                     <i class="fas fa-ellipsis-h"></i>
@@ -859,7 +867,12 @@
                                                     </li>
                                                 </ul>
                                             </div>
+                                             {% else %}
+                                        <!-- Empty cell for withdrawn leaves to maintain column count -->
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
                                         </td>
+                                        
                                         {% endif %}
                                     </tr>
                                     {% empty %}
@@ -1544,7 +1557,8 @@ function createDayElement(day, isOtherMonth, dayHolidays, isToday = false) {
     dayEl.innerHTML = `
         <div class="day-number">${day}</div>
         ${dayHolidays && dayHolidays.length > 0 ? `<div class="holiday-name-small">${dayHolidays[0].name}</div>` : ''}
-        ${dayHolidays && dayHolidays.length > 1 ? '<div class="holiday-indicator"></div>' : ''}
+        ${dayHolidays && dayHolidays.length > 1 ? `<div class="holiday-indicator">${dayHolidays.length}</div>` : ''}
+
     `;
    
     if (dayHolidays && dayHolidays.length > 0) {

@@ -84,7 +84,7 @@
         {% endif %}
         <img src="{{ emp.profile_picture.url|default:'/static/default.png' }}" alt="Profile" class="employee-image">
         <div class="employee-info">
-            <h3>{{ emp.first_name }} {{ emp.last_name }}</h3>
+           <h3>{{ emp.first_name }} {% if emp.middle_name %}{{ emp.middle_name }} {% endif %} {{ emp.last_name }}</h3>
             <p style="color: #3161FF;" class="designation">{{ emp.designation }}</p>
         </div>
         
@@ -128,12 +128,12 @@
 <!-- Advanced Pagination -->
 {% if employees.has_other_pages %}
 <div class="pagination-container">
-    <div class="pagination-info">
+    <!-- <div class="pagination-info">
         Showing {{ employees.start_index }} to {{ employees.end_index }} of {{ employees.paginator.count }} entries
-    </div>
+    </div> -->
     
     <div class="d-flex align-items-center gap-4">
-        <div class="page-size-selector">
+        <!-- <div class="page-size-selector">
             <span>Show</span>
             <select id="pageSizeSelect" class="form-select">
                 <option value="12" {% if page_size == 12 %}selected{% endif %}>12</option>
@@ -142,7 +142,7 @@
                 <option value="96" {% if page_size == 96 %}selected{% endif %}>96</option>
             </select>
             <span>entries</span>
-        </div>
+        </div> -->
 
         <nav aria-label="Employee pagination">
             <ul class="pagination mb-0">
@@ -489,7 +489,7 @@ body {
                                 <img src="${emp.profile_picture}" class="employee-image">
 
                                 <div class="employee-info">
-                                    <h3>${emp.first_name} ${emp.last_name}</h3>
+                                    <h3>${emp.first_name} ${emp.middle_name ? emp.middle_name : ""}  ${emp.last_name}</h3>
                                     <p style="color:#3161FF;" class="designation">${emp.designation}</p>
                                 </div>
 
