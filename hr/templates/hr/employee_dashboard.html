@@ -710,7 +710,8 @@
             </div>
             <div class="card-body-custom">
                 <h2>{{ upcoming_holidays }}</h2>
-                <p>In next 30 days</p>
+                <a href="{% url 'leave_dashboard' %}" style="color: inherit; text-decoration: none;">
+                <p>In next 30 days</p></a>
             </div>
         </div>
 
@@ -892,7 +893,7 @@
                     {% endif %}
                 </div>
                 <div class="profile-info">
-                    <h2>{{ employee.first_name }} {{ employee.last_name }}</h2>
+                    <h2>{{ employee.first_name }} {% if employee.middle_name %}{{ employee.middle_name }} {% endif %}  {{ employee.last_name }}</h2>
                     <p style="color: white;" class="designation">{{ employee.designation }}</p>
                 </div>
             </div>

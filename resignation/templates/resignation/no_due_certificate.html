@@ -146,7 +146,7 @@
                 {% endif %}
 
                 <!-- HR Actions -->
-                {% if user_role in 'HR,ADMIN,SUPER ADMIN' %}
+                {% if user_role in 'HR,ADMIN,SUPER ADMIN' and not is_self_resignation %}
                 <div class="col-md-6">
                     <div class="custom-card">
                         <div class="card-header">

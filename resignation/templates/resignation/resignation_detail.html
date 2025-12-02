@@ -305,7 +305,7 @@
                       <th width="50">#</th>
                       <th>Task</th>
                       <th>Department</th>
-                      <th>Assigned To</th>
+                      <!-- <th>Assigned To</th> -->
                       <th>Due Date</th>
                       <th>Status</th>
                       <th>Remarks</th>
@@ -320,13 +320,13 @@
                         <td>
                           <span class="badge bg-secondary">{{ item.department }}</span>
                         </td>
-                        <td>
+                        <!-- <td>
                           {% if item.assigned_to %}
                             {{ item.assigned_to.first_name }} {{ item.assigned_to.last_name }}
                           {% else %}
                             <span class="text-muted">Not assigned</span>
                           {% endif %}
-                        </td>
+                        </td> -->
                         <td>{{ item.due_date }}</td>
                         <td>
                           {% if item.completed %}

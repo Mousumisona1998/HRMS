@@ -399,6 +399,17 @@ def my_resignation(request):
         notice_progress = None
         exit_status = None
         status_timeline = None
+        
+    # Check if logged-in user is HR/Admin AND is the resigning employee
+    user_role = request.session.get('user_role')
+    user_email = request.session.get('user_email')
+    employee_email = current_resignation.employee.email if current_resignation else None
+    
+    # Determine if this is a self-resignation for HR/Admin
+    is_self_resignation = (
+        user_role in ['HR', 'ADMIN', 'SUPER ADMIN'] and 
+        user_email == employee_email
+    )   
     
     context = {
         'resignations': resignations,  # All resignations for dropdown
@@ -411,6 +422,7 @@ def my_resignation(request):
         'user_name': request.session.get('user_name'),
         'user_role': request.session.get('user_role'),
         'today_date': date.today(),
+        'is_self_resignation':is_self_resignation,
     }
     return render(request, 'resignation/my_resignation.html', context)
 
@@ -648,6 +660,16 @@ def no_due_certificate(request, resignation_id):
             'settlement_date': resignation.last_working_date,
         }
     )
+    # Check if logged-in user is HR/Admin AND is the resigning employee
+    user_role = request.session.get('user_role')
+    user_email = request.session.get('user_email')
+    employee_email = resignation.employee.email if resignation.employee else None
+    
+    # Determine if this is a self-resignation for HR/Admin
+    is_self_resignation = (
+        user_role in ['HR', 'ADMIN', 'SUPER ADMIN'] and 
+        user_email == employee_email
+    )
     
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -702,6 +724,7 @@ def no_due_certificate(request, resignation_id):
         'user_name': request.session.get('user_name'),
         'user_role': request.session.get('user_role'),
         'today_date': date.today(),
+        'is_self_resignation': is_self_resignation,
     }
     return render(request, 'resignation/no_due_certificate.html', context)
 
@@ -1043,6 +1066,16 @@ def exit_interview(request, resignation_id):
     exit_interview_obj, created = ExitInterview.objects.get_or_create(
         resignation=resignation
     )
+    # Check if logged-in user is HR/Admin AND is the resigning employee
+    user_role = request.session.get('user_role')
+    user_email = request.session.get('user_email')
+    employee_email = resignation.employee.email if resignation.employee else None
+    
+    # Determine if this is a self-resignation for HR/Admin
+    is_self_resignation = (
+        user_role in ['HR', 'ADMIN', 'SUPER ADMIN'] and 
+        user_email == employee_email
+    )
     
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -1114,6 +1147,7 @@ def exit_interview(request, resignation_id):
         'user_name': request.session.get('user_name'),
         'user_role': request.session.get('user_role'),
         'today_date': date.today(),
+        'is_self_resignation': is_self_resignation,
     }
     return render(request, 'resignation/exit_interview.html', context)
 

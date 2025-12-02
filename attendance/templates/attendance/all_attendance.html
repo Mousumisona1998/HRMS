@@ -239,8 +239,12 @@
                               LOP
                           </span>
 
+                      {% elif attendance.day_status == "Sunday" %}
+                          <span style="background:#dbeafe; color:#1e3a8a; font-weight:600; padding:4px 12px; border-radius:8px;">
+                              Sunday
+                          </span>
                       {% else %}
-                          <span style="background-color:#fee2e2; color:#b91c1c; font-weight:600; padding:4px 12px; border-radius:8px;">
+                          <span style="background:#fee2e2; color:#b91c1c; font-weight:600; padding:4px 12px; border-radius:8px;">
                               Absent
                           </span>
                       {% endif %}

@@ -1793,14 +1793,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         
         
-        // IFSC Code - Optional
-        'ifsc_code': {
-            element: document.querySelector('[name="ifsc_code"]'),
-            validate: function(value) {
-                return true; // Optional field
-            },
-            errorMessage: ''
-        },
+       // IFSC Code - Optional but if entered must be valid
+'ifsc_code': {
+    element: document.querySelector('[name="ifsc_code"]'),
+    validate: function(value) {
+        if (value.trim() === '') 
+           return true; // allow empty
+
+        // Validate only alphanumeric & exactly 11 characters
+        return /^[A-Z0-9]{11}$/.test(value); 
+    },
+    errorMessage: 'IFSC Code must be 11 characters (Capital letters and numbers only)'
+},
+
         
         // Name on Bank Account - Optional, letters only
         'name_on_bank_account': {

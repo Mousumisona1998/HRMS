@@ -117,7 +117,7 @@ def login_view(request):
             messages.success(request, f'Welcome back, {request.session["user_name"]}!')
 
             # Redirect based on role
-            if user_type in ['ADMIN', 'HR', 'SUPER ADMIN']:
+            if user_type in ['ADMIN', 'HR', 'SUPER ADMIN','Branch Manager']:
                 return redirect('dashboard')
             
             else:
@@ -326,7 +326,7 @@ def dashboard(request):
             recent_leaves = Leave.objects.select_related('employee', 'leave_type').filter(
                 start_date__lte=today,
                 end_date__gte=today,
-                status__in=['approved','pending']
+                status__in=['approved']
             ).order_by('-applied_date')[:5]
             
             pending_leave_requests = Leave.objects.filter(status__in=['pending', 'new']).count()
@@ -345,7 +345,7 @@ def dashboard(request):
             recent_leaves = Leave.objects.select_related('employee', 'leave_type').filter(
                 start_date__lte=today,
                 end_date__gte=today,
-                status__in=['approved','pending'],
+                status__in=['approved'],
                 employee__location__iexact=current_branch_manager_location
             ).order_by('-applied_date')[:5]
             
@@ -660,6 +660,12 @@ def employee_dashboard(request):
         'total_remaining_leaves': total_remaining_leaves,
         'today_attendance': today_attendance,
         'punctuality_status': punctuality_status,
+        'recent_warnings': recent_warnings,
+        'recent_appreciations': recent_appreciations,
+        'recent_warnings_count': recent_warnings.count(),
+        'recent_appreciations_count': recent_appreciations.count(),
+
+        # OLD — Still used by bell icon
         'notifications': merged_notifications,
         'notifications_count': len(merged_notifications),
     }

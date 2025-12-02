@@ -637,7 +637,7 @@
 {% endblock %}
 
 {% block content %}
-{% if request.session.user_role in 'ADMIN,HR,MANAGER,SUPER ADMIN' %}
+{% if request.session.user_role in 'ADMIN,HR,MANAGER,SUPER ADMIN,BRANCH MANAGER,TL' %}
 <div class="dashboard-header">
     <h2><i class="fas fa-calendar-alt"></i> Leave Management Dashboard</h2>
     <p class="mb-0">Overview of employee leave status and requests</p>
@@ -645,7 +645,7 @@
 {% endif %}
 <!-- Custom Tabs -->
 <ul class="nav nav-tabs nav-tabs-custom" id="leaveTabs" role="tablist">
-  {% if request.session.user_role in 'ADMIN,HR,MANAGER,SUPER ADMIN,BRANCH MANAGER' %}
+  {% if request.session.user_role in 'ADMIN,HR,MANAGER,SUPER ADMIN,BRANCH MANAGER,TL' %}
     <li class="nav-item" role="presentation">
         <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
             <i class="fas fa-chart-line"></i> Dashboard
@@ -668,7 +668,7 @@
 
 <!-- Tab Content -->
 <div class="tab-content" id="leaveTabsContent">
-    {% if request.session.user_role in 'ADMIN,HR,MANAGER,SUPER ADMIN,BRANCH MANAGER' %}
+    {% if request.session.user_role in 'ADMIN,HR,MANAGER,SUPER ADMIN,BRANCH MANAGER,BRANCH MANAGER,TL' %}
     <!-- Dashboard Tab -->
     <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
         <!-- Statistics Cards -->
@@ -790,7 +790,7 @@
                                         <th>End</th>
                                         <th>Applied date</th>
                                         <th>Status</th>
-                                        {% if request.session.user_role == 'MANAGER' or request.session.user_role == 'SUPER ADMIN' or request.session.user_role == 'ADMIN' or request.session.user_role == 'HR' %}
+                                        {% if request.session.user_role == 'MANAGER' or request.session.user_role == 'SUPER ADMIN' or request.session.user_role == 'ADMIN' or request.session.user_role == 'HR' or request.session.user_role == 'TL' %}
                                         <th>Action</th>
                                        {% endif %}
                                     </tr>
@@ -842,7 +842,7 @@
                                                 <span class="badge badge-pending">Pending</span>
                                             {% endif %}
                                         </td>
-                                         {% if request.session.user_role == 'MANAGER' or request.session.user_role == 'SUPER ADMIN' or request.session.user_role == 'ADMIN' or request.session.user_role == 'HR' %}
+                                         {% if request.session.user_role == 'MANAGER' or request.session.user_role == 'SUPER ADMIN' or request.session.user_role == 'ADMIN' or request.session.user_role == 'HR' or request.session.user_role == 'TL' %}
                                          
                                         <td>
                                             {% if leave.status != 'withdrawn'%}

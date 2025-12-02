@@ -50,9 +50,7 @@
             width: 100%;
             margin-left: 0;
         }
-        .d-flex{
-             display: grid !important;
-        }
+       
     }
 
     @media (max-width: 575px) {
@@ -97,9 +95,27 @@
   #attendanceReportTable th {
       text-align: left !important;
   }
+  @media (max-width: 576px) {
+    .upload-box-container {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
+
+    .upload-box-container form,
+    .upload-box-container select,
+    .upload-box-container input[type="file"],
+    .upload-box-container button {
+        width: 100% !important;
+    }
+
+    input[type="file"] {
+        padding: 6px;
+    }
+}
 </style>
 
-<div class="d-flex justify-content-between align-items-center page-header" style="margin-bottom: 20px;">
+<div class="justify-content-between align-items-center page-header" style="margin-bottom: 20px;display: grid !important">
 
     <!-- LEFT SIDE: Title -->
     <div>
@@ -108,7 +124,13 @@
     </div>
 
     <!-- RIGHT SIDE: Branch Filter + Upload Excel -->
-    <div class="d-flex align-items-center" style="gap: 12px;">
+    <div class="card shadow-sm p-3 mb-3" style="border-radius:10px; border:1px solid #e3e6ea;">
+
+    <h6 class="fw-bold mb-3" style="font-size:15px;">
+        <i class="fas fa-file-import me-1"></i> Upload Attendance
+    </h6>
+
+    <div class="d-flex align-items-center flex-wrap upload-box-container" style="gap: 15px;">
 
         <!-- Branch / Location Filter -->
         <form method="GET" class="d-flex align-items-center">
@@ -146,6 +168,7 @@
 </form>
 
 
+    </div>
     </div>
 
 </div>
@@ -343,6 +366,11 @@
                             <span style="background-color: #dcfce7; color: #166534; font-weight: 600; padding: 6px 12px; border-radius: 8px; display: inline-block; min-width: 90px;">
                                 Present
                             </span>
+                            
+                        {% elif attendance.status == "Sunday" %}
+                            <span style="background-color:#dbeafe; color:#1e3a8a; font-weight:600; padding:6px 12px; border-radius:8px; min-width:90px; display:inline-block;">
+                                Sunday
+                            </span>
 
                         {% elif attendance.status == "Absent" %}
                             <span style="background-color: #fee2e2; color: #b91c1c; font-weight: 600; padding: 6px 12px; border-radius: 8px; display: inline-block; min-width: 90px;">
@@ -351,7 +379,7 @@
 
                         {% elif attendance.status == "Half Day" %}
                             <span style="background-color: #fef9c3; color: #92400e; font-weight: 600; padding: 6px 12px; border-radius: 8px; display: inline-block; min-width: 90px;">
-                                Half Day
+                                Present
                             </span>
 
                         {% elif attendance.status == "LOP" %}

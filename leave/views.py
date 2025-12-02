@@ -30,7 +30,7 @@ def leave_dashboard(request):
         return redirect('login')
     
     user_role = request.session.get('user_role')
-    is_hr_admin_manager = user_role in ['HR', 'Admin', 'Manager','Super Admin','BRANCH MANAGER']
+    is_hr_admin_manager = user_role in ['HR', 'Admin', 'Manager','Super Admin','BRANCH MANAGER','TL']
     
     today = timezone.now().date()
     current_year = today.year
@@ -59,7 +59,7 @@ def leave_dashboard(request):
         pass
     
     # ✅ Role-based employee filtering for statistics
-    if user_role in ['ADMIN', 'HR', 'SUPER ADMIN']:
+    if user_role in ['ADMIN', 'HR', 'SUPER ADMIN','TL']:
         total_employees = Employee.objects.count()
     elif user_role == 'BRANCH MANAGER':
         try:
@@ -81,7 +81,7 @@ def leave_dashboard(request):
         total_employees = 0
     
     # Today Present (employees not on leave today)
-    if user_role in ['ADMIN', 'HR', 'SUPER ADMIN']:
+    if user_role in ['ADMIN', 'HR', 'SUPER ADMIN','TL']:
         employees_on_leave_today = Leave.objects.filter(
             start_date__lte=today,
             end_date__gte=today,
@@ -187,7 +187,7 @@ def leave_dashboard(request):
         recent_leaves = recent_leaves.exclude(employee=current_user_emp)
         
         
-    if user_role == 'MANAGER' and request.session.get('user_department'):
+    if user_role == 'MANAGER'or user_role == 'TL' and request.session.get('user_department'):
         recent_leaves = recent_leaves.filter(employee__department=request.session.get('user_department'))
     elif user_role == 'BRANCH MANAGER' and current_branch_manager_location:
         recent_leaves = recent_leaves.filter(employee__location__iexact=current_branch_manager_location)
@@ -238,7 +238,7 @@ def leave_dashboard(request):
     # INTEGRATED PLANNED vs SHORT-NOTICE LOGIC (FILTERED)
     # =============================================
     # Base queryset for approved leaves (role-based)
-    if user_role in ['ADMIN', 'HR', 'SUPER ADMIN']:
+    if user_role in ['ADMIN', 'HR', 'SUPER ADMIN','TL']:
         planned_unplanned_base = Leave.objects.filter(
             status='approved',
             applied_date__isnull=False
@@ -316,7 +316,7 @@ def leave_dashboard(request):
     # PENDING REQUESTS WITH DATE FILTERING + ROLE-BASED (FIXED)
     # -> Now mirrors the table's date/branch scope so counts align
     # =============================================
-    if user_role in ['ADMIN', 'HR', 'SUPER ADMIN']:
+    if user_role in ['ADMIN', 'HR', 'SUPER ADMIN','TL']:
         pending_base = Leave.objects.filter(
             status__in=['pending', 'new']
         ).exclude(status='withdrawn')

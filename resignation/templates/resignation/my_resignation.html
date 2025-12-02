@@ -325,9 +325,11 @@
                                     <i class="fas fa-comments me-1"></i>Exit Interview
                                 </a>
                                 {% endif %}
+                                {% if user_role in 'HR,ADMIN,SUPER ADMIN' and not is_self_resignation %}
                                 <a href="{% url 'resignation:resignation_detail' current_resignation.id %}" class="btn btn-outline-primary">
                                     <i class="fas fa-eye me-1"></i>View Full Details
                                 </a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>

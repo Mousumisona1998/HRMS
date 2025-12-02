@@ -125,8 +125,8 @@ def all_attendance(request):
     all_dates = [
         start_date + timedelta(days=i)
         for i in range((end_date - start_date).days + 1)
-        if (start_date + timedelta(days=i)).weekday() != 6
-        and (start_date + timedelta(days=i)) <= today
+        if (start_date + timedelta(days=i))<= today
+       
     ]
 
     attendance_dict = {att.date: att for att in attendance_records}
@@ -220,8 +220,16 @@ def all_attendance(request):
             )
             fake_record.duration_display = "-"
             fake_record.extra_hours_display = "-"
-            fake_record.day_status = "Absent"
-            fake_record.punctuality = "—"
+            # fake_record.day_status = "Absent"
+            # fake_record.punctuality = "—"
+            # full_attendance_list.append(fake_record)
+            
+            # ✅ Sunday logic
+            if d.weekday() == 6:   # Sunday
+                fake_record.day_status = "Sunday"
+            else:
+                fake_record.day_status = "Absent"
+
             full_attendance_list.append(fake_record)
 
     full_attendance_list.sort(key=lambda x: x.date, reverse=True)
@@ -357,7 +365,12 @@ def attendance_report(request):
                 'duration_display': '-',
                 'is_late': False,
             }
-
+            
+            if day.weekday() == 6 and not att:
+                record['status'] = "Sunday"
+                attendance_data.append(record)
+                continue
+            
             if att:
                 if att.check_in:
                     ci = localtime(att.check_in)
@@ -554,7 +567,15 @@ def download_admin_attendance_report(request):
                 'status': 'Absent',
                 'duration_display': '-'
             }
-
+            
+            
+            #  SUNDAY LOGIC (NO RECORD)
+            # ---------------------------
+            if day.weekday() == 6 and not att:
+                record['status'] = "Sunday"
+                attendance_data.append(record)
+                continue
+            
             if att:
                 # Set time values
                 if att.check_in:
@@ -707,7 +728,7 @@ def download_attendance_report_excel(request):
     all_dates = [
         start_date + timedelta(days=i)
         for i in range((end_date - start_date).days + 1)
-        if (start_date + timedelta(days=i)).weekday() != 6  # Exclude Sundays
+        
     ]
 
     # ✅ Prepare full attendance list (with Absent days)
@@ -724,8 +745,12 @@ def download_attendance_report_excel(request):
                 hours = int(total_minutes // 60)
                 minutes = int(total_minutes % 60)
                 duration = f"{hours}h {minutes}m"
+                 
+                if total_minutes < 120:
+                   status = "Lop"
+                   
             elif record.check_in:
-                status = "Half Day"
+                status = "Present"
                 duration = "In Progress"
             else:
                 status = "Absent"
@@ -733,7 +758,13 @@ def download_attendance_report_excel(request):
         else:
             check_in = "-"
             check_out = "-"
-            status = "Absent"
+
+            # ✅ Sunday logic FIXED
+            if d.weekday() == 6:
+                status = "Sunday"
+            else:
+                status = "Absent"
+
             duration = "-"
         full_attendance_list.append({
             'date': d.strftime("%b %d, %Y"),

@@ -106,7 +106,7 @@
 
 
 
-        
+       
         .sidebar .nav-item {
             position: relative;
         }
@@ -157,7 +157,7 @@
 
 
 
-        
+       
 
         /* Top Navbar Styles */
         .top-navbar {
@@ -211,7 +211,7 @@
             margin-left: 250px;
             padding: 20px;
             min-height: 100vh;
-            transition: margin-left 0.3s ease;
+            transition: margin-left 0.3s ease;    
         }
 
         /* Card styles */
@@ -620,21 +620,21 @@
     .sidebar-toggle {
         display: inline-block !important;
     }
-    
+   
     .sidebar {
         transform: translateX(-100%);
         transition: transform 0.3s ease-in-out;
         box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
     }
-    
+   
     .sidebar.show {
         transform: translateX(0);
     }
-    
+   
     .main-content {
         margin-left: 0 !important;
     }
-    
+   
     .top-navbar {
         margin-left: 0 !important;
     }
@@ -658,9 +658,9 @@
     opacity: 1;
 }
 
-/* .sidebar {
+.sidebar {
     z-index: 1000;
-} */
+}
 
 .sidebar-toggle {
     border: 1px solid #dee2e6;
@@ -741,7 +741,7 @@
         margin-top: 5px !important;
         width: 200px;
     }
-    
+   
     .navbar-nav .nav-link.dropdown-toggle {
         padding: 6px 10px;
     }
@@ -773,7 +773,7 @@
             <img src="{% static 'img/ikontellogot.png' %}" alt="Logo" height="40" class="me-2">
         </a>
     </div>
-    
+   
     <!-- Debug Info -->
     <!-- <div style="color: white; padding: 10px; font-size: 10px; background: rgba(0,255,0,0.2); margin: 10px; border-radius: 5px; border: 1px solid green;">
         <strong>✅ DYNAMIC MENU LOADED:</strong><br>
@@ -786,8 +786,8 @@
                 {% if menu.submenus %}
                     <!-- Menu with submenus -->
                     <li class="nav-item">
-                        <a class="nav-link dropdown-toggle" 
-                           href="#submenu{{ menu.id }}" 
+                        <a class="nav-link dropdown-toggle"
+                           href="#submenu{{ menu.id }}"
                            data-bs-toggle="collapse">
                             {% if menu.icon %}<i class="{{ menu.icon }}"></i>{% endif %}
                             {{ menu.name }}
@@ -822,10 +822,10 @@
     <nav class="navbar navbar-expand-lg top-navbar">
         <div class="container-fluid">
 
-            
-            <button class="btn btn-outline-secondary sidebar-toggle me-3" onclick="toggleSidebar()">
-                <i class="fas fa-bars"></i>
-            </button>
+           
+            <button class="btn btn-outline-secondary sidebar-toggle me-3" type="button" onclick="toggleSidebar()">
+    <i class="fas fa-bars"></i>
+</button>
 
 <div class="navbar-nav ms-auto d-flex align-items-center" style="flex-direction: row;">
 <!-- Celebration Badge - Always show if there are celebrations -->
@@ -839,10 +839,10 @@
     </a>
 </li>
 {% endif %}
-                
+               
 
 <div class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle d-flex align-items-center p-0" href="#" role="button" 
+    <a class="nav-link dropdown-toggle d-flex align-items-center p-0" href="#" role="button"
        data-bs-toggle="dropdown" aria-expanded="false" style="background: none; border: none;">
         <div class="user-avatar position-relative">
             {% if request.session.user_role == 'ADMIN' or request.session.user_role == 'SUPER ADMIN' %}
@@ -885,7 +885,7 @@
         <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
     </ul>
 </div>
-                
+               
 
             </div>
         </div>
@@ -916,7 +916,7 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
         <!-- FullCalendar JS -->
         <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script> 
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
         <script>
         // Initialize datepicker $(document).ready(function()
             {
@@ -931,23 +931,23 @@
 document.addEventListener('DOMContentLoaded', function() {
     const currentPath = window.location.pathname;
     console.log('Current Path:', currentPath);
-    
+   
     // Function to normalize URLs for comparison
     function normalizeUrl(url) {
         if (!url) return '';
         // Remove trailing slashes and ensure consistent format
         return url.replace(/\/+$/, '');
     }
-    
+   
     // Function to detect URL patterns
     function detectUrlPattern(url) {
         const normalized = normalizeUrl(url);
-        
+       
         // Employee detail: /employee/123/ or /employee/123/edit/
         if (normalized.match(/^\/employee\/\d+/) || normalized.match(/^\/employee\/\d+\/edit/)) {
             return 'employee-detail';
         }
-        
+       
         // Leave apply: /leave/apply/
         if (normalized === '/leave/apply') {
             return 'leave-apply';
@@ -956,20 +956,20 @@ document.addEventListener('DOMContentLoaded', function() {
         if (normalized.match(/^\/resignation\/(all|analytics|detail|submit|certificate|exit-interview|my-resignation)/)) {
             return 'resignation-pages';
         }
-        
+       
         return null;
     }
-    
+   
     // Function to check if two URLs match (exact or parent-child relationship)
     function urlMatches(menuUrl, currentUrl) {
         const normalizedMenu = normalizeUrl(menuUrl);
         const normalizedCurrent = normalizeUrl(currentUrl);
-        
+       
         // Exact match
         if (normalizedMenu === normalizedCurrent) {
             return { match: true, type: 'exact' };
         }
-        
+       
         // Special handling for employee detail/edit pages
         const currentPattern = detectUrlPattern(normalizedCurrent);
         if (currentPattern === 'employee-detail') {
@@ -978,7 +978,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return { match: true, type: 'special-employee' };
             }
         }
-        
+       
         // Special handling for leave apply page
         if (currentPattern === 'leave-apply') {
             // Match /leave/leave_details for /leave/apply/ page
@@ -986,7 +986,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return { match: true, type: 'special-leave-apply' };
             }
         }
-        
+       
         // Special handling for resignation pages
         if (currentPattern === 'resignation-pages') {
             // Match /resignation/dashboard for all resignation sub-pages
@@ -1000,14 +1000,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (normalizedMenu && normalizedCurrent.startsWith(normalizedMenu + '/')) {
             return { match: true, type: 'child' };
         }
-        
+       
         return { match: false };
     }
-    
+   
     // Function to activate menu items
     function activateMenus() {
         console.log('Activating menus for:', currentPath);
-        
+       
         // Reset all active states
         document.querySelectorAll('.sidebar .nav-link').forEach(link => {
             link.classList.remove('active');
@@ -1015,23 +1015,23 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.sidebar .collapse').forEach(collapse => {
             collapse.classList.remove('show');
         });
-        
+       
         let exactMatchFound = false;
         let parentDropdownToActivate = null;
-        
+       
         // STEP 1: Check for special patterns first
         const currentPattern = detectUrlPattern(currentPath);
-        
+       
         if (currentPattern === 'employee-detail' || currentPattern === 'leave-apply'|| currentPattern === 'resignation-pages') {
             document.querySelectorAll('.sidebar .nav-link:not(.dropdown-toggle)').forEach(link => {
                 const href = link.getAttribute('href');
                 const matchResult = urlMatches(href, currentPath);
-                
+               
                 if (matchResult.match && (matchResult.type === 'special-employee' || matchResult.type === 'special-leave-apply'|| matchResult.type === 'special-resignation')) {
                     link.classList.add('active');
                     exactMatchFound = true;
                     console.log('✅ Special pattern match found:', href, 'for pattern:', currentPattern);
-                    
+                   
                     // Expand parent dropdown if this is a submenu item
                     const parentCollapse = link.closest('.collapse');
                     if (parentCollapse) {
@@ -1046,18 +1046,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
-        
+       
         // STEP 2: Find exact matches (if no special pattern matched)
         if (!exactMatchFound) {
             document.querySelectorAll('.sidebar .nav-link:not(.dropdown-toggle)').forEach(link => {
                 const href = link.getAttribute('href');
                 const matchResult = urlMatches(href, currentPath);
-                
+               
                 if (matchResult.match && matchResult.type === 'exact') {
                     link.classList.add('active');
                     exactMatchFound = true;
                     console.log('✅ Exact match found:', href);
-                    
+                   
                     // Expand parent dropdown if this is a submenu item
                     const parentCollapse = link.closest('.collapse');
                     if (parentCollapse) {
@@ -1072,18 +1072,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
-        
+       
         // STEP 3: If no exact match, check for child URLs
         if (!exactMatchFound) {
             console.log('⚠️ No exact match found, checking for parent matches');
-            
+           
             let bestMatch = { link: null, specificity: 0 };
-            
+           
             // Find the most specific parent match
             document.querySelectorAll('.sidebar .nav-link:not(.dropdown-toggle)').forEach(link => {
                 const href = link.getAttribute('href');
                 const matchResult = urlMatches(href, currentPath);
-                
+               
                 if (matchResult.match && matchResult.type === 'child') {
                     const specificity = normalizeUrl(href).split('/').length;
                     if (specificity > bestMatch.specificity) {
@@ -1091,12 +1091,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             });
-            
+           
             // Activate the best match
             if (bestMatch.link) {
                 bestMatch.link.classList.add('active');
                 console.log('✅ Parent match found:', bestMatch.link.getAttribute('href'));
-                
+               
                 // Expand parent dropdown
                 const parentCollapse = bestMatch.link.closest('.collapse');
                 if (parentCollapse) {
@@ -1111,19 +1111,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 exactMatchFound = true;
             }
         }
-        
+       
         // STEP 4: If still no match, check dropdown toggles themselves
         if (!exactMatchFound) {
             document.querySelectorAll('.sidebar .dropdown-toggle').forEach(toggle => {
                 const href = toggle.getAttribute('href');
-                
+               
                 // Skip if href is just an anchor (like #submenu-something)
                 if (href && href.startsWith('#')) {
                     return;
                 }
-                
+               
                 const matchResult = urlMatches(href, currentPath);
-                
+               
                 if (matchResult.match) {
                     toggle.classList.add('active');
                     const submenuId = toggle.getAttribute('href');
@@ -1138,7 +1138,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
-        
+       
         // STEP 5: Dashboard fallback
         if (!exactMatchFound && (currentPath === '/' || currentPath === '/dashboard' || currentPath === '/dashboard/')) {
             const dashboardLink = document.querySelector('.sidebar .nav-link[href*="dashboard"]');
@@ -1147,13 +1147,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('🏠 Activated dashboard');
             }
         }
-        
+       
         console.log('🎯 Menu activation completed. Match found:', exactMatchFound);
     }
-    
+   
     // Initialize menu activation
     activateMenus();
-    
+   
     // Add click handlers to maintain active state
     document.querySelectorAll('.sidebar .nav-link').forEach(link => {
         link.addEventListener('click', function(e) {
@@ -1161,17 +1161,17 @@ document.addEventListener('DOMContentLoaded', function() {
             if (this.classList.contains('dropdown-toggle')) {
                 return;
             }
-            
+           
             console.log('🖱️ Menu item clicked:', this.getAttribute('href'));
-            
+           
             // Remove active class from all non-dropdown links
             document.querySelectorAll('.sidebar .nav-link:not(.dropdown-toggle)').forEach(l => {
                 l.classList.remove('active');
             });
-            
+           
             // Add active class to clicked link
             this.classList.add('active');
-            
+           
             // Activate parent dropdown if exists
             const parentCollapse = this.closest('.collapse');
             if (parentCollapse) {
@@ -1212,7 +1212,7 @@ document.addEventListener('DOMContentLoaded', function() {
         overlay.className = 'sidebar-overlay';
         overlay.id = 'sidebarOverlay';
         document.body.appendChild(overlay);
-        
+       
         overlay.addEventListener('click', function() {
             toggleSidebar();
         });
@@ -1223,11 +1223,11 @@ document.addEventListener('DOMContentLoaded', function() {
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
-    
+   
     if (sidebar && overlay) {
         sidebar.classList.toggle('show');
         overlay.classList.toggle('show');
-        
+       
         if (sidebar.classList.contains('show')) {
             document.body.style.overflow = 'hidden';
         } else {
@@ -1239,7 +1239,7 @@ function toggleSidebar() {
 // Close sidebar when clicking menu item on mobile
 document.addEventListener('DOMContentLoaded', function() {
     const navLinks = document.querySelectorAll('.sidebar .nav-link:not(.dropdown-toggle)');
-    
+   
     navLinks.forEach(function(link) {
         link.addEventListener('click', function() {
             if (window.innerWidth <= 768) {
@@ -1255,7 +1255,7 @@ document.addEventListener('DOMContentLoaded', function() {
 window.addEventListener('resize', function() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
-    
+   
     if (window.innerWidth > 768 && sidebar && sidebar.classList.contains('show')) {
         sidebar.classList.remove('show');
         if (overlay) {
@@ -1309,7 +1309,7 @@ window.addEventListener('resize', function() {
                                 </div>
                                 <!-- Wish Button - Hide for current user -->
                                 {% if not birthday.is_current_user %}
-                                <button class="btn btn-sm btn-outline-primary wish-btn position-absolute top-0 end-0 m-2" 
+                                <button class="btn btn-sm btn-outline-primary wish-btn position-absolute top-0 end-0 m-2"
                                         data-celebrant-id="{{ birthday.id }}"
                                         data-celebrant-name="{{ birthday.name }}"
                                         data-wish-type="birthday">
@@ -1317,7 +1317,7 @@ window.addEventListener('resize', function() {
                                 </button>
                                 {% else %}
                                 <!-- View Wishes Button for current user -->
-                                <button class="btn btn-sm btn-outline-info view-wishes-btn position-absolute top-0 end-0 m-2" 
+                                <button class="btn btn-sm btn-outline-info view-wishes-btn position-absolute top-0 end-0 m-2"
                                         data-celebrant-id="{{ birthday.id }}"
                                         data-celebrant-name="{{ birthday.name }}"
                                         data-wish-type="birthday">
@@ -1367,7 +1367,7 @@ window.addEventListener('resize', function() {
                                 </button>
                                 {% else %}
                                 <!-- View Wishes Button for current user -->
-                                <button class="btn btn-sm btn-outline-info view-wishes-btn position-absolute top-0 end-0 m-2" 
+                                <button class="btn btn-sm btn-outline-info view-wishes-btn position-absolute top-0 end-0 m-2"
                                         data-celebrant-id="{{ anniversary.id }}"
                                         data-celebrant-name="{{ anniversary.name }}"
                                         data-wish-type="work_anniversary">
@@ -1417,7 +1417,7 @@ window.addEventListener('resize', function() {
                                 </button>
                                 {% else %}
                                 <!-- View Wishes Button for current user -->
-                                <button class="btn btn-sm btn-outline-info view-wishes-btn position-absolute top-0 end-0 m-2" 
+                                <button class="btn btn-sm btn-outline-info view-wishes-btn position-absolute top-0 end-0 m-2"
                                         data-celebrant-id="{{ anniversary.id }}"
                                         data-celebrant-name="{{ anniversary.name }}"
                                         data-wish-type="marriage_anniversary">
@@ -1451,18 +1451,18 @@ window.addEventListener('resize', function() {
                         <form id="wishForm">
                             <input type="hidden" id="celebrantId" name="celebrant_id">
                             <input type="hidden" id="wishType" name="wish_type">
-                            
+                           
                             <div class="mb-3">
                                 <label class="form-label">To: <strong id="celebrantName"></strong></label>
                                 <label class="form-label float-end" id="wishTypeLabel"></label>
                             </div>
-                            
+                           
                             <div class="mb-3">
                                 <label for="wishMessage" class="form-label">Your Message:</label>
-                                <textarea class="form-control" id="wishMessage" name="message" rows="4" 
+                                <textarea class="form-control" id="wishMessage" name="message" rows="4"
                                           placeholder="Write your warm wishes here..." required></textarea>
                             </div>
-                            
+                           
                             <div class="mb-3">
                                 <small class="text-muted">
                                     <i class="fas fa-info-circle me-1"></i>
@@ -1470,7 +1470,7 @@ window.addEventListener('resize', function() {
                                 </small>
                             </div>
                         </form>
-                        
+                       
                         <!-- Previous Wishes Section -->
                         <div id="previousWishes" class="mt-4" style="display: none;">
                             <h6 class="border-bottom pb-2">Recent Wishes:</h6>
@@ -1495,11 +1495,11 @@ window.addEventListener('resize', function() {
 document.addEventListener('DOMContentLoaded', function() {
     // Check if we should auto-show the celebration modal
     const celebrationModalElement = document.getElementById('celebrationModal');
-    
+   
     if (celebrationModalElement) {
         // Check if we've already shown the modal in this session
         const hasSeenCelebrations = sessionStorage.getItem('celebrationModalShown');
-        
+       
         if (!hasSeenCelebrations) {
             // First time visiting - auto-show modal after delay
             setTimeout(function() {
@@ -1508,7 +1508,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 sessionStorage.setItem('celebrationModalShown', 'true');
             }, 1500);
         }
-        
+       
         // Always initialize wish buttons
         initializeWishButtons();
     }
@@ -1522,7 +1522,7 @@ function openCelebrationModal() {
 // Safe function to show celebration modal
 function showCelebrationModal() {
     const celebrationModalElement = document.getElementById('celebrationModal');
-    
+   
     if (celebrationModalElement) {
         const celebrationModal = new bootstrap.Modal(celebrationModalElement);
         celebrationModal.show();
@@ -1540,7 +1540,7 @@ function initializeWishButtons() {
             const celebrantId = this.getAttribute('data-celebrant-id');
             const celebrantName = this.getAttribute('data-celebrant-name');
             const wishType = this.getAttribute('data-wish-type');
-            
+           
             openWishModal(celebrantId, celebrantName, wishType);
         });
     });
@@ -1551,7 +1551,7 @@ function initializeWishButtons() {
             const celebrantId = this.getAttribute('data-celebrant-id');
             const celebrantName = this.getAttribute('data-celebrant-name');
             const wishType = this.getAttribute('data-wish-type');
-            
+           
             openViewWishesModal(celebrantId, celebrantName, wishType);
         });
     });
@@ -1563,36 +1563,36 @@ function openWishModal(celebrantId, celebrantName, wishType) {
         console.error('Wish modal not found');
         return;
     }
-    
+   
     // Set modal content
     document.getElementById('celebrantId').value = celebrantId;
     document.getElementById('celebrantName').textContent = celebrantName;
     document.getElementById('wishType').value = wishType;
-    
+   
     // Set wish type label
     const wishTypeLabels = {
         'birthday': '🎂 Birthday',
-        'work_anniversary': '🏆 Work Anniversary', 
+        'work_anniversary': '🏆 Work Anniversary',
         'marriage_anniversary': '💖 Marriage Anniversary'
     };
     document.getElementById('wishTypeLabel').textContent = wishTypeLabels[wishType];
-    
+   
     // Clear previous message
     document.getElementById('wishMessage').value = '';
-    
+   
     // Show send wish form and hide view-only mode
     document.getElementById('wishMessage').disabled = false;
     document.getElementById('sendWishBtn').style.display = 'block';
     document.querySelector('label[for="wishMessage"]').textContent = 'Your Message:';
     document.getElementById('wishMessage').style.display = 'block';
     document.querySelector('label[for="wishMessage"]').style.display = 'block';
-    
+   
     // Reset modal title
     document.getElementById('wishModalLabel').innerHTML = '<i class="fas fa-gift me-2"></i>Send Your Wish';
-    
+   
     // Load previous wishes WITH TYPE FILTER
     loadPreviousWishes(celebrantId, wishType);
-    
+   
     // Show modal
     const wishModal = new bootstrap.Modal(wishModalElement);
     wishModal.show();
@@ -1603,29 +1603,29 @@ function openViewWishesModal(celebrantId, celebrantName, wishType) {
         console.error('Wish modal not found');
         return;
     }
-    
+   
     // Set modal content for view-only mode
     document.getElementById('celebrantId').value = celebrantId;
     document.getElementById('celebrantName').textContent = celebrantName;
     document.getElementById('wishType').value = wishType;
-    
+   
     // Set wish type label
     const wishTypeLabels = {
         'birthday': '🎂 Your Birthday Wishes',
-        'work_anniversary': '🏆 Your Work Anniversary Wishes', 
+        'work_anniversary': '🏆 Your Work Anniversary Wishes',
         'marriage_anniversary': '💖 Your Marriage Anniversary Wishes'
     };
     document.getElementById('wishModalLabel').innerHTML = '<i class="fas fa-eye me-2"></i>Your Wishes';
     document.getElementById('wishTypeLabel').textContent = wishTypeLabels[wishType];
-    
+   
     // Hide send form and show view-only mode
     document.getElementById('wishMessage').style.display = 'none';
     document.querySelector('label[for="wishMessage"]').style.display = 'none';
     document.getElementById('sendWishBtn').style.display = 'none';
-    
+   
     // Load wishes WITH TYPE FILTER
     loadPreviousWishes(celebrantId, wishType);
-    
+   
     // Show modal
     const wishModal = new bootstrap.Modal(wishModalElement);
     wishModal.show();
@@ -1636,13 +1636,13 @@ function loadPreviousWishes(celebrantId, wishType = null,) {
     if (wishType) {
         url += `?wish_type=${wishType}`;
     }
-    
+   
     fetch(url)
         .then(response => response.json())
         .then(data => {
             const wishesList = document.getElementById('wishesList');
             const previousWishes = document.getElementById('previousWishes');
-            
+           
             if (wishesList && previousWishes) {
                 if (data.wishes && data.wishes.length > 0) {
                     wishesList.innerHTML = '';
@@ -1685,17 +1685,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 wish_type: document.getElementById('wishType').value,
                 message: document.getElementById('wishMessage').value
             };
-            
+           
             if (!formData.message.trim()) {
                 alert('Please write a message before sending.');
                 return;
             }
-            
+           
             // Disable button and show loading
             const btn = this;
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Sending...';
-            
+           
             // Send wish
             fetch('/send-celebration-wish/', {
                 method: 'POST',
@@ -1710,7 +1710,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     // Show success message
                     alert('🎉 Wish sent successfully!');
-                    
+                   
                     // Close modals
                     const wishModalElement = document.getElementById('wishModal');
                     if (wishModalElement) {
@@ -1719,7 +1719,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             wishModal.hide();
                         }
                     }
-                    
+                   
                     // Reload wishes if needed
                     loadPreviousWishes(formData.celebrant_id);
                 } else {
@@ -1736,6 +1736,131 @@ document.addEventListener('DOMContentLoaded', function() {
                 btn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Send Wish';
             });
         });
+    }
+});
+
+// Improved sidebar functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize sidebar and overlay
+    initializeSidebar();
+   
+    // Close sidebar when clicking menu items on mobile
+    setupSidebarLinks();
+   
+    // Handle window resize
+    setupResizeHandler();
+});
+
+// Initialize sidebar and create overlay if needed
+function initializeSidebar() {
+    // Create overlay if it doesn't exist
+    if (!document.querySelector('.sidebar-overlay')) {
+        const overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        overlay.id = 'sidebarOverlay';
+        document.body.appendChild(overlay);
+    }
+}
+
+// Setup sidebar toggle function
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+   
+    // Ensure overlay exists
+    if (!overlay) {
+        initializeSidebar();
+        return toggleSidebar(); // Retry after creating overlay
+    }
+   
+    if (sidebar && overlay) {
+        const isShowing = sidebar.classList.contains('show');
+       
+        if (isShowing) {
+            // Close sidebar
+            sidebar.classList.remove('show');
+            overlay.classList.remove('show');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        } else {
+            // Open sidebar
+            sidebar.classList.add('show');
+            overlay.classList.add('show');
+            document.body.style.overflow = 'hidden';
+           
+            // Add click event to overlay to close sidebar
+            overlay.onclick = function() {
+                toggleSidebar();
+            };
+           
+            // Add escape key handler
+            document.addEventListener('keydown', function escapeHandler(e) {
+                if (e.key === 'Escape') {
+                    toggleSidebar();
+                    document.removeEventListener('keydown', escapeHandler);
+                }
+            });
+        }
+    }
+}
+
+// Setup sidebar links to close sidebar on mobile when clicked
+function setupSidebarLinks() {
+    const navLinks = document.querySelectorAll('.sidebar .nav-link:not(.dropdown-toggle)');
+   
+    navLinks.forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            // For dropdown toggles, don't close the sidebar
+            if (this.classList.contains('dropdown-toggle')) {
+                return;
+            }
+           
+            // For regular links on mobile, close sidebar
+            if (window.innerWidth <= 768) {
+                setTimeout(function() {
+                    toggleSidebar();
+                }, 300);
+            }
+        });
+    });
+}
+
+// Handle window resize to auto-close sidebar on desktop
+function setupResizeHandler() {
+    let resizeTimer;
+   
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+       
+        resizeTimer = setTimeout(function() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+           
+            if (window.innerWidth > 768) {
+                // Close sidebar on desktop
+                if (sidebar && sidebar.classList.contains('show')) {
+                    sidebar.classList.remove('show');
+                    if (overlay) {
+                        overlay.classList.remove('show');
+                    }
+                    document.body.style.overflow = '';
+                    document.body.style.paddingRight = '';
+                }
+            }
+        }, 250); // Debounce resize events
+    });
+}
+
+// Close sidebar when clicking outside on mobile
+document.addEventListener('click', function(event) {
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.querySelector('.sidebar-toggle');
+   
+    if (sidebar && sidebar.classList.contains('show') &&
+        window.innerWidth <= 768 &&
+        !sidebar.contains(event.target) &&
+        !sidebarToggle.contains(event.target)) {
+        toggleSidebar();
     }
 });
         </script>

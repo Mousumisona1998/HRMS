@@ -310,11 +310,11 @@
           {% endif %}
 
           <!-- HR Signature -->
-          {% if user_role in 'HR,ADMIN,SUPER ADMIN' and not exit_interview.hr_signature %}
+          {% if user_role in 'HR,ADMIN,SUPER ADMIN' and not exit_interview.hr_signature and not is_self_resignation %}
             <div class="col-md-6">
               <div class="custom-card">
                 <div class="card-header">
-                  <h5 class="card-title mb-0"><� HR Digital Signature</h5>
+                  <h5 class="card-title mb-0">HR Digital Signature</h5>
                 </div>
                 <div class="card-body">
                   <form method="POST">
