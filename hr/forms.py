@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
-from .models import Admin, AllowedDomain, Employee ,Role,Location,Department,Designation,EmployeeWarning
+from .models import Admin, AllowedDomain, Employee, MessageSubType ,Role,Location,Department,Designation,EmployeeWarning,MessageCategory
 
 class CustomAuthenticationForm(AuthenticationForm):
     username = forms.EmailField(
@@ -159,46 +159,54 @@ class RoleForm(forms.ModelForm):
         return name
 # --------------------------------------------------------------------------------------
 class EmployeeWarningForm(forms.ModelForm):
-    employee = forms.ModelChoiceField(
-        queryset=Employee.objects.all(),
-        label="Employee",
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
 
     class Meta:
         model = EmployeeWarning
-        fields = ['employee', 'message_category', 'warning_type', 'appreciation_type', 'subject', 'description', 'warning_date']
+        fields = ['employee_code', 'message_category', 'sub_type', 'subject', 'description', 'warning_date']
 
         widgets = {
-            'message_category': forms.Select(attrs={'class': 'form-select'}),
-            'warning_type': forms.Select(attrs={'class': 'form-select'}),
-            'appreciation_type': forms.Select(attrs={'class': 'form-select'}),
             'subject': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter subject'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Enter description'}),
-            'warning_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'warning_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
         }
 
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        instance.employee_code = self.cleaned_data['employee'].employee_id
-        # ✅ if Appreciation, ensure warning_type is empty
-        if self.cleaned_data.get('message_category') == 'Appreciation':
-            instance.warning_type = None
-        if commit:
-            instance.save()
-        return instance
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Category dropdown should load categories
+        self.fields['message_category'].queryset = MessageCategory.objects.filter(is_active=True)
+
+        # Subtype empty by default
+        self.fields['sub_type'].queryset = MessageSubType.objects.none()
+
+        # Handle AJAX post load
+        if 'message_category' in self.data:
+            try:
+                cat_id = int(self.data.get('message_category'))
+                self.fields['sub_type'].queryset = MessageSubType.objects.filter(
+                    category_id=cat_id, is_active=True
+                )
+            except:
+                pass
+
+        # Editing case
+        elif self.instance.pk:
+            cat = MessageCategory.objects.filter(name=self.instance.message_category).first()
+            if cat:
+                self.fields['sub_type'].queryset = MessageSubType.objects.filter(
+                    category=cat, is_active=True
+                )
+
 
     def clean(self):
         cleaned = super().clean()
-        msg = cleaned.get('message_category')
-        wtype = cleaned.get('warning_type')
-        atype = cleaned.get('appreciation_type')
-        # ✅ Require warning_type for Warnings only
-        if msg == 'Warning' and not wtype:
-            self.add_error('warning_type', 'This field is required for Warnings.')
-             # Require appreciation_type for Appreciation
-        if msg == 'Appreciation' and not atype:
-            self.add_error('appreciation_type', 'This field is required for Appreciation.')
+        category = cleaned.get('message_category')
+        subtype = cleaned.get('sub_type')
+
+        # Validation: Subtype must be selected
+        if category and not subtype:
+            self.add_error('sub_type', "Please select a valid type for this message category.")
+
         return cleaned
 
     

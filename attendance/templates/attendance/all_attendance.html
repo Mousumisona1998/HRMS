@@ -181,7 +181,7 @@
           <!-- Date -->
           <td style="color: #111827; font-weight: 500;" 
               data-order="{{ attendance.date|date:'Y-m-d' }}">
-              {{ attendance.date|date:"M d, Y" }}
+              {{ attendance.date|date:"d M, Y"}}
           </td>
 
            <!-- Check-In -->
@@ -241,7 +241,7 @@
 
                       {% elif attendance.day_status == "Sunday" %}
                           <span style="background:#dbeafe; color:#1e3a8a; font-weight:600; padding:4px 12px; border-radius:8px;">
-                              Sunday
+                              Week off
                           </span>
                       {% else %}
                           <span style="background:#fee2e2; color:#b91c1c; font-weight:600; padding:4px 12px; border-radius:8px;">

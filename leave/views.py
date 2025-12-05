@@ -551,24 +551,113 @@ def leave_list(request):
     
     return render(request, 'leave/leave_list.html', context)
 
-def calculate_working_days(start_date, end_date):
+def calculate_working_days_with_optional(start_date, end_date, location=None):
     """
-    Calculate working days between two dates, excluding weekends.
-    You can also add holiday exclusion logic here.
+    Calculate working days between two dates, excluding:
+    - Sundays (only Sunday, not Saturday)
+    - National holidays (region=None or 'National') where is_optional=False
+    - State holidays for the employee's location where is_optional=False
+    
+    BUT INCLUDING:
+    - Optional holidays (is_optional=True) - count as working days
+    - Saturdays - count as working days
+    
+    Args:
+        start_date (date): Start date
+        end_date (date): End date
+        location (str): Employee's location/region name
+    
+    Returns:
+        int: Number of working days
     """
     if start_date > end_date:
-        return 0
+        return {
+            'working_days': 0,
+            'optional_holidays': [],
+            'mandatory_holidays': [],
+            'total_calendar_days': 0
+        }
     
     working_days = 0
     current_date = start_date
     
+    # Get mandatory holidays (National + State, non-optional)
+    mandatory_holiday_dates = set()
+    
+    # National mandatory holidays (holiday_type = 'National Holiday' AND is_optional = False)
+    national_holidays = Holiday.objects.filter(
+        Q(holiday_type__iexact='National Holiday'),
+        date__gte=start_date,
+        date__lte=end_date,
+        is_optional=False
+    ).values_list('date', flat=True)
+    
+    mandatory_holiday_dates.update(national_holidays)
+    
+    # State mandatory holidays for the specific location
+    if location:
+        matching_region = Location.objects.filter(
+            name__iexact=location
+        ).first()
+        
+        if matching_region:
+            state_holidays = Holiday.objects.filter(
+                region=matching_region,
+                holiday_type__iexact='State Holiday',
+                date__gte=start_date,
+                date__lte=end_date,
+                is_optional=False
+            ).values_list('date', flat=True)
+            
+            mandatory_holiday_dates.update(state_holidays)
+    
+    # Get optional holidays (holiday_type = 'Optional Holiday' AND is_optional = True)
+    optional_holidays_query = Holiday.objects.filter(
+        holiday_type__iexact='Optional Holiday',
+        date__gte=start_date,
+        date__lte=end_date,
+        is_optional=True
+    )
+    
+    # Filter by region if location provided
+    if location:
+        matching_region = Location.objects.filter(name__iexact=location).first()
+        if matching_region:
+            optional_holidays_query = optional_holidays_query.filter(
+                Q(region=matching_region) | Q(region__isnull=True)
+            )
+    
+    optional_holidays_list = []
+    optional_holiday_dates = set()
+    
+    for holiday in optional_holidays_query:
+        optional_holidays_list.append({
+            'date': holiday.date,
+            'name': holiday.name,
+            'region': holiday.region.name if holiday.region else 'National',
+            'id': holiday.id
+        })
+        optional_holiday_dates.add(holiday.date)
+    
+    # Calculate working days (exclude Sundays and mandatory holidays)
+    total_calendar_days = 0
     while current_date <= end_date:
-        # Check if it's a weekday (Monday=0, Sunday=6)
-        if current_date.weekday() < 6:  # Monday to Friday
+        total_calendar_days += 1
+        
+        # Exclude Sundays (weekday 6) and mandatory holidays
+        # Optional holidays are COUNTED as working days initially
+        if current_date.weekday() != 6 and current_date not in mandatory_holiday_dates:
             working_days += 1
+        
         current_date += timedelta(days=1)
     
-    return working_days
+    return {
+        'working_days': working_days,
+        'optional_holidays': optional_holidays_list,
+        'mandatory_holidays': list(mandatory_holiday_dates),
+        'total_calendar_days': total_calendar_days
+    }
+
 
 def apply_leave(request):
     user_email = request.session.get('user_email')
@@ -587,25 +676,26 @@ def apply_leave(request):
             end_date = request.POST.get('end_date')
             reason = request.POST.get('reason')
             
-            # Get half-day data from form
+            # Get optional holidays that user wants to use
+            selected_optional_holidays = request.POST.getlist('optional_holidays')
+            
+            # Half-day data
             is_half_day = request.POST.get('is_half_day', 'false') == 'true'
             half_day_period = request.POST.get('half_day_period', '')
-            total_days_str = request.POST.get('total_days', '0')
             
-            # Debug logging
             print(f"DEBUG Apply Leave:")
             print(f"leave_type_id: '{leave_type_id}'")
             print(f"start_date: '{start_date}'")
             print(f"end_date: '{end_date}'")
             print(f"reason: '{reason}'")
-            print(f"All POST data: {dict(request.POST)}")
+            print(f"selected_optional_holidays: {selected_optional_holidays}")
             
             # For half-day leaves, set end_date to start_date if empty
             if is_half_day and (not end_date or end_date.strip() == '' or end_date == 'DD-MM-YYYY'):
                 end_date = start_date
                 print(f"Half-day: Auto-set end_date to start_date: {end_date}")
             
-            # Validate required fields with detailed checks
+            # Validate required fields
             missing_fields = []
             if not leave_type_id or leave_type_id.strip() == '' or leave_type_id == 'Select Leave Type':
                 missing_fields.append('Leave Type')
@@ -626,18 +716,18 @@ def apply_leave(request):
                 end_date_obj = datetime.strptime(end_date, '%d-%m-%Y').date()
             except (ValueError, TypeError) as e:
                 print(f"Date parsing error: {e}")
-                messages.error(request, 'Invalid date format. Please select valid dates.')
+                messages.warning(request, 'Invalid date format. Please select valid dates.')
                 return redirect('apply_leave')
             
             if start_date_obj > end_date_obj:
-                messages.error(request, 'Start date cannot be after end date.')
+                messages.warning(request, 'Start date cannot be after end date.')
                 return redirect('apply_leave')
             
             if start_date_obj < date.today():
-                messages.error(request, 'Cannot apply for leave in the past.')
+                messages.warning(request, 'Cannot apply for leave in the past.')
                 return redirect('apply_leave')
             
-            # ✅ CHECK FOR OVERLAPPING LEAVES
+            # Check for overlapping leaves
             overlapping_leaves = Leave.objects.filter(
                 employee=employee,
                 status__in=['pending', 'approved'],
@@ -654,241 +744,607 @@ def apply_leave(request):
                         f"({leave.leave_type.name} - {status_display})"
                     )
                 
-                messages.error(
-                    request, 
+                messages.warning(
+                    request,
                     f'❌ Leave date conflict! You already have leaves on these dates: {", ".join(overlap_details)}'
                 )
                 return redirect('apply_leave')
             
             # Validate half-day period selection
             if is_half_day and not half_day_period:
-                messages.error(request, 'Please select first half or second half for half-day leave.')
+                messages.warning(request, 'Please select first half or second half for half-day leave.')
                 return redirect('apply_leave')
             
-            # Convert total_days from form (frontend calculated)
-            try:
-                total_days = Decimal(total_days_str)
-            except:
-                total_days = Decimal('0')
-
-            # Debug logging
-            print(f"DEBUG: is_half_day={is_half_day}, total_days={total_days}, total_days_str={total_days_str}")
-
-            # IMPORTANT: Force 0.5 for half-day leaves
+            # Calculate working days
             if is_half_day:
-                total_days = Decimal('0.5')
-                print(f"Half-day detected: Forcing total_days to 0.5")
-            elif total_days <= 0:
-                # Backend calculation as fallback
-                from datetime import timedelta
-                working_days = 0
-                current_date = start_date_obj
-                while current_date <= end_date_obj:
-                    # Monday=0, Sunday=6
-                    if current_date.weekday() < 6:  # Monday to Friday
-                        working_days += 1
-                    current_date += timedelta(days=1)
-                total_days = Decimal(str(working_days))
+                total_working_days = Decimal('0.5')
+                days_calculation = {
+                    'working_days': 0.5,
+                    'optional_holidays': [],
+                    'mandatory_holidays': [],
+                    'total_calendar_days': 1
+                }
+                print(f"Half-day detected: Setting total_working_days to 0.5")
+            else:
+                days_calculation = calculate_working_days_with_optional(
+                    start_date=start_date_obj,
+                    end_date=end_date_obj,
+                    location=employee.location
+                )
+                total_working_days = Decimal(str(days_calculation['working_days']))
+                print(f"✅ Backend calculated working days: {days_calculation}")
+                print(f"✅ Total working days (including optional holidays): {total_working_days}")
             
             # Final check
-            if total_days <= 0:
-                messages.error(request, 'No working days in the selected date range. Please check your dates.')
+            if not is_half_day and total_working_days <= 0:
+                messages.warning(request, 'No working days in the selected date range. Please check your dates.')
                 return redirect('apply_leave')
             
             # Get requested leave type
             try:
                 requested_leave_type = LeaveType.objects.get(id=leave_type_id)
             except LeaveType.DoesNotExist:
-                messages.error(request, 'Invalid leave type selected.')
+                messages.warning(request, 'Invalid leave type selected.')
                 return redirect('apply_leave')
             
-            # FIXED: Partial paid/unpaid logic
-            is_partial_unpaid = False
-            paid_days = Decimal('0.00')
-            unpaid_days = Decimal('0.00')
-            final_leave_type = requested_leave_type
+            # Check if requested leave type is Optional Leave
+            is_optional_leave_type = 'optional' in requested_leave_type.name.lower()
             
-            # Get balance ONLY for the specific requested leave type
-            balance = LeaveBalance.objects.filter(
-                employee=employee, 
-                leave_type=requested_leave_type,
-                year=date.today().year
-            )
-            
-            print(f"DEBUG: Checking balance for {requested_leave_type.name}")
-            print(f"DEBUG: Found {balance.count()} balance records")
-            
-            if balance.exists():
-                # Calculate total available balance from all records of THIS specific leave type
-                total_available_balance = sum(
-                    Decimal(str(balance.leaves_remaining)) for balance in balance
-                )
+            # SPECIAL VALIDATION: If Optional Leave type is selected, check if dates contain optional holidays
+            if is_optional_leave_type and not is_half_day:
+                # Get optional holidays for the date range
+                optional_holidays_in_range = days_calculation['optional_holidays']
+                optional_dates_in_range = {holiday['date'] for holiday in optional_holidays_in_range}
                 
-                print(f"DEBUG: Total available balance for {requested_leave_type.name}: {total_available_balance}")
-                print(f"DEBUG: Requested days: {total_days}")
-                
-                if total_available_balance >= total_days:
-                    # Sufficient balance - fully paid leave
-                    paid_days = total_days
-                    unpaid_days = Decimal('0.00')
-                    is_partial_unpaid = False
-                    print(f"DEBUG: ✅ Sufficient balance. Fully PAID leave.")
-                    
-                elif total_available_balance > 0:
-                    # Partial balance - part paid, part unpaid
-                    paid_days = total_available_balance
-                    unpaid_days = total_days - total_available_balance
-                    is_partial_unpaid = True
-                    
-                    # Get unpaid leave type
-                    unpaid_leave_type = LeaveType.objects.filter(
-                        is_active=True,
-                        name__icontains='unpaid'
-                    ).first()
-                    
-                    if unpaid_leave_type:
-                        # For partial unpaid, we need to create TWO leave records
-                        # One for paid portion, one for unpaid portion
-                        
-                        # Create paid leave record
-                        paid_leave = Leave(
-                            employee=employee,
-                            leave_type=requested_leave_type,
-                            colour=getattr(requested_leave_type, 'colour', '#667eea'),
-                            start_date=start_date_obj,
-                            end_date=end_date_obj,
-                            days_requested=paid_days,
-                            reason=f"{reason} (Paid portion)",
-                            status='pending',
-                            applied_date=timezone.now(),
-                            is_half_day=is_half_day,
-                            half_day_period=half_day_period if is_half_day else None,
-                            is_unpaid=False
-                        )
-                        paid_leave.save()
-                        
-                        # Create unpaid leave record
-                        unpaid_leave = Leave(
-                            employee=employee,
-                            leave_type=unpaid_leave_type,
-                            colour=getattr(unpaid_leave_type, 'colour', '#dc3545'),
-                            start_date=start_date_obj,
-                            end_date=end_date_obj,
-                            days_requested=unpaid_days,
-                            reason=f"{reason} (Unpaid portion)",
-                            status='pending',
-                            applied_date=timezone.now(),
-                            is_half_day=False,  # Unpaid can't be half-day
-                            half_day_period=None,
-                            is_unpaid=True
-                        )
-                        unpaid_leave.save()
-                        
-                        messages.warning(
-                            request, 
-                            f'⚠️ Partial balance available! '
-                            f'Application split into: {paid_days} days PAID + {unpaid_days} days UNPAID. '
-                            f'Salary deduction will apply for {unpaid_days} days.'
-                        )
-                        print(f"DEBUG: ⚠️ Partial balance. Split into {paid_days} paid + {unpaid_days} unpaid.")
-                        
-                        return redirect('employee_leave_details')
-                    else:
-                        messages.error(request, 'Unpaid leave type not configured. Please contact HR.')
-                        return redirect('apply_leave')
-                else:
-                    # No available balance - fully unpaid
-                    paid_days = Decimal('0.00')
-                    unpaid_days = total_days
-                    is_partial_unpaid = True
-            else:
-                # No balance exists - fully unpaid
-                paid_days = Decimal('0.00')
-                unpaid_days = total_days
-                is_partial_unpaid = True
-            
-            # If we reach here, it's either fully paid or fully unpaid (not partial)
-            if is_partial_unpaid and unpaid_days > 0:
-                # Fully unpaid leave
-                unpaid_leave_type = LeaveType.objects.filter(
-                    is_active=True,
-                    name__icontains='unpaid'
-                ).first()
-                
-                if unpaid_leave_type:
-                    final_leave_type = unpaid_leave_type
-                    
-                    # Ensure unpaid leave balance exists
-                    unpaid_balance = AutoLeaveBalanceService.ensure_unpaid_leave_balance(employee)
-                    
-                    messages.warning(
+                if not optional_dates_in_range:
+                    messages.error(
                         request,
-                        f'⚠️ No {requested_leave_type.name} balance available. '
-                        f'Application will be submitted as UNPAID LEAVE. Salary will be deducted for {unpaid_days} days.'
+                        '❌ Cannot use Optional Leave type for selected dates. '
+                        'The selected date range does not contain any optional holidays. '
+                        'Please select a different leave type or choose dates that include optional holidays.'
                     )
-                    print(f"DEBUG: ❌ No balance. Fully UNPAID leave.")
-                else:
-                    messages.error(request, 'Unpaid leave type not configured. Please contact HR.')
                     return redirect('apply_leave')
             
-            # Get leave type color (with fallback)
-            leave_colour = getattr(final_leave_type, 'colour', '#667eea')
-            if not leave_colour:
-                leave_colour = '#667eea'
+            # ============================================
+            # HANDLE OPTIONAL HOLIDAYS
+            # ============================================
+            optional_days_count = 0
+            valid_selected_holidays = []
             
-            # Create leave application
-            print(f"Creating Leave object with days_requested={total_days}, is_unpaid={is_partial_unpaid}")
-            leave = Leave(
-                employee=employee,
-                leave_type=final_leave_type,
-                colour=leave_colour,
-                start_date=start_date_obj,
-                end_date=end_date_obj,
-                days_requested=total_days,
-                reason=reason,
-                status='pending',
-                applied_date=timezone.now(),
-                is_half_day=is_half_day,
-                half_day_period=half_day_period if is_half_day else None,
-                is_unpaid=is_partial_unpaid
-            )
+            if not is_half_day and selected_optional_holidays:
+                # Validate selected optional holidays
+                valid_optional_dates = {opt['date'] for opt in days_calculation['optional_holidays']}
+                
+                for holiday_date_str in selected_optional_holidays:
+                    try:
+                        holiday_date = datetime.strptime(holiday_date_str, '%Y-%m-%d').date()
+                        if holiday_date in valid_optional_dates:
+                            valid_selected_holidays.append(holiday_date)
+                    except ValueError:
+                        continue
+                
+                optional_days_count = len(valid_selected_holidays)
+                print(f"✅ Valid optional holidays selected: {optional_days_count}")
             
-            # Save the leave (balance will be deducted upon approval)
-            leave.save()
-            print(f"Leave saved! ID={leave.id}, days_requested={leave.days_requested}, is_unpaid={leave.is_unpaid}")
+            # Get Optional Leave type (initialize it early so it's available in all cases)
+            optional_leave_type = None
+            if not is_half_day and (optional_days_count > 0 or is_optional_leave_type):
+                optional_leave_type = LeaveType.objects.filter(
+                    Q(name__icontains='optional') | Q(name__icontains='Optional')
+                ).first()
+                
+                if not optional_leave_type:
+                    optional_leave_type = LeaveType.objects.create(
+                        name='Optional Leave',
+                        description='Optional holidays leave',
+                        is_active=True,
+                        colour='#28a745'
+                    )
+                    messages.info(request, 'Created Optional Leave type automatically.')
             
-            # Success message with details
-            if is_partial_unpaid:
-                messages.success(
+            # ============================================
+            # CREATE SEPARATE LEAVE APPLICATIONS
+            # ============================================
+            
+            # Track all created leaves
+            created_leaves = []
+            
+            # 1. Create optional leave applications (if any)
+            if not is_half_day and optional_days_count > 0:
+                # Check optional leave balance
+                optional_balance = LeaveBalance.objects.filter(
+                    employee=employee,
+                    leave_type=optional_leave_type,
+                    year=date.today().year
+                ).first()
+                
+                # ============================================
+                # PARTIAL PAID/UNPAID LOGIC FOR OPTIONAL LEAVES
+                # ============================================
+                is_optional_partial_unpaid = False
+                optional_paid_days = Decimal('0.00')
+                optional_unpaid_days = Decimal('0.00')
+                optional_final_leave_type = optional_leave_type
+                
+                if optional_balance:
+                    optional_available_balance = optional_balance.leaves_remaining
+                    print(f"DEBUG: Optional Leave balance available: {optional_available_balance}")
+                    print(f"DEBUG: Optional days requested: {optional_days_count}")
+                    
+                    if optional_available_balance >= optional_days_count:
+                        # Sufficient optional balance
+                        optional_paid_days = Decimal(str(optional_days_count))
+                        optional_unpaid_days = Decimal('0.00')
+                        is_optional_partial_unpaid = False
+                        print(f"DEBUG: ✅ Sufficient optional balance. Fully PAID optional leave.")
+                        
+                    elif optional_available_balance > 0:
+                        # Partial optional balance
+                        optional_paid_days = optional_available_balance
+                        optional_unpaid_days = Decimal(str(optional_days_count)) - optional_available_balance
+                        is_optional_partial_unpaid = True
+                        
+                        # Get unpaid leave type for optional portion
+                        unpaid_leave_type = LeaveType.objects.filter(
+                            is_active=True,
+                            name__icontains='unpaid'
+                        ).first()
+                        
+                        if unpaid_leave_type:
+                            # Create paid optional leave
+                            paid_optional_leave = Leave(
+                                employee=employee,
+                                leave_type=optional_leave_type,
+                                colour=getattr(optional_leave_type, 'colour', '#28a745'),
+                                start_date=start_date_obj,
+                                end_date=end_date_obj,
+                                days_requested=optional_paid_days,
+                                reason=f"{reason} - Optional holidays (Paid portion)",
+                                status='pending',
+                                applied_date=timezone.now(),
+                                is_half_day=False,
+                                half_day_period=None,
+                                is_unpaid=False
+                            )
+                            paid_optional_leave.save()
+                            created_leaves.append(paid_optional_leave)
+                            
+                            # Create unpaid portion for optional
+                            unpaid_optional_leave = Leave(
+                                employee=employee,
+                                leave_type=unpaid_leave_type,
+                                colour=getattr(unpaid_leave_type, 'colour', '#dc3545'),
+                                start_date=start_date_obj,
+                                end_date=end_date_obj,
+                                days_requested=optional_unpaid_days,
+                                reason=f"{reason} - Optional holidays (Unpaid portion)",
+                                status='pending',
+                                applied_date=timezone.now(),
+                                is_half_day=False,
+                                half_day_period=None,
+                                is_unpaid=True
+                            )
+                            unpaid_optional_leave.save()
+                            created_leaves.append(unpaid_optional_leave)
+                            
+                            messages.warning(
+                                request,
+                                f'⚠️ Partial optional leave balance available! '
+                                f'Optional holidays split into: {optional_paid_days} days PAID + {optional_unpaid_days} days UNPAID.'
+                            )
+                            print(f"DEBUG: ⚠️ Partial optional balance. Split into {optional_paid_days} paid + {optional_unpaid_days} unpaid.")
+                            
+                        else:
+                            messages.error(request, 'Unpaid leave type not configured. Please contact HR.')
+                            return redirect('apply_leave')
+                    else:
+                        # No optional balance - fully unpaid optional leave
+                        optional_paid_days = Decimal('0.00')
+                        optional_unpaid_days = Decimal(str(optional_days_count))
+                        is_optional_partial_unpaid = True
+                else:
+                    # No optional balance exists - fully unpaid optional leave
+                    optional_paid_days = Decimal('0.00')
+                    optional_unpaid_days = Decimal(str(optional_days_count))
+                    is_optional_partial_unpaid = True
+                
+                # If we haven't created optional leaves yet (fully paid or fully unpaid)
+                if not created_leaves or (created_leaves and not is_optional_partial_unpaid):
+                    # Handle fully unpaid optional leave
+                    if is_optional_partial_unpaid and optional_unpaid_days > 0:
+                        unpaid_leave_type = LeaveType.objects.filter(
+                            is_active=True,
+                            name__icontains='unpaid'
+                        ).first()
+                        
+                        if unpaid_leave_type:
+                            optional_final_leave_type = unpaid_leave_type
+                            
+                            messages.warning(
+                                request,
+                                f'⚠️ No Optional Leave balance available. '
+                                f'Optional holidays will be submitted as UNPAID LEAVE.'
+                            )
+                            print(f"DEBUG: ❌ No optional balance. Fully UNPAID optional leave.")
+                        else:
+                            messages.error(request, 'Unpaid leave type not configured. Please contact HR.')
+                            return redirect('apply_leave')
+                    
+                    # Create optional leave application
+                    optional_leave = Leave(
+                        employee=employee,
+                        leave_type=optional_final_leave_type,
+                        colour=getattr(optional_final_leave_type, 'colour', '#28a745'),
+                        start_date=start_date_obj,
+                        end_date=end_date_obj,
+                        days_requested=Decimal(str(optional_days_count)),
+                        reason=f"{reason} - Using optional holidays",
+                        status='pending',
+                        applied_date=timezone.now(),
+                        is_half_day=False,
+                        half_day_period=None,
+                        is_unpaid=is_optional_partial_unpaid
+                    )
+                    optional_leave.save()
+                    created_leaves.append(optional_leave)
+                
+                messages.info(
                     request,
-                    f'✅ Leave application submitted as UNPAID LEAVE! '
-                    f'Salary deduction will apply for {total_days} days. Waiting for approval.'
+                    f'✅ Created optional leave application for {optional_days_count} day(s)'
                 )
-            elif is_half_day:
-                period_display = "First Half" if half_day_period == "first_half" else "Second Half"
-                messages.success(
-                    request, 
-                    f'✅ Half-day leave application ({period_display}) submitted successfully for {start_date_obj.strftime("%d %b %Y")}! '
-                    f'Waiting for approval.'
-                )
+            
+            # 2. Calculate days for main leave application
+            if is_half_day:
+                # Half day leave
+                main_leave_days = Decimal('0.5')
+                should_create_main_leave = True
             else:
-                messages.success(
-                    request, 
-                    f'✅ Leave application for {total_days} days submitted successfully! '
-                    f'Waiting for approval.'
-                )
+                # Calculate main leave days
+                main_leave_days = total_working_days - Decimal(str(optional_days_count))
+                should_create_main_leave = main_leave_days > 0
+            
+            # 3. Create main leave application (if needed)
+            if should_create_main_leave:
+                # For Optional Leave type, create the application
+                if is_optional_leave_type:
+                    # If user selected Optional Leave type, all days are considered optional
+                    optional_days_for_leave_type = total_working_days
+                    
+                    # ============================================
+                    # PARTIAL PAID/UNPAID LOGIC FOR OPTIONAL LEAVE TYPE
+                    # ============================================
+                    # Check optional leave balance
+                    optional_balance = LeaveBalance.objects.filter(
+                        employee=employee,
+                        leave_type=optional_leave_type,
+                        year=date.today().year
+                    ).first()
+                    
+                    is_optional_partial_unpaid = False
+                    optional_paid_days = Decimal('0.00')
+                    optional_unpaid_days = Decimal('0.00')
+                    optional_final_leave_type = optional_leave_type
+                    
+                    if optional_balance:
+                        optional_available_balance = optional_balance.leaves_remaining
+                        print(f"DEBUG: Optional Leave balance available: {optional_available_balance}")
+                        print(f"DEBUG: Optional days requested: {optional_days_for_leave_type}")
+                        
+                        if optional_available_balance >= optional_days_for_leave_type:
+                            # Sufficient optional balance
+                            optional_paid_days = optional_days_for_leave_type
+                            optional_unpaid_days = Decimal('0.00')
+                            is_optional_partial_unpaid = False
+                            print(f"DEBUG: ✅ Sufficient optional balance. Fully PAID optional leave.")
+                            
+                        elif optional_available_balance > 0:
+                            # Partial optional balance - part paid, part unpaid
+                            optional_paid_days = optional_available_balance
+                            optional_unpaid_days = optional_days_for_leave_type - optional_available_balance
+                            is_optional_partial_unpaid = True
+                            
+                            # Get unpaid leave type
+                            unpaid_leave_type = LeaveType.objects.filter(
+                                is_active=True,
+                                name__icontains='unpaid'
+                            ).first()
+                            
+                            if unpaid_leave_type:
+                                # Create paid optional leave
+                                paid_optional_leave = Leave(
+                                    employee=employee,
+                                    leave_type=optional_leave_type,
+                                    colour=getattr(optional_leave_type, 'colour', '#28a745'),
+                                    start_date=start_date_obj,
+                                    end_date=end_date_obj,
+                                    days_requested=optional_paid_days,
+                                    reason=f"{reason} (Paid portion)",
+                                    status='pending',
+                                    applied_date=timezone.now(),
+                                    is_half_day=False,
+                                    half_day_period=None,
+                                    is_unpaid=False
+                                )
+                                paid_optional_leave.save()
+                                created_leaves.append(paid_optional_leave)
+                                
+                                # Create unpaid portion
+                                unpaid_optional_leave = Leave(
+                                    employee=employee,
+                                    leave_type=unpaid_leave_type,
+                                    colour=getattr(unpaid_leave_type, 'colour', '#dc3545'),
+                                    start_date=start_date_obj,
+                                    end_date=end_date_obj,
+                                    days_requested=optional_unpaid_days,
+                                    reason=f"{reason} (Unpaid portion)",
+                                    status='pending',
+                                    applied_date=timezone.now(),
+                                    is_half_day=False,
+                                    half_day_period=None,
+                                    is_unpaid=True
+                                )
+                                unpaid_optional_leave.save()
+                                created_leaves.append(unpaid_optional_leave)
+                                
+                                messages.warning(
+                                    request,
+                                    f'⚠️ Partial optional leave balance available! '
+                                    f'Application split into: {optional_paid_days} days PAID + {optional_unpaid_days} days UNPAID. '
+                                    f'Salary deduction will apply for {optional_unpaid_days} days.'
+                                )
+                                print(f"DEBUG: ⚠️ Partial optional balance. Split into {optional_paid_days} paid + {optional_unpaid_days} unpaid.")
+                                
+                            else:
+                                messages.error(request, 'Unpaid leave type not configured. Please contact HR.')
+                                return redirect('apply_leave')
+                        else:
+                            # No available balance - fully unpaid
+                            optional_paid_days = Decimal('0.00')
+                            optional_unpaid_days = optional_days_for_leave_type
+                            is_optional_partial_unpaid = True
+                    else:
+                        # No balance exists - fully unpaid
+                        optional_paid_days = Decimal('0.00')
+                        optional_unpaid_days = optional_days_for_leave_type
+                        is_optional_partial_unpaid = True
+                    
+                    # If we haven't created leaves yet (fully paid or fully unpaid)
+                    if not created_leaves:
+                        # Handle fully unpaid optional leave
+                        if is_optional_partial_unpaid and optional_unpaid_days > 0:
+                            unpaid_leave_type = LeaveType.objects.filter(
+                                is_active=True,
+                                name__icontains='unpaid'
+                            ).first()
+                            
+                            if unpaid_leave_type:
+                                optional_final_leave_type = unpaid_leave_type
+                                
+                                messages.warning(
+                                    request,
+                                    f'⚠️ No Optional Leave balance available. '
+                                    f'Application will be submitted as UNPAID LEAVE. '
+                                    f'Salary will be deducted for {optional_unpaid_days} days.'
+                                )
+                                print(f"DEBUG: ❌ No optional balance. Fully UNPAID optional leave.")
+                            else:
+                                messages.error(request, 'Unpaid leave type not configured. Please contact HR.')
+                                return redirect('apply_leave')
+                        
+                        # Create optional leave application
+                        optional_leave = Leave(
+                            employee=employee,
+                            leave_type=optional_final_leave_type,
+                            colour=getattr(optional_final_leave_type, 'colour', '#28a745'),
+                            start_date=start_date_obj,
+                            end_date=end_date_obj,
+                            days_requested=optional_days_for_leave_type,
+                            reason=f"{reason} - Using Optional Leave type",
+                            status='pending',
+                            applied_date=timezone.now(),
+                            is_half_day=False,
+                            half_day_period=None,
+                            is_unpaid=is_optional_partial_unpaid
+                        )
+                        optional_leave.save()
+                        created_leaves.append(optional_leave)
+                    
+                    messages.success(
+                        request,
+                        f'✅ Optional Leave application submitted for {optional_days_for_leave_type} days!'
+                    )
+                else:
+                    # ============================================
+                    # PARTIAL PAID/UNPAID LOGIC FOR NON-OPTIONAL LEAVES
+                    # ============================================
+                    # Check balance for non-optional leave types
+                    balance = LeaveBalance.objects.filter(
+                        employee=employee,
+                        leave_type=requested_leave_type,
+                        year=date.today().year
+                    )
+                    
+                    is_partial_unpaid = False
+                    paid_days = Decimal('0.00')
+                    unpaid_days = Decimal('0.00')
+                    final_leave_type = requested_leave_type
+                    leave_colour = getattr(requested_leave_type, 'colour', '#667eea')
+                    
+                    if balance.exists():
+                        total_available_balance = sum(
+                            Decimal(str(b.leaves_remaining)) for b in balance
+                        )
+                        
+                        print(f"DEBUG: Checking balance for {requested_leave_type.name}")
+                        print(f"DEBUG: Total available balance: {total_available_balance}")
+                        print(f"DEBUG: Main leave days requested: {main_leave_days}")
+                        
+                        if total_available_balance >= main_leave_days:
+                            # Sufficient balance - fully paid leave
+                            paid_days = main_leave_days
+                            unpaid_days = Decimal('0.00')
+                            is_partial_unpaid = False
+                            print(f"DEBUG: ✅ Sufficient balance. Fully PAID leave.")
+                            
+                        elif total_available_balance > 0:
+                            # Partial balance - part paid, part unpaid
+                            paid_days = total_available_balance
+                            unpaid_days = main_leave_days - total_available_balance
+                            is_partial_unpaid = True
+                            
+                            # Get unpaid leave type
+                            unpaid_leave_type = LeaveType.objects.filter(
+                                is_active=True,
+                                name__icontains='unpaid'
+                            ).first()
+                            
+                            if unpaid_leave_type:
+                                # Create paid leave record
+                                paid_leave = Leave(
+                                    employee=employee,
+                                    leave_type=requested_leave_type,
+                                    colour=getattr(requested_leave_type, 'colour', '#667eea'),
+                                    start_date=start_date_obj,
+                                    end_date=end_date_obj,
+                                    days_requested=paid_days,
+                                    reason=f"{reason} (Paid portion)",
+                                    status='pending',
+                                    applied_date=timezone.now(),
+                                    is_half_day=is_half_day,
+                                    half_day_period=half_day_period if is_half_day else None,
+                                    is_unpaid=False
+                                )
+                                paid_leave.save()
+                                created_leaves.append(paid_leave)
+                                
+                                # Create unpaid leave record
+                                unpaid_leave = Leave(
+                                    employee=employee,
+                                    leave_type=unpaid_leave_type,
+                                    colour=getattr(unpaid_leave_type, 'colour', '#dc3545'),
+                                    start_date=start_date_obj,
+                                    end_date=end_date_obj,
+                                    days_requested=unpaid_days,
+                                    reason=f"{reason} (Unpaid portion)",
+                                    status='pending',
+                                    applied_date=timezone.now(),
+                                    is_half_day=False,  # Unpaid can't be half-day
+                                    half_day_period=None,
+                                    is_unpaid=True
+                                )
+                                unpaid_leave.save()
+                                created_leaves.append(unpaid_leave)
+                                
+                                messages.warning(
+                                    request,
+                                    f'⚠️ Partial balance available! '
+                                    f'Application split into: {paid_days} days PAID + {unpaid_days} days UNPAID. '
+                                    f'Salary deduction will apply for {unpaid_days} days.'
+                                )
+                                print(f"DEBUG: ⚠️ Partial balance. Split into {paid_days} paid + {unpaid_days} unpaid.")
+                                
+                                # Skip to final success message
+                                if not is_half_day and optional_days_count > 0:
+                                    messages.info(
+                                        request,
+                                        f'📝 Total application: {total_working_days} days '
+                                        f'({optional_days_count} optional + {main_leave_days} {requested_leave_type.name})'
+                                    )
+                                return redirect('employee_leave_details')
+                            else:
+                                messages.error(request, 'Unpaid leave type not configured. Please contact HR.')
+                                return redirect('apply_leave')
+                        else:
+                            # No available balance - fully unpaid
+                            paid_days = Decimal('0.00')
+                            unpaid_days = main_leave_days
+                            is_partial_unpaid = True
+                    else:
+                        # No balance exists - fully unpaid
+                        paid_days = Decimal('0.00')
+                        unpaid_days = main_leave_days
+                        is_partial_unpaid = True
+                    
+                    # If we reach here, it's either fully paid or fully unpaid (not partial)
+                    if is_partial_unpaid and unpaid_days > 0:
+                        # Fully unpaid leave
+                        unpaid_leave_type = LeaveType.objects.filter(
+                            is_active=True,
+                            name__icontains='unpaid'
+                        ).first()
+                        
+                        if unpaid_leave_type:
+                            final_leave_type = unpaid_leave_type
+                            leave_colour = getattr(unpaid_leave_type, 'colour', '#dc3545')
+                            
+                            # Ensure unpaid leave balance exists
+                            unpaid_balance = AutoLeaveBalanceService.ensure_unpaid_leave_balance(employee)
+                            
+                            messages.warning(
+                                request,
+                                f'⚠️ No {requested_leave_type.name} balance available. '
+                                f'Application will be submitted as UNPAID LEAVE. Salary will be deducted for {unpaid_days} days.'
+                            )
+                            print(f"DEBUG: ❌ No balance. Fully UNPAID leave.")
+                        else:
+                            messages.error(request, 'Unpaid leave type not configured. Please contact HR.')
+                            return redirect('apply_leave')
+                    
+                    # Create the main leave application
+                    main_leave = Leave(
+                        employee=employee,
+                        leave_type=final_leave_type,
+                        colour=leave_colour,
+                        start_date=start_date_obj,
+                        end_date=end_date_obj,
+                        days_requested=main_leave_days,
+                        reason=reason,
+                        status='pending',
+                        applied_date=timezone.now(),
+                        is_half_day=is_half_day,
+                        half_day_period=half_day_period if is_half_day else None,
+                        is_unpaid=is_partial_unpaid
+                    )
+                    main_leave.save()
+                    created_leaves.append(main_leave)
+                    
+                    # Success message
+                    if is_partial_unpaid:
+                        messages.success(
+                            request,
+                            f'✅ Leave application submitted as UNPAID LEAVE! '
+                            f'Salary deduction will apply for {main_leave_days} days. Waiting for approval.'
+                        )
+                    elif is_half_day:
+                        period_display = "First Half" if half_day_period == "first_half" else "Second Half"
+                        messages.success(
+                            request,
+                            f'✅ Half-day leave ({period_display}) submitted successfully!'
+                        )
+                    else:
+                        messages.success(
+                            request,
+                            f'✅ Leave application for {main_leave_days} days submitted successfully!'
+                        )
+                    
+                    # If optional leaves were also created
+                    if not is_half_day and optional_days_count > 0:
+                        messages.info(
+                            request,
+                            f'📝 Total application: {total_working_days} days '
+                            f'({optional_days_count} optional + {main_leave_days} {final_leave_type.name})'
+                        )
             
             return redirect('employee_leave_details')
             
         except Exception as e:
             messages.error(request, f'Error applying for leave: {str(e)}')
-            # Log the error for debugging
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"Leave application error for {user_email}: {str(e)}", exc_info=True)
             return redirect('employee_leave_details')
     
-    # GET request - show form
+    # GET request - show form (same as before)
     leave_types = LeaveType.objects.filter(is_active=True)
     
     # Get leave balances for current year
@@ -902,23 +1358,75 @@ def apply_leave(request):
     probation_message = None
     if is_on_probation:
         probation_message = "⚠️ You are currently on probation. You have no paid leave balance. Any leave taken will be unpaid."
-     # Check if current time is before 8:30 AM
-    now = timezone.now()
-    cutoff_time = timezone.make_aware(datetime.combine(now.date(), time(8, 30)))
-    is_before_830 = now < cutoff_time
+    
+    # Get mandatory holidays for JavaScript calculation
+    national_holidays = Holiday.objects.filter(
+        Q(holiday_type__iexact='National Holiday'),
+        date__year=date.today().year,
+        is_optional=False
+    ).values_list('date', flat=True)
+    
+    state_holidays = []
+    if employee.location:
+        matching_region = Location.objects.filter(name__iexact=employee.location).first()
+        if matching_region:
+            state_holidays = Holiday.objects.filter(
+                region=matching_region,
+                holiday_type__iexact='State Holiday',
+                date__year=date.today().year,
+                is_optional=False
+            ).values_list('date', flat=True)
+    
+    all_mandatory_holidays = set(national_holidays) | set(state_holidays)
+    holiday_dates_json = [f'"{holiday.isoformat()}"' for holiday in all_mandatory_holidays]
     
     context = {
         'leave_types': leave_types,
         'leave_balances': leave_balances,
         'today_date': date.today(),
-        'is_before_830': is_before_830,
         'min_date': date.today().strftime('%Y-%m-%d'),
         'user_name': request.session.get('user_name'),
         'user_role': user_role,
         'is_on_probation': is_on_probation,
         'probation_message': probation_message,
+        'holiday_dates': f'[{",".join(holiday_dates_json)}]',
+        'employee': employee,
     }
     return render(request, 'leave/apply_leave.html', context)
+
+
+def get_optional_holidays_api(request):
+    """API endpoint to get optional holidays for a date range"""
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    user_email = request.session.get('user_email')
+    
+    try:
+        employee = Employee.objects.get(email=user_email)
+        
+        start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+        
+        result = calculate_working_days_with_optional(
+            start_date=start_date_obj,
+            end_date=end_date_obj,
+            location=employee.location
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'working_days': result['working_days'],
+            'optional_holidays': result['optional_holidays'],
+            'mandatory_holidays_count': len(result['mandatory_holidays']),
+            'total_calendar_days': result['total_calendar_days']
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+
 
 def approve_leave(request, leave_id):
     """Approve or reject a leave application with balance management"""

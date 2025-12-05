@@ -297,7 +297,7 @@
 
     .calendar-day.today {
         border-color: #667eea;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #8594d7 0%, #be99e3 100%);
         color: white;
     }
 
@@ -428,7 +428,7 @@
     }
     
     .calendar-day.holiday-optional {
-        background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+        background: linear-gradient(135deg, #67ab77 0%, #58c871 100%);
     }
     
     .calendar-day.holiday-default {
@@ -895,34 +895,62 @@
     
     <!-- Holiday Calendar Tab -->
     <div class="tab-pane fade {% if request.session.user_role not in 'ADMIN,HR,MANAGER,SUPER ADMIN' %}show active{% endif %}" id="holidays" role="tabpanel">
-        <!-- Region Selector -->
-        <div class="region-selector mb-3">
-            <div class="row align-items-center">
-                <div class="col-md-4">
-                    <label class="form-label fw-bold"><i class="fas fa-map-marker-alt"></i> Select Region</label>
-                   <select class="form-select" id="regionFilter" onchange="filterHolidayCalendar()">
-                    <option value="">All Regions</option>
-
+    <!-- Region Selector -->
+    <div class="region-selector mb-3">
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <label class="form-label fw-bold"><i class="fas fa-map-marker-alt"></i> 
+                    {% if request.session.user_role in 'ADMIN,HR,MANAGER,SUPER ADMIN,BRANCH MANAGER,TL' %}
+                        Select Region
+                    {% else %}
+                        Your Region
+                    {% endif %}
+                </label>
+                <select class="form-select" id="regionFilter" 
+                    {% if request.session.user_role not in 'ADMIN,HR,MANAGER,SUPER ADMIN,BRANCH MANAGER,TL' %}disabled{% endif %}
+                    onchange="filterHolidayCalendar()">
+                    {% if request.session.user_role in 'ADMIN,HR,MANAGER,SUPER ADMIN,BRANCH MANAGER,TL' %}
+                        <option value="">All Regions</option>
+                    {% endif %}
+                    
                     {% for region in regions %}
-                    <option value="{{ region.id }}" 
-                        {% if region.id == default_region_id %} selected {% endif %}>
-                        {{ region.name }} ({{ region.code }})
-                    </option>
+                        {% if request.session.user_role in 'ADMIN,HR,MANAGER,SUPER ADMIN,BRANCH MANAGER,TL' or region.id == default_region_id %}
+                        <option value="{{ region.id }}" 
+                            {% if region.id == default_region_id %} selected {% endif %}
+                            {% if request.session.user_role not in 'ADMIN,HR,MANAGER,SUPER ADMIN,BRANCH MANAGER,TL' and region.id != default_region_id %}style="display: none;"{% endif %}>
+                            {{ region.name }} ({{ region.code }})
+                        </option>
+                        {% endif %}
                     {% endfor %}
                 </select>
+                
+                <!-- Show employee's region as text if not admin -->
+                {% if request.session.user_role not in 'ADMIN,HR,MANAGER,SUPER ADMIN,BRANCH MANAGER,TL' and default_region_id %}
+                <div class="mt-2">
+                    <span class="badge bg-primary">
+                        <i class="fas fa-map-marker-alt"></i> 
+                        {% for region in regions %}
+                            {% if region.id == default_region_id %}
+                                {{ region.name }} ({{ region.code }})
+                            {% endif %}
+                        {% endfor %}
+                    </span>
+                    <small class="text-muted ms-2">Your assigned region</small>
                 </div>
-                <div class="col-md-8 text-end">
-                    <div class="view-toggle d-inline-flex">
-                        <button onclick="switchView('calendar')" id="calendarViewBtn" class="active">
-                            <i class="fas fa-calendar"></i> Calendar View
-                        </button>
-                        <button onclick="switchView('list')" id="listViewBtn">
-                            <i class="fas fa-list"></i> List View
-                        </button>
-                    </div>
+                {% endif %}
+            </div>
+            <div class="col-md-8 text-end">
+                <div class="view-toggle d-inline-flex">
+                    <button onclick="switchView('calendar')" id="calendarViewBtn" class="active">
+                        <i class="fas fa-calendar"></i> Calendar View
+                    </button>
+                    <button onclick="switchView('list')" id="listViewBtn">
+                        <i class="fas fa-list"></i> List View
+                    </button>
                 </div>
             </div>
         </div>
+    </div>
 
         <!-- Calendar View with Sidebar -->
         <div id="calendarView" class="calendar-wrapper">
@@ -951,10 +979,10 @@
                     <span><i class="fas fa-calendar-check"></i> National Holiday</span>
                 </div>
 
-                <div class="event-item meeting">
+                <!-- <div class="event-item meeting">
                     <span class="event-icon" style="background: #d85ddc;"></span>
                     <span><i class="fas fa-users"></i> Company Meeting</span>
-                </div>
+                </div> -->
 
                 <div class="mt-4">
                     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -1145,12 +1173,55 @@
 {% block extra_js %}
 <script>
 // ============================================
-// TAB STATE MANAGEMENT - NO TRANSITION VERSION
+// GLOBAL VARIABLES
+// ============================================
+const holidayTypeColors = {
+    'National Holiday': 'holiday-national',
+    'State Holiday': 'holiday-state',
+    'Company Holiday': 'holiday-company',
+    'Optional Holiday': 'holiday-optional'
+};
+
+// Initialize these AFTER DOM is ready
+let holidays = [];
+let currentDate = new Date();
+let selectedRegion = '';
+let leaveTable = null;
+
+// Check if user is employee
+const isEmployee = {% if request.session.user_role not in 'ADMIN,HR,MANAGER,SUPER ADMIN,BRANCH MANAGER,TL' %}true{% else %}false{% endif %};
+
+// ============================================
+// INITIALIZATION
 // ============================================
 $(document).ready(function() {
-
-
-        // Initialize datepicker
+    console.log('Initializing dashboard...');
+    console.log('User is employee:', isEmployee);
+    
+    // Initialize holidays data from Django template
+    holidays = [
+        {% for region in regions %}
+            {% for holiday in region.holidays.all %}
+            {
+                name: "{{ holiday.name }}",
+                date: "{{ holiday.date|date:'Y-m-d' }}",
+                region: "{{ region.id|stringformat:'s' }}",
+                regionName: "{{ region.name }}",
+                isOptional: {{ holiday.is_optional|lower }},
+                holidayType: "{{ holiday.holiday_type|default:'General Holiday' }}",
+                description: "{{ holiday.description|default:'' }}"
+            },
+            {% endfor %}
+        {% endfor %}
+    ];
+    
+    // Set default region from Django template
+    selectedRegion = "{{ default_region_id|default:'' }}";
+    
+    console.log('Default region ID:', selectedRegion);
+    console.log('Total holidays loaded:', holidays.length);
+    
+    // Initialize datepicker for dashboard tab (if visible)
     $('.datepicker').datepicker({
         format: 'dd-mm-yyyy',
         autoclose: true,
@@ -1159,7 +1230,6 @@ $(document).ready(function() {
 
     // Auto-submit form when date changes
     $('.datepicker').on('changeDate', function() {
-        // Small delay to ensure both dates are updated
         setTimeout(function() {
             validateAndSubmitForm();
         }, 300);
@@ -1173,7 +1243,6 @@ $(document).ready(function() {
         $('#from_date').val(formattedDate);
         $('#to_date').val(formattedDate);
         
-        // Auto-submit after setting dates
         setTimeout(function() {
             validateAndSubmitForm();
         }, 100);
@@ -1184,7 +1253,6 @@ $(document).ready(function() {
         const fromDate = $('#from_date').val();
         const toDate = $('#to_date').val();
         
-        // If no dates are selected, automatically apply today's filter
         if (!fromDate && !toDate) {
             const today = new Date();
             const formattedDate = formatDate(today);
@@ -1192,304 +1260,146 @@ $(document).ready(function() {
             $('#from_date').val(formattedDate);
             $('#to_date').val(formattedDate);
             
-            // Auto-submit the form to show today's data
             setTimeout(function() {
                 validateAndSubmitForm();
             }, 100);
         }
     }
 
-    // Validate and submit form
-    function validateAndSubmitForm() {
-        const fromDate = $('#from_date').val();
-        const toDate = $('#to_date').val();
-        const status = $('#status').val();
-        const branch = $('#branch').val();
-        // If both dates are empty, don't submit
-        if (!fromDate && !toDate  && !status && !branch) {
-            return;
-        }
-        
-        if (fromDate && toDate) {
-            const from = parseDate(fromDate);
-            const to = parseDate(toDate);
-            
-            if (from > to) {
-                showAlert('From date cannot be greater than To date', 'error');
-                return false;
-            }
-        }
-        
-        // Submit the form
-        $('#dateFilterForm').submit();
-    }
-
-    // Format date as DD-MM-YYYY
-    function formatDate(date) {
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        return `${day}-${month}-${year}`;
-    }
-
-    // Parse DD-MM-YYYY date string to Date object
-    function parseDate(dateString) {
-        const parts = dateString.split('-');
-        if (parts.length === 3) {
-            const day = parseInt(parts[0], 10);
-            const month = parseInt(parts[1], 10) - 1;
-            const year = parseInt(parts[2], 10);
-            return new Date(year, month, day);
-        }
-        return null;
-    }
-
     // Call auto-apply on page load
     autoApplyTodayFilter();
+    
+    // Initialize tab system AFTER holidays data is loaded
+    initializeTabSystem();
+});
 
-    // ============================================
-    // REST OF YOUR EXISTING CODE...
-    // ============================================
-    // Function to activate tab immediately
-    function activateTab(tabId) {
-        const tabElement = document.getElementById(tabId);
-        if (tabElement) {
-            // Hide all tab panes first
-            $('.tab-pane').removeClass('show active');
-           
-            // Deactivate all tabs
-            $('button[data-bs-toggle="tab"]').removeClass('active');
-           
-            // Activate the target tab
-            $(tabElement).addClass('active');
-            const targetPane = $(tabElement).attr('data-bs-target');
-            $(targetPane).addClass('show active');
-           
-            console.log('Activated tab:', tabId);
-           
-            // Initialize components for the active tab
-            initializeTabComponents(tabId);
-        }
+// ============================================
+// TAB MANAGEMENT
+// ============================================
+function initializeTabSystem() {
+    const savedTab = localStorage.getItem('activeLeaveTab');
+    const defaultTab = {% if request.session.user_role in 'ADMIN,HR,MANAGER,SUPER ADMIN,BRANCH MANAGER,TL' %}'dashboard-tab'{% else %}'holidays-tab'{% endif %};
+    const initialTab = savedTab || defaultTab;
+    
+    console.log('Initial tab:', initialTab);
+    
+    // Clear any saved region preferences for employees
+    if (isEmployee) {
+        localStorage.removeItem('selectedHolidayRegion');
+        console.log('Cleared saved region for employee');
     }
-   
-    // Initialize components based on active tab
-    function initializeTabComponents(tabId) {
-        if (tabId === 'dashboard-tab') {
-            setTimeout(function() {
-                initializeLeaveTable();
-            }, 300);
-        } else if (tabId === 'holidays-tab') {
-            setTimeout(function() {
+    
+    // Wait a bit for DOM to be fully ready
+    setTimeout(() => {
+        activateTab(initialTab);
+        
+        // Initialize calendar region AFTER tab is activated
+        if (initialTab === 'holidays-tab' || !savedTab) {
+            setTimeout(() => {
+                initializeCalendarRegion();
                 renderCalendar();
                 updateHolidayCount();
-            }, 300);
+            }, 100);
         }
-    }
-   
-    // Check for saved active tab on page load
-    const savedTab = localStorage.getItem('activeLeaveTab');
-    const defaultTab = {% if request.session.user_role in 'ADMIN,HR,MANAGER,SUPER ADMIN' %}'dashboard-tab'{% else %}'holidays-tab'{% endif %};
-    const initialTab = savedTab || defaultTab;
-   
-    console.log('Initial tab:', initialTab);
-   
-    // Activate the correct tab immediately - no delay
-    activateTab(initialTab);
-   
-    // Save active tab to localStorage when a tab is shown
+    }, 200);
+    
+    // Save active tab when changed
     $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
         const activeTab = $(e.target).attr('id');
         localStorage.setItem('activeLeaveTab', activeTab);
         console.log('Saved active tab:', activeTab);
-       
-        // Initialize components for the newly activated tab
-        initializeTabComponents(activeTab);
+        
+        if (activeTab === 'holidays-tab') {
+            // Initialize calendar when holidays tab is shown
+            setTimeout(() => {
+                initializeCalendarRegion();
+                renderCalendar();
+                updateHolidayCount();
+            }, 100);
+        } else if (activeTab === 'dashboard-tab') {
+            setTimeout(() => {
+                initializeLeaveTable();
+            }, 100);
+        }
     });
-   
-    // ============================================
-    // DATATABLE INITIALIZATION
-    // ============================================
-    let leaveTable = null;
-   
-    function initializeLeaveTable() {
-        console.log('Initializing DataTable...');
-       
-        const table = $('#leaveTable');
-        if (table.length === 0) {
-            console.log('Leave table not found');
-            return;
-        }
-       
-        // Check if we have actual data rows
-        const hasRealData = table.find('tbody tr').length > 0 &&
-                           !table.find('tbody tr td[colspan]').length;
-       
-        if (!hasRealData) {
-            console.log('No real data rows found, skipping DataTable');
-            table.addClass('table table-striped table-bordered table-hover');
-            return;
-        }
-       
-        // Destroy existing instance if any
-        if (leaveTable && $.fn.DataTable.isDataTable(table)) {
-            try {
-                leaveTable.destroy(true);
-            } catch (e) {
-                console.log('Error destroying old DataTable:', e);
-            }
-        }
-       
-        try {
-            leaveTable = table.DataTable({
-                destroy: true,
-                paging: true,
-                searching: true,
-                ordering: true,
-                info: true,
-                responsive: true,
-                autoWidth: false,
-                scrollX : true,
-                pageLength: 10,
-                dom: 'lftip',
-                language: {
-                    search: "Search:",
-                    lengthMenu: "Show _MENU_ entries",
-                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
-                    infoEmpty: "No entries available",
-                    zeroRecords: "No matching records found"
-                }
-            });
-           
-            console.log('DataTable initialized successfully');
-           
-        } catch (error) {
-            console.error('DataTable initialization failed, using basic table styling:', error);
-            table.addClass('table table-striped table-bordered table-hover');
-        }
-    }
-   
-    // ============================================
-    // AJAX FORM SUBMISSION FOR ADDING HOLIDAY
-    // ============================================
-    $('#addHolidayForm').on('submit', function(e) {
-        e.preventDefault();
-       
-        const form = $(this);
-        const submitBtn = form.find('button[type="submit"]');
-        const originalText = submitBtn.html();
-       
-        console.log('Submitting holiday form...');
-        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Adding...');
-       
-        $.ajax({
-            type: 'POST',
-            url: form.attr('action'),
-            data: form.serialize(),
-            success: function(response) {
-                console.log('Holiday added successfully');
-                showAlert('Holiday added successfully!', 'success');
-                $('#addHolidayModal').modal('hide');
-                form[0].reset();
-               
-                // Ensure we stay on holidays tab after reload
-                localStorage.setItem('activeLeaveTab', 'holidays-tab');
-                console.log('Set active tab to holidays-tab for reload');
-               
-                setTimeout(function() {
-                    window.location.reload();
-                }, 1000);
-            },
-            error: function(xhr, status, error) {
-                console.error('Error adding holiday:', error, xhr.responseText);
-                showAlert('Error adding holiday. Please try again.', 'error');
-                submitBtn.prop('disabled', false).html(originalText);
-            }
-        });
-    });
-});
-
-// Function to show alert messages
-function showAlert(message, type) {
-    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-   
-    $('.alert-dismissible').remove();
-   
-    const alertHtml = `
-        <div class="alert ${alertClass} alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
-            <strong>${type === 'success' ? 'Success!' : 'Error!'}</strong> ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `;
-   
-    $('body').append(alertHtml);
-   
-    setTimeout(function() {
-        $('.alert-dismissible').alert('close');
-    }, 5000);
 }
 
-// Rest of your functions remain exactly the same...
-// ============================================
-// LEAVE APPROVAL FUNCTIONALITY
-// ============================================
-function approveLeave(leaveId, action) {
-    const message = action === 'approve' ?
-        'Are you sure you want to approve this leave application?' :
-        'Are you sure you want to reject this leave application?';
-   
-    if (confirm(message)) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = `/leave/approve/${leaveId}/`;
+function activateTab(tabId) {
+    const tabElement = document.getElementById(tabId);
+    if (tabElement) {
+        // Hide all tab panes
+        $('.tab-pane').removeClass('show active');
        
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        const csrfInput = document.createElement('input');
-        csrfInput.type = 'hidden';
-        csrfInput.name = 'csrfmiddlewaretoken';
-        csrfInput.value = csrfToken;
-        form.appendChild(csrfInput);
+        // Deactivate all tabs
+        $('button[data-bs-toggle="tab"]').removeClass('active');
        
-        const actionInput = document.createElement('input');
-        actionInput.type = 'hidden';
-        actionInput.name = 'action';
-        actionInput.value = action;
-        form.appendChild(actionInput);
+        // Activate the target tab
+        $(tabElement).addClass('active');
+        const targetPane = $(tabElement).attr('data-bs-target');
+        $(targetPane).addClass('show active');
        
-        document.body.appendChild(form);
-        form.submit();
+        console.log('Activated tab:', tabId);
     }
 }
 
 // ============================================
-// HOLIDAY CALENDAR FUNCTIONALITY
+// CALENDAR REGION INITIALIZATION
 // ============================================
-const holidayTypeColors = {
-    'National Holiday': 'holiday-national',
-    'State Holiday': 'holiday-state',
-    'Company Holiday': 'holiday-company',
-    'Optional Holiday': 'holiday-optional'
-};
+function initializeCalendarRegion() {
+    console.log('Initializing calendar region...');
+    console.log('User is employee:', isEmployee);
+    console.log('Default region from Django:', selectedRegion);
+    
+    const regionFilter = document.getElementById('regionFilter');
+    if (regionFilter) {
+        if (isEmployee) {
+            // FOR EMPLOYEES: Always use their assigned region
+            if (selectedRegion) {
+                regionFilter.value = selectedRegion;
+                console.log('Employee: Using assigned region:', selectedRegion);
+                
+                // Disable the dropdown for employees
+                regionFilter.disabled = true;
+                
+                // Add visual indicator
+                regionFilter.classList.add('bg-light');
+                
+                // Clear any saved preferences
+                localStorage.removeItem('selectedHolidayRegion');
+            }
+        } else {
+            // FOR ADMINS/MANAGERS: Allow region selection
+            const savedRegion = localStorage.getItem('selectedHolidayRegion');
+            if (savedRegion) {
+                selectedRegion = savedRegion;
+                regionFilter.value = savedRegion;
+                console.log('Admin/Manager: Using saved region:', savedRegion);
+            } else if (selectedRegion) {
+                regionFilter.value = selectedRegion;
+                console.log('Admin/Manager: Using default region:', selectedRegion);
+            }
+        }
+    } else {
+        console.error('Region filter element not found!');
+    }
+}
 
-let holidays = [
-    {% for region in regions %}
-        {% for holiday in region.holidays.all %}
-        {
-            name: "{{ holiday.name }}",
-            date: "{{ holiday.date|date:'Y-m-d' }}",
-            region: "{{ region.id }}",
-            regionName: "{{ region.name }}",
-            isOptional: {{ holiday.is_optional|lower }},
-            holidayType: "{{ holiday.holiday_type|default:'General Holiday' }}",
-            description: "{{ holiday.description|default:'' }}"
-        },
-        {% endfor %}
-    {% endfor %}
-];
-
-let currentDate = new Date();
-let selectedRegion = '';
-
+// ============================================
+// HOLIDAY CALENDAR FUNCTIONS
+// ============================================
 function renderCalendar() {
+    console.log('Rendering calendar...');
+    console.log('Selected region:', selectedRegion);
+    console.log('User is employee:', isEmployee);
+    console.log('Holidays count:', holidays.length);
+    
+    const calendarDays = document.getElementById('calendarDays');
+    if (!calendarDays) {
+        console.error('Calendar days element not found!');
+        setTimeout(renderCalendar, 100); // Retry after 100ms
+        return;
+    }
+    
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
    
@@ -1506,7 +1416,6 @@ function renderCalendar() {
     const lastDayDate = lastDay.getDate();
     const prevLastDayDate = prevLastDay.getDate();
    
-    const calendarDays = document.getElementById('calendarDays');
     calendarDays.innerHTML = '';
    
     const today = new Date();
@@ -1522,8 +1431,21 @@ function renderCalendar() {
     for (let day = 1; day <= lastDayDate; day++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
-        const dayHolidays = holidays.filter(h => h.date === dateStr && (!selectedRegion || h.region === selectedRegion));
-       
+        
+        // Get holidays for this day
+        let dayHolidays = holidays.filter(h => h.date === dateStr);
+        
+        // FOR EMPLOYEES: Show only their region's holidays
+        // FOR ADMINS: Show all holidays or filtered by selected region
+        if (isEmployee) {
+            // Employees only see their assigned region
+            dayHolidays = dayHolidays.filter(h => h.region === selectedRegion.toString());
+        } else if (selectedRegion) {
+            // Admins see filtered holidays if region selected
+            dayHolidays = dayHolidays.filter(h => h.region === selectedRegion.toString());
+        }
+        // If admin and no region selected (All Regions), show all holidays
+        
         const dayEl = createDayElement(day, false, dayHolidays, isToday);
         calendarDays.appendChild(dayEl);
     }
@@ -1534,6 +1456,8 @@ function renderCalendar() {
         const dayEl = createDayElement(day, true, null);
         calendarDays.appendChild(dayEl);
     }
+    
+    console.log('Calendar rendered successfully');
 }
 
 function createDayElement(day, isOtherMonth, dayHolidays, isToday = false) {
@@ -1558,7 +1482,6 @@ function createDayElement(day, isOtherMonth, dayHolidays, isToday = false) {
         <div class="day-number">${day}</div>
         ${dayHolidays && dayHolidays.length > 0 ? `<div class="holiday-name-small">${dayHolidays[0].name}</div>` : ''}
         ${dayHolidays && dayHolidays.length > 1 ? `<div class="holiday-indicator">${dayHolidays.length}</div>` : ''}
-
     `;
    
     if (dayHolidays && dayHolidays.length > 0) {
@@ -1627,25 +1550,60 @@ function switchView(view) {
 }
 
 function filterHolidayCalendar() {
+    // For employees, don't allow changing region
+    if (isEmployee) {
+        console.log('Employee cannot change region');
+        return;
+    }
+    
     selectedRegion = document.getElementById('regionFilter').value;
+    console.log('Filtering by region:', selectedRegion);
+    
+    // Save preference to localStorage for admins only
+    if (selectedRegion) {
+        localStorage.setItem('selectedHolidayRegion', selectedRegion);
+        console.log('Saved region preference');
+    } else {
+        localStorage.removeItem('selectedHolidayRegion');
+    }
+    
     renderCalendar();
     updateHolidayCount();
 }
 
 function updateHolidayCount() {
+    let count = 0;
+    
+    if (isEmployee) {
+        // Employees: Count only their region's holidays
+        count = holidays.filter(h => h.region === selectedRegion.toString()).length;
+    } else if (selectedRegion) {
+        // Admins with region selected: Count that region's holidays
+        count = holidays.filter(h => h.region === selectedRegion.toString()).length;
+    } else {
+        // Admins with "All Regions": Count all holidays
+        count = holidays.length;
+    }
+    
+    document.getElementById('holidayCount').textContent = count;
+    
+    // Also update list view visibility
     const holidayItems = document.querySelectorAll('.holiday-list-item');
-    let visibleCount = 0;
-   
+    
     holidayItems.forEach(item => {
-        if (selectedRegion === '' || item.dataset.region === selectedRegion) {
-            item.style.display = '';
-            visibleCount++;
+        const itemRegion = item.dataset.region;
+        
+        if (isEmployee) {
+            // Employees: Show only their region
+            item.style.display = (itemRegion === selectedRegion.toString()) ? '' : 'none';
+        } else if (selectedRegion) {
+            // Admins with region selected
+            item.style.display = (itemRegion === selectedRegion.toString()) ? '' : 'none';
         } else {
-            item.style.display = 'none';
+            // Admins with "All Regions": Show all
+            item.style.display = '';
         }
     });
-   
-    document.getElementById('holidayCount').textContent = visibleCount;
 }
 
 function showAddHolidayModal() {
@@ -1658,6 +1616,192 @@ function showAddHolidayModal() {
     {% endif %}
    
     modal.show();
+}
+
+// ============================================
+// OTHER FUNCTIONS (unchanged)
+// ============================================
+function initializeLeaveTable() {
+    console.log('Initializing DataTable...');
+   
+    const table = $('#leaveTable');
+    if (table.length === 0) {
+        console.log('Leave table not found');
+        return;
+    }
+   
+    // Check if we have actual data rows
+    const hasRealData = table.find('tbody tr').length > 0 &&
+                       !table.find('tbody tr td[colspan]').length;
+   
+    if (!hasRealData) {
+        console.log('No real data rows found, skipping DataTable');
+        table.addClass('table table-striped table-bordered table-hover');
+        return;
+    }
+   
+    // Destroy existing instance if any
+    if (leaveTable && $.fn.DataTable.isDataTable(table)) {
+        try {
+            leaveTable.destroy(true);
+        } catch (e) {
+            console.log('Error destroying old DataTable:', e);
+        }
+    }
+   
+    try {
+        leaveTable = table.DataTable({
+            destroy: true,
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+            responsive: true,
+            autoWidth: false,
+            scrollX : true,
+            pageLength: 10,
+            dom: 'lftip',
+            language: {
+                search: "Search:",
+                lengthMenu: "Show _MENU_ entries",
+                info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                infoEmpty: "No entries available",
+                zeroRecords: "No matching records found"
+            }
+        });
+       
+        console.log('DataTable initialized successfully');
+       
+    } catch (error) {
+        console.error('DataTable initialization failed, using basic table styling:', error);
+        table.addClass('table table-striped table-bordered table-hover');
+    }
+}
+
+function validateAndSubmitForm() {
+    const fromDate = $('#from_date').val();
+    const toDate = $('#to_date').val();
+    const status = $('#status').val();
+    const branch = $('#branch').val();
+    
+    if (!fromDate && !toDate && !status && !branch) {
+        return;
+    }
+    
+    if (fromDate && toDate) {
+        const from = parseDate(fromDate);
+        const to = parseDate(toDate);
+        
+        if (from > to) {
+            showAlert('From date cannot be greater than To date', 'error');
+            return false;
+        }
+    }
+    
+    $('#dateFilterForm').submit();
+}
+
+function formatDate(date) {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+}
+
+function parseDate(dateString) {
+    const parts = dateString.split('-');
+    if (parts.length === 3) {
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const year = parseInt(parts[2], 10);
+        return new Date(year, month, day);
+    }
+    return null;
+}
+
+// ============================================
+// AJAX FORM SUBMISSION FOR ADDING HOLIDAY
+// ============================================
+$('#addHolidayForm').on('submit', function(e) {
+    e.preventDefault();
+   
+    const form = $(this);
+    const submitBtn = form.find('button[type="submit"]');
+    const originalText = submitBtn.html();
+   
+    console.log('Submitting holiday form...');
+    submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Adding...');
+   
+    $.ajax({
+        type: 'POST',
+        url: form.attr('action'),
+        data: form.serialize(),
+        success: function(response) {
+            console.log('Holiday added successfully');
+            showAlert('Holiday added successfully!', 'success');
+            $('#addHolidayModal').modal('hide');
+            form[0].reset();
+           
+            localStorage.setItem('activeLeaveTab', 'holidays-tab');
+            console.log('Set active tab to holidays-tab for reload');
+           
+            setTimeout(function() {
+                window.location.reload();
+            }, 1000);
+        },
+        error: function(xhr, status, error) {
+            console.error('Error adding holiday:', error, xhr.responseText);
+            showAlert('Error adding holiday. Please try again.', 'error');
+            submitBtn.prop('disabled', false).html(originalText);
+        }
+    });
+});
+
+function showAlert(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+   
+    $('.alert-dismissible').remove();
+   
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+            <strong>${type === 'success' ? 'Success!' : 'Error!'}</strong> ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+   
+    $('body').append(alertHtml);
+   
+    setTimeout(function() {
+        $('.alert-dismissible').alert('close');
+    }, 5000);
+}
+
+function approveLeave(leaveId, action) {
+    const message = action === 'approve' ?
+        'Are you sure you want to approve this leave application?' :
+        'Are you sure you want to reject this leave application?';
+   
+    if (confirm(message)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/leave/approve/${leaveId}/`;
+       
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+       
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = action;
+        form.appendChild(actionInput);
+       
+        document.body.appendChild(form);
+        form.submit();
+    }
 }
 </script>
 {% endblock %}

@@ -511,34 +511,40 @@ class ProbationConfiguration(models.Model):
         super().save(*args, **kwargs)
 
 
+class MessageCategory(models.Model):
+    name = models.CharField(max_length=255)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True) 
+    
+    class Meta:
+        db_table = 'message_category' 
+
+    def __str__(self):
+        return self.name
+
+
+class MessageSubType(models.Model):
+    category = models.ForeignKey(MessageCategory, on_delete=models.CASCADE, related_name="subtypes")
+    name = models.CharField(max_length=255)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'message_subtype' 
+
+    def __str__(self):
+        return f"{self.category.name} - {self.name}"
+
+
 class EmployeeWarning(models.Model):
-    WARNING_TYPES = [
-        ('Behavior', 'Behavior Issue'),
-        ('Performance', 'Performance Issue'),
-        ('Attendance', 'Attendance Issue'),
-        ('Other', 'Other'),
-    ]
-    APPRECIATION_TYPES = [
-        ('Increment', 'Increment'),
-        ('Appraisal', 'Appraisal'),
-        ('Bonus', 'Bonus'),
-        ('Promotion', 'Promotion'),
-        ('Other', 'Other'),
-    ]
-
-    MESSAGE_CATEGORY = [
-        ('Warning', 'Warning'),
-        ('Appreciation', 'Appreciation'),
-    ]
-
     employee_code = models.CharField(max_length=100)
-    message_category = models.CharField(max_length=20, choices=MESSAGE_CATEGORY, default='Warning')
-    warning_type = models.CharField(max_length=50, choices=WARNING_TYPES, default='Performance',blank=True,null=True)
-    appreciation_type = models.CharField(max_length=50, choices=APPRECIATION_TYPES, blank=True, null=True)
+
+    message_category = models.CharField(max_length=255)  
+    sub_type = models.CharField(max_length=255)
+
     warning_date = models.DateField()
     subject = models.CharField(max_length=255)
     description = models.TextField()
-    issued_by = models.CharField(max_length=255)  # will auto-fill
+    issued_by = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -547,20 +553,21 @@ class EmployeeWarning(models.Model):
     def __str__(self):
         return f"{self.employee_code} - {self.subject}"
 
-    # ✅ Helper method to fetch employee name + ID from Employee model
     def get_employee_name(self):
         from hr.models import Employee
         try:
             emp = Employee.objects.get(employee_id=self.employee_code)
             return f"{emp.first_name} {emp.last_name} ({emp.employee_id})"
-        except ObjectDoesNotExist:
-            return f"({self.employee_code})"    
+        except:
+            return f"({self.employee_code})"
+ 
     # Helper for table display
     def get_message_type(self):
         if self.message_category == "Warning":
             return self.warning_type
         else:
             return self.appreciation_type   
+
 # Menu and submenu
 
 class YsMenuMaster(models.Model):

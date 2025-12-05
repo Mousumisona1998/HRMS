@@ -5,7 +5,7 @@ from django.utils.timezone import now
 from attendance.models import Attendance
 from leave.models import Holiday as LeaveHoliday, Leave, LeaveBalance
 from resignation.models import Resignation 
-from .models import Admin, AllowedDomain, Employee ,EmployeeDocument, Location, Department, Designation, Role ,ProbationConfiguration,EmployeeWarning, YsMenuLinkMaster, YsMenuMaster, YsMenuRoleMaster,CelebrationWish
+from .models import Admin, AllowedDomain, Employee ,EmployeeDocument, Location, Department, Designation, MessageCategory, MessageSubType, Role ,ProbationConfiguration,EmployeeWarning, YsMenuLinkMaster, YsMenuMaster, YsMenuRoleMaster,CelebrationWish
 from .forms import AdminForm, AllowedDomainForm, LocationForm, DepartmentForm, DesignationForm, RoleForm,EmployeeWarningForm
 from datetime import date, datetime, time, timedelta
 from django.utils import timezone
@@ -624,31 +624,21 @@ def employee_dashboard(request):
     
     next_30_days = today + timedelta(days=30)
     upcoming_holidays = LeaveHoliday.objects.filter(
-        date__range=(today, next_30_days)
+        date__range=(today, next_30_days),
+        region__name=employee_profile.location 
     ).count() or 0
 
     # ✅ Get only recent warnings & appreciations (last 7 days)
     seven_days_ago = today - timedelta(days=7)
 
-    recent_warnings = EmployeeWarning.objects.filter(
+    recent_messages = EmployeeWarning.objects.filter(
         employee_code=employee_profile.employee_id,
-        message_category='Warning',
         warning_date__gte=seven_days_ago
-    )
+    ).order_by('-warning_date')
 
-    recent_appreciations = EmployeeWarning.objects.filter(
-        employee_code=employee_profile.employee_id,
-        message_category='Appreciation',
-        warning_date__gte=seven_days_ago
-    )
-
-    
-    merged_notifications = list(chain(recent_warnings, recent_appreciations))
-    merged_notifications = sorted(
-        merged_notifications,
-        key=attrgetter('warning_date'),
-        reverse=True
-    )
+    # Same messages used for dashboard + popup
+    notifications = recent_messages
+    notifications_count = recent_messages.count()
 
     context = {
         'employee': employee_profile,
@@ -660,14 +650,12 @@ def employee_dashboard(request):
         'total_remaining_leaves': total_remaining_leaves,
         'today_attendance': today_attendance,
         'punctuality_status': punctuality_status,
-        'recent_warnings': recent_warnings,
-        'recent_appreciations': recent_appreciations,
-        'recent_warnings_count': recent_warnings.count(),
-        'recent_appreciations_count': recent_appreciations.count(),
+        'recent_messages': recent_messages,
+        'recent_messages_count': recent_messages.count(),
 
-        # OLD — Still used by bell icon
-        'notifications': merged_notifications,
-        'notifications_count': len(merged_notifications),
+        # Notification bell popup = same messages
+        'notifications': notifications,
+        'notifications_count': notifications_count,
     }
     return render(request, 'hr/employee_dashboard.html', context)
 
@@ -2448,25 +2436,44 @@ def probation_settings(request):
 
 
 @login_required
-@role_required(['ADMIN','HR','SUPER ADMIN'])
+@role_required(['ADMIN', 'HR', 'SUPER ADMIN'])
 def warning_list(request):
+
     warnings = EmployeeWarning.objects.all().order_by('-created_at')
+    message_categories = MessageCategory.objects.filter(is_active=True)
 
     if request.method == "POST":
         form = EmployeeWarningForm(request.POST)
         if form.is_valid():
             warning = form.save(commit=False)
-            warning.issued_by = request.session.get('user_name')
+
+            # Category
+            cat_id = request.POST.get("message_category")
+            cat_obj = MessageCategory.objects.get(id=cat_id)
+            warning.message_category = cat_obj.name
+
+            # Subtype
+            subtype_id = request.POST.get("sub_type")
+            subtype_obj = MessageSubType.objects.get(id=subtype_id)
+            warning.sub_type = subtype_obj.name   # store name
+
+            warning.issued_by = request.session.get("user_name")
             warning.save()
-            messages.success(request, "Warning Added Successfully!")
-            return redirect('warning_list')
+
+            messages.success(request, "Notice added successfully!")
+            return redirect("warning_list")
+
         else:
-            print(form.errors)  # ✅ debug line (you can remove later)
+            print("FORM ERRORS:", form.errors)
+
     else:
         form = EmployeeWarningForm()
 
-    return render(request, 'hr/warning_list.html', {'warnings': warnings, 'form': form})
-
+    return render(request, "hr/warning_list.html", {
+        "warnings": warnings,
+        "form": form,
+        "message_categories": message_categories,
+    })
 
 def add_warning(request):
     if request.method == 'POST':
@@ -2478,7 +2485,6 @@ def add_warning(request):
     else:
         form = EmployeeWarningForm()
     return render(request, 'hr/add_warning.html', {'form': form}) 
-
     
 @login_required
 @role_required(['ADMIN', 'HR', 'SUPER ADMIN'])
@@ -2976,3 +2982,154 @@ def employee_search_ajax(request):
         })
 
     return JsonResponse({"results": data})
+
+
+def warning_master_list(request):
+    search_query = request.GET.get("search", "")
+    status_filter = request.GET.get("status", "")
+
+    categories = MessageCategory.objects.all()
+
+    if search_query:
+        categories = categories.filter(name__icontains=search_query)
+
+    if status_filter == "active":
+        categories = categories.filter(is_active=True)
+    elif status_filter == "inactive":
+        categories = categories.filter(is_active=False)
+
+    categories = categories.order_by('-id')
+
+    return render(request, "hr/master_data/warning.html", {
+        "categories": categories,
+        "search_query": search_query,
+        "status_filter": status_filter,
+    })
+
+
+
+def warning_master_delete(request, pk):
+    category = get_object_or_404(MessageCategory, pk=pk)
+    category.delete()
+    messages.success(request, "Message Type deleted successfully!")
+    return redirect("warning_master_list")
+
+
+
+def load_subtypes(request):
+    category_id = request.GET.get("category_id")
+    subtypes = MessageSubType.objects.filter(category_id=category_id, is_active=True)
+    return JsonResponse(list(subtypes.values("id", "name")), safe=False)
+
+
+def message_category_list(request):
+    categories = MessageCategory.objects.all()
+    return render(request, "hr/master_data/message_category_list.html", {"categories": categories})
+
+
+def message_category_create(request):
+    if request.method == "POST":
+        category_name = request.POST.get("name")
+        subtype_name = request.POST.get("subtype_name")
+
+        # 1️⃣ Create or fetch category
+        category, created = MessageCategory.objects.get_or_create(
+            name=category_name,
+            defaults={"is_active": True}
+        )
+
+        # 2️⃣ Create subtype
+        if subtype_name:
+            MessageSubType.objects.create(
+                category=category,
+                name=subtype_name,
+                is_active=True
+            )
+
+        messages.success(request, "Message Type & Subtype Saved Successfully!")
+        return redirect("warning_master_list")
+
+
+def message_subtype_list(request, category_id):
+    category = get_object_or_404(MessageCategory, id=category_id)
+    subtypes = MessageSubType.objects.filter(category=category)
+
+    return render(request, "hr/master_data/message_subtype_list.html", {
+        "category": category,
+        "subtypes": subtypes
+    })
+
+
+def message_subtype_create(request):
+    if request.method == "POST":
+        category_id = request.POST.get("category_id")
+        name = request.POST.get("name")
+
+        MessageSubType.objects.create(category_id=category_id, name=name)
+        return redirect("message_subtype_list", category_id=category_id)
+
+
+# ===========================
+# MESSAGE CATEGORY – EDIT
+# ===========================
+def message_category_edit(request, pk):
+    category = get_object_or_404(MessageCategory, id=pk)
+
+    if request.method == "POST":
+        category.name = request.POST.get("name")
+        category.is_active = request.POST.get("is_active") == "on"
+
+        # 🔥 NEW – update subtypes
+        subtype_string = request.POST.get("subtypes", "")
+        subtype_list = [x.strip() for x in subtype_string.split(",") if x.strip()]
+
+        # delete previous subtypes
+        category.subtypes.all().delete()
+
+        # create new subtypes
+        for st in subtype_list:
+            MessageSubType.objects.create(category=category, name=st)
+
+        category.save()
+        messages.success(request, "Message Category updated successfully!")
+        return redirect("warning_master_list")
+
+    return redirect("warning_master_list")
+
+
+
+
+# ===========================
+# MESSAGE CATEGORY – DELETE
+# ===========================
+def message_category_delete(request, pk):
+    category = get_object_or_404(MessageCategory, pk=pk)
+    category.delete()
+    messages.success(request, "Message Type deleted successfully!")
+    return redirect("warning_master_list")
+
+
+# ===========================
+# MESSAGE SUBTYPE – EDIT
+# ===========================
+def message_subtype_edit(request, pk):
+    subtype = get_object_or_404(MessageSubType, pk=pk)
+
+    if request.method == "POST":
+        subtype.name = request.POST.get("name")
+        subtype.is_active = request.POST.get("is_active") == "on"
+        subtype.save()
+        messages.success(request, "Subtype updated successfully!")
+        return redirect("warning_master_list")
+
+    return redirect("warning_master_list")
+
+
+# ===========================
+# MESSAGE SUBTYPE – DELETE
+# ===========================
+def message_subtype_delete(request, pk):
+    subtype = get_object_or_404(MessageSubType, pk=pk)
+    subtype.delete()
+    messages.success(request, "Subtype deleted successfully!")
+    return redirect("warning_master_list")

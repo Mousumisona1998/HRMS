@@ -298,7 +298,7 @@
                         {{ attendance.employee_name }}
                     </a>
                 </td>
-                <td style="color: #6b7280; padding: 14px 12px; vertical-align: middle;">{{ attendance.date|date:"M d, Y" }}</td>
+                <td style="color: #6b7280; padding: 14px 12px; vertical-align: middle;">{{ attendance.date|date:"d M, Y" }}</td>
 
                <!-- ✅ Check-In -->
                     <td style="padding: 14px 12px; vertical-align: middle;">
@@ -369,7 +369,7 @@
                             
                         {% elif attendance.status == "Sunday" %}
                             <span style="background-color:#dbeafe; color:#1e3a8a; font-weight:600; padding:6px 12px; border-radius:8px; min-width:90px; display:inline-block;">
-                                Sunday
+                                Week off
                             </span>
 
                         {% elif attendance.status == "Absent" %}

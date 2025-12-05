@@ -69,7 +69,24 @@ urlpatterns = [
     path('employees/warnings/', views.warning_list, name='warning_list'),
     path('employees/add-warning/', views.add_warning, name='add_warning'),
     path('employees/warnings/delete/<int:warning_id>/', views.delete_warning, name='delete_warning'),
-    
+    path('master-data/warning-list/', views.warning_master_list, name='warning_master_list'),
+    path('master-data/warning-remove/<int:pk>/', views.warning_master_delete, name='warning_master_delete'),
+    path('master-data/message-category/edit/<int:pk>/', views.message_category_edit, name='message_category_edit'),
+    path('master-data/message-category/delete/<int:pk>/', views.message_category_delete, name='message_category_delete'),
+    # CATEGORY MASTER
+    path('master-data/message-category/', views.message_category_list, name='message_category_list'),
+    path('master-data/message-category/create/', views.message_category_create, name='message_category_create'),
+
+    # SUBTYPE MASTER
+    path('master-data/message-subtype/<int:category_id>/', views.message_subtype_list, name='message_subtype_list'),
+    path('master-data/message-subtype/create/', views.message_subtype_create, name='message_subtype_create'),
+
+    # SUBTYPE
+    path('master-data/message-subtype/edit/<int:pk>/', views.message_subtype_edit, name='message_subtype_edit'),
+    path('master-data/message-subtype/delete/<int:pk>/', views.message_subtype_delete, name='message_subtype_delete'),
+
+    # AJAX
+    path('ajax/load-subtypes/', views.load_subtypes, name="load_subtypes"),
     
     path('permission-center/', views.permission_center, name='permission_center'),
     path('get-roles/', views.get_roles, name='get_roles'),

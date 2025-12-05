@@ -644,7 +644,7 @@
         <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2">
                 <span class="btn btn-sm btn-outline-secondary">
-                    <i class="fas fa-calendar"></i> {{ today_date|date:"M d, Y" }}
+                    <i class="fas fa-calendar"></i> {{ today_date|date:"d M, Y" }}
                 </span>
             </div>
         </div>
@@ -754,13 +754,13 @@
                         data-checkedout="false">
                     </span>
                 {% endif %}
-                <span class="badge bg-light text-dark border"  style="font-size: 1rem; padding: 6px 22px; border-radius: 8px;">
+                <!-- <span class="badge bg-light text-dark border"  style="font-size: 1rem; padding: 6px 22px; border-radius: 8px;">
                     {% if today_attendance %}
-                        {{ today_attendance.date|date:"D, M d, Y" }}
+                        {{ today_attendance.date|date:"d M, Y" }}
                     {% else %}
                         Today
                     {% endif %}
-                </span>
+                </span> -->
             </div>
         </div>
 
@@ -872,7 +872,7 @@
                     <div class="info-label">Date of Birth</div>
                     <div class="info-value">
                         {% if employee.date_of_birth and employee.date_of_birth %}
-                        {{ employee.date_of_birth }}
+                        {{ employee.date_of_birth|date:"d M, Y" }}
                         {% else %}
                         Not specified
                         {% endif %}
@@ -1014,7 +1014,7 @@
 
                 <div class="notification-meta">
                     <i class="fas fa-user-tie me-1"></i>{{ n.issued_by }} ·
-                    <i class="far fa-calendar-alt ms-2 me-1"></i>{{ n.warning_date|date:"M d, Y" }}
+                    <i class="far fa-calendar-alt ms-2 me-1"></i>{{ n.warning_date|date:"d M, Y" }}
                 </div>
             </div>
         </div>

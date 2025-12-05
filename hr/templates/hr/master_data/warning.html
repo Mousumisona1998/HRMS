@@ -1,0 +1,376 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <h1 class="mb-3"><i class="fas fa-exclamation-triangle me-2"></i>Warning Management</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Warnings</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Django Messages Framework -->
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>{{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Search and Filter Card -->
+    <div class="card custom-card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" 
+                               class="form-control" 
+                               id="search" 
+                               name="search" 
+                               placeholder="Search warnings..."
+                               value="{{ search_query }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select filter-select" id="status" name="status">
+                        <option value="">All Status</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addWarningModal">
+                            <i class="fas fa-plus me-2"></i>Add New Warning
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warnings Table Card -->
+    <div class="card custom-card">
+        <div class="card-body p-0">
+            {% if categories %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Warning Name</th>
+                            <th>Subtype(s)</th>
+                            <th>Status</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+<tbody>
+{% for cat in categories %}
+<tr>
+    <td>{{ forloop.counter }}</td>
+
+    <!-- Category -->
+    <td><strong>{{ cat.name }}</strong></td>
+    <td>
+    {% if cat.subtypes.all %}
+        {% for st in cat.subtypes.all %}
+            {{ st.name }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    {% else %}
+        <span class="text-muted">No subtype</span>
+    {% endif %}
+</td>
+
+
+    <!-- Status -->
+    <td>
+        <span class="badge {% if cat.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+            {{ cat.is_active|yesno:"Active,Inactive" }}
+        </span>
+    </td>
+
+    <!-- Created -->
+    <td>
+        {% if cat.created_at %}
+            {{ cat.created_at|date:"Y-m-d" }}
+        {% else %}
+            --
+        {% endif %}
+    </td>
+
+    <!-- Actions -->
+    <td>
+        <div class="btn-group">
+
+            <!-- Edit -->
+            <button type="button"
+    class="btn btn-sm btn-outline-primary edit-warning-btn"
+    data-warning-id="{{ cat.id }}"
+    data-warning-name="{{ cat.name }}"
+    data-warning-subtypes="{% for st in cat.subtypes.all %}{{ st.name }}{% if not forloop.last %}, {% endif %}{% endfor %}"
+    data-warning-is-active="{{ cat.is_active|yesno:'true,false' }}"
+    title="Edit">
+    <i class="fas fa-edit"></i>
+</button>
+
+
+            <!-- Delete -->
+            <button type="button"
+                class="btn btn-sm btn-outline-danger delete-warning-btn"
+                data-category-id="{{ cat.id }}"
+                data-category-name="{{ cat.name }}"
+                title="Delete">
+                <i class="fas fa-trash"></i>
+            </button>
+
+        </div>
+    </td>
+</tr>
+{% endfor %}
+</tbody>
+
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-exclamation-triangle fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No warnings found</h5>
+                <p class="text-muted">Get started by adding your first warning.</p>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addWarningModal">
+                    <i class="fas fa-plus me-2"></i>Add New Warning
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Warning Modal -->
+<div class="modal fade" id="addWarningModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header bg-light">
+                <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Add Message Type</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form method="post" action="{% url 'message_category_create' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+
+                    <!-- CATEGORY FIELD -->
+                    <div class="mb-3">
+                        <label class="form-label">Message Type *</label>
+                        <input type="text"
+                               name="name"
+                               class="form-control"
+                               placeholder="Enter message type (e.g., Warning, Appreciation)"
+                               required>
+                    </div>
+
+                    <!-- SUBTYPE FIELD -->
+                    <div class="mb-3">
+                        <label class="form-label">Subtype *</label>
+                        <input type="text"
+                               name="subtype_name"
+                               class="form-control"
+                               placeholder="Enter subtype (e.g., Late Coming, Misconduct)"
+                               required>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+<!-- Edit Warning Modal -->
+<div class="modal fade" id="editWarningModal" tabindex="-1" aria-labelledby="editWarningModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="editWarningModalLabel"><i class="fas fa-edit me-2"></i>Edit Warning</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="" id="editWarningForm" novalidate>
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div id="editFormErrors" class="alert alert-danger" style="display: none;"></div>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="edit_id_warning_name" class="form-label">Warning Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="edit_id_warning_name" name="name" placeholder="Enter warning name" required>
+                        </div>
+                        <!-- Subtypes (comma separated) -->
+<div class="col-12">
+    <label class="form-label">Subtype(s) <span class="text-danger">*</span></label>
+    <input type="text" class="form-control" id="edit_id_subtypes"
+           name="subtypes"
+           placeholder="Enter subtypes separated by commas">
+</div>
+
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="edit_id_is_active" name="is_active">
+                                <label class="form-check-label" for="edit_id_is_active">Active Warning</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Update Warning
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Warning Modal -->
+<div class="modal fade" id="deleteWarningModal" tabindex="-1" aria-labelledby="deleteWarningModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteWarningModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Warning
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-4">
+                    <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                    <h4>Are you sure?</h4>
+                    <p class="text-muted">
+                        You are about to delete the warning <strong id="delete-warning-name"></strong>. 
+                        This action cannot be undone.
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <form method="post" action="" id="deleteWarningForm">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Delete Warning
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search');
+    const statusSelect = document.getElementById('status');
+    
+    function applyFilters() {
+        const search = searchInput.value;
+        const status = statusSelect.value;
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        if (status) params.append('status', status);
+        window.location.href = '{% url "warning_master_list" %}' + (params.toString() ? '?' + params.toString() : '');
+    }
+    
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(applyFilters, 500);
+    });
+    statusSelect.addEventListener('change', applyFilters);
+
+    // Edit Warning Modal
+    const editButtons = document.querySelectorAll('.edit-warning-btn');
+    const editWarningModal = new bootstrap.Modal(document.getElementById('editWarningModal'));
+    const editWarningForm = document.getElementById('editWarningForm');
+    
+    editButtons.forEach(button => {
+    button.addEventListener('click', function() {
+
+        const id = this.getAttribute('data-warning-id');
+        const name = this.getAttribute('data-warning-name');
+        const subtypes = this.getAttribute('data-warning-subtypes');
+        const isActive = this.getAttribute('data-warning-is-active') === 'true';
+
+        document.getElementById('edit_id_warning_name').value = name;
+        document.getElementById('edit_id_subtypes').value = subtypes;
+        document.getElementById('edit_id_is_active').checked = isActive;
+
+        editWarningForm.action = "/master-data/message-category/edit/" + id + "/";
+        editWarningModal.show();
+    });
+});
+
+  // Delete Warning Modal
+const deleteButtons = document.querySelectorAll('.delete-warning-btn');
+const deleteWarningModal = new bootstrap.Modal(document.getElementById('deleteWarningModal'));
+const deleteWarningForm = document.getElementById('deleteWarningForm');
+const deleteWarningName = document.getElementById('delete-warning-name');
+
+deleteButtons.forEach(button => {
+    button.addEventListener('click', function() {
+        const id = this.getAttribute('data-category-id');   
+        const name = this.getAttribute('data-category-name');
+
+        deleteWarningName.textContent = '"' + name + '"';
+        deleteWarningForm.action = "/master-data/warning-remove/" + id + "/";
+        deleteWarningModal.show();
+    });
+});
+
+
+});
+</script>
+
+<style>
+.search-box {
+    position: relative;
+}
+.search-box input { padding-left: 40px; }
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #6c757d; }
+
+.table th { border-top: none; font-weight: 600; color: #2c3e50; background-color: #f8f9fa; padding: 12px 16px; }
+.table td { padding: 12px 16px; vertical-align: middle; }
+
+.form-label { font-weight: 500; margin-bottom: 8px; }
+.form-control, .form-select { border-radius: 6px; border: 1px solid #dee2e6; padding: 8px 12px; }
+.form-control:focus, .form-select:focus { border-color: #3498db; box-shadow: 0 0 0 0.2rem rgba(52,152,219,0.25); }
+.form-check-input:checked { background-color: #3498db; border-color: #3498db; }
+
+.btn-group .btn { border-radius: 4px; margin-right: 4px; }
+.btn-group .btn:last-child { margin-right: 0; }
+
+.is-invalid { border-color: #dc3545 !important; }
+.invalid-feedback { display: block; }
+
+.modal-header { border-bottom: 1px solid #dee2e6; }
+.modal-footer { border-top: 1px solid #dee2e6; }
+.alert { border-radius: 8px; border: none; }
+.badge { font-size: 0.75em; padding: 0.35em 0.65em; }
+</style>
+{% endblock %}

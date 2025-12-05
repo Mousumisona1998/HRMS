@@ -92,7 +92,7 @@
   }
 
   .balance-item {
-    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    background: linear-gradient(135deg, #ffecd2 0%, #fdfaf9 100%);
     border: none !important;
     border-radius: 12px;
     transition: transform 0.3s ease;
@@ -123,7 +123,7 @@
   }
 
   .half-day-section {
-    background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+    background: linear-gradient(135deg, #8e9bd9 0%, #8ec5fc 100%);
     padding: 1.5rem;
     border-radius: 12px;
     margin-bottom: 1.5rem;
@@ -308,7 +308,61 @@
     font-size: 1.2rem;
     margin-right: 0.5rem;
   }
+  /* Add this to your existing CSS section */
+.optional-holidays-section {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border: 1px solid #c3e6cb;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    display: none;
+}
+
+.optional-holidays-section.show {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+.optional-holiday-item {
+    background: white;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.optional-holiday-item:hover {
+    border-color: #28a745;
+    transform: translateX(5px);
+}
+
+.optional-holiday-item.selected {
+    background: #d4edda;
+    border-color: #28a745;
+}
+
+.holiday-info-badge {
+    background: #28a745;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    margin-left: 1rem;
+}
+
+.optional-notice {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #856404;
+}
 </style>
+<div id="validation_messages"></div>
 
 <div class="container-fluid">
   <div class="page-header">
@@ -330,7 +384,7 @@
         <h5 class="mb-1">You are currently on probation</h5>
         <p class="mb-0">{{ probation_message }}</p>
         {% if employee.probation_end_date %}
-        <small>Probation ends on: {{ employee.probation_end_date }}</small>
+        <small>Probation ends on: {{ employee.probation_end_date|date:"d M, Y" }}</small>
         {% endif %}
       </div>
     </div>
@@ -458,6 +512,25 @@
               />
             </div>
           </div>
+          <!-- NEW: Optional Holidays Selection -->
+          <div class="optional-holidays-section" id="optional_holidays_section">
+            <div class="d-flex align-items-center mb-3">
+              <!-- <i class="fas fa-star text-warning fa-2x me-2"></i> -->
+              <div>
+                <h5 class="mb-0">Optional Holidays Available</h5>
+                <p class="mb-0 text-muted">Select which optional holidays you want to use for this leave</p>
+              </div>
+            </div>
+            
+            <div id="optional_holidays_list"></div>
+            
+            <div class="optional-notice">
+              <i class="fas fa-info-circle"></i>
+              <strong>Note:</strong> Selected optional holidays will be deducted from your Optional Leave balance. 
+              The remaining days will be deducted from your selected leave type.
+            </div>
+          </div>
+
 
           <div class="row">
             <div class="col-md-6 mb-3">
@@ -596,10 +669,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const secondHalfRadio = document.getElementById('second_half');
     const leaveTypeInfo = document.getElementById('leave_type_info');
     const submitBtn = document.getElementById('submit_btn');
-    const advanceNoticeWarning = document.getElementById('advance_notice_warning');
-    const warningTitle = document.getElementById('warning_title');
-    const warningMessage = document.getElementById('warning_message');
-    const leaveForm = document.getElementById('leave_form');
+    const optionalHolidaysSection = document.getElementById('optional_holidays_section');
+    const optionalHolidaysList = document.getElementById('optional_holidays_list');
 
     const leaveBalances = {
         {% for balance in leave_balances %}
@@ -615,33 +686,21 @@ document.addEventListener('DOMContentLoaded', function() {
         {% endfor %}
     };
 
-    // // Initialize Flatpickr with DD-MM-YYYY format
-    // const startPicker = flatpickr(startDateInput, {
-    //     dateFormat: "d-m-Y",
-    //     minDate: "today",
-    //     onChange: function(selectedDates, dateStr, instance) {
-    //         console.log("Start date selected:", dateStr);
-    //         if (halfDayToggle.checked) {
-    //             endDateInput.value = dateStr;
-    //             endPicker.setDate(dateStr);
-    //         }
-    //         calculateDays();
-    //         checkSameMonthAccrual();
-    //     }
-    // });
+    // 🆕 Get mandatoryHolidays from backend
+    const mandatoryHolidays = new Set({{ holiday_dates|safe }}.map(date => date));
+    
+    let currentOptionalHolidays = [];
+    let selectedOptionalHolidays = [];
+    let currentOptionalHolidayDates = new Set();
+    let isOptionalLeaveTypeSelected = false;
 
-    // const endPicker = flatpickr(endDateInput, {
-    //     dateFormat: "d-m-Y",
-    //     minDate: "today",
-    //     onChange: function(selectedDates, dateStr, instance) {
-    //         console.log("End date selected:", dateStr);
-    //         calculateDays();
-    //     }
-    // });
+    // 🆕 Create validation message container
+    const validationContainer = document.createElement('div');
+    validationContainer.id = 'validation_messages';
+    validationContainer.style.marginBottom = '1rem';
+    document.querySelector('form').insertBefore(validationContainer, document.querySelector('form').firstChild);
 
-
-
-     // Initialize Bootstrap Datepicker with DD-MM-YYYY format
+    // Initialize Bootstrap Datepicker
     $(startDateInput).datepicker({
         format: 'dd-mm-yyyy',
         autoclose: true,
@@ -650,15 +709,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }).on('changeDate', function(e) {
         console.log("Start date selected:", e.format());
         if (halfDayToggle.checked) {
-            // Set end date to same as start date
-        const selectedDate = e.format(); // This gives DD-MM-YYYY format
-        endDateInput.value = selectedDate;
-        $(endDateInput).datepicker('setDate', e.date);
-        $(endDateInput).datepicker('update'); // Force update
+            const selectedDate = e.format();
+            endDateInput.value = selectedDate;
+            $(endDateInput).datepicker('setDate', e.date);
+            $(endDateInput).datepicker('update');
         }
-        calculateDays();
-        checkSameMonthAccrual();
-        checkAdvanceNotice(); // NEW: Check advance notice
+        calculateDaysAndFetchOptional();
+        validateAllFields();
     });
 
     $(endDateInput).datepicker({
@@ -668,226 +725,387 @@ document.addEventListener('DOMContentLoaded', function() {
         startDate: '0d'
     }).on('changeDate', function(e) {
         console.log("End date selected:", e.format());
-        calculateDays();
-        checkAdvanceNotice(); // NEW: Check advance notice
+        calculateDaysAndFetchOptional();
+        validateAllFields();
     });
-
-    // Helper function to get formatted date from datepicker
-    function getFormattedDate(date) {
-        if (!date) return '';
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        return `${day}-${month}-${year}`;
-    }
-
-
-
-    
 
     // Parse DD-MM-YYYY format to Date object
     function parseDate(dateStr) {
         if (!dateStr || dateStr.trim() === '') return null;
         
-        // Handle DD-MM-YYYY format
         const parts = dateStr.trim().split('-');
-        if (parts.length !== 3) {
-            console.error("Invalid date format:", dateStr);
-            return null;
-        }
+        if (parts.length !== 3) return null;
         
         const day = parseInt(parts[0], 10);
-        const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+        const month = parseInt(parts[1], 10) - 1;
         const year = parseInt(parts[2], 10);
         
-        if (isNaN(day) || isNaN(month) || isNaN(year)) {
-            console.error("Invalid date parts:", {day, month, year});
-            return null;
-        }
+        if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
         
         const date = new Date(year, month, day);
         
-        // Validate the date
         if (date.getDate() !== day || date.getMonth() !== month || date.getFullYear() !== year) {
-            console.error("Invalid date created:", date);
             return null;
         }
         
         return date;
     }
-     // NEW: Check advance notice requirements using WORKING DAYS
-function checkAdvanceNotice() {
-    const startDateStr = startDateInput.value;
-    const endDateStr = endDateInput.value;
-    const isHalfDay = halfDayToggle.checked;
 
-    // Reset warning
-    advanceNoticeWarning.classList.remove('show');
-    
-    if (!startDateStr || !endDateStr || isHalfDay) {
-        return;
+    // Convert Date to YYYY-MM-DD for comparison
+    function dateToString(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
-    const startDate = parseDate(startDateStr);
-    const endDate = parseDate(endDateStr);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (!startDate || !endDate) return;
-
-    // Calculate working days until start (excluding weekends)
-    const daysUntilStart = calculateWorkingDaysBetween(today, startDate);
-    
-    // Get working days duration from the same logic as calculateDays()
-    const workingDaysDuration = calculateWorkingDaysBetween(startDate, endDate);
-
-    console.log(`Advance Notice Check: ${workingDaysDuration} working days leave starting in ${daysUntilStart} working days`);
-
-    // Check advance notice rules based on working days
-    if (workingDaysDuration >= 3 && workingDaysDuration < 7 && daysUntilStart < 7) {
-        showAdvanceNoticeWarning(
-            '7-Day Advance Notice Required',
-            `You are applying for ${workingDaysDuration} working days. For leaves of 3 days or more, please apply at least 7 working days in advance.`
-        );
-    } else if (workingDaysDuration >= 7 && daysUntilStart < 15) {
-        showAdvanceNoticeWarning(
-            '15-Day Advance Notice Required',
-            `You are applying for ${workingDaysDuration} working days leave starting in ${daysUntilStart} working days. For leaves longer than 7 days, please apply at least 15 working days in advance.`
-        );
+    // Convert DD-MM-YYYY to YYYY-MM-DD
+    function formatDateForAPI(dateStr) {
+        const date = parseDate(dateStr);
+        return date ? dateToString(date) : null;
     }
-}
 
-// Helper function to calculate working days between two dates
-function calculateWorkingDaysBetween(startDate, endDate) {
-    let workingDays = 0;
-    let currentDate = new Date(startDate);
-    
-    while (currentDate <= endDate) {
-        const dayOfWeek = currentDate.getDay();
-        // 0 = Sunday, 6 = Saturday
-        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-            workingDays++;
+    // 🆕 Check if two date ranges overlap
+    function datesOverlap(start1, end1, start2, end2) {
+        return start1 <= end2 && end1 >= start2;
+    }
+
+    // 🆕 Calculate working days excluding Sundays and mandatoryHolidays
+    function calculateWorkingDays(startDate, endDate) {
+        let workingDays = 0;
+        let holidayCount = 0;
+        let currentDate = new Date(startDate);
+
+        while (currentDate <= endDate) {
+            const dayOfWeek = currentDate.getDay();
+            const dateStr = dateToString(currentDate);
+            
+            // Check if it's a holiday
+            const isHoliday = mandatoryHolidays.has(dateStr);
+            
+            // Exclude Sundays (0) and mandatoryHolidays
+            if (dayOfWeek !== 0 && !isHoliday) {
+                workingDays++;
+            } else if (isHoliday) {
+                holidayCount++;
+            }
+            
+            currentDate.setDate(currentDate.getDate() + 1);
         }
-        currentDate.setDate(currentDate.getDate() + 1);
-    }
-    
-    return workingDays;
-}
-    // NEW: Show advance notice warning
-    function showAdvanceNoticeWarning(title, message) {
-        warningTitle.textContent = title;
-        warningMessage.textContent = message;
-        advanceNoticeWarning.classList.add('show');
-        
-        // Scroll to warning for visibility
-        advanceNoticeWarning.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+        return { workingDays, holidayCount };
     }
 
-    // Calculate working days
-    function calculateDays() {
+    // 🆕 Check if dates contain optional holidays
+    function checkDatesForOptionalHolidays(startDate, endDate) {
+        if (!currentOptionalHolidayDates.size) return false;
+        
+        let currentDate = new Date(startDate);
+        while (currentDate <= endDate) {
+            const dateStr = dateToString(currentDate);
+            if (currentOptionalHolidayDates.has(dateStr)) {
+                return true;
+            }
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+        return false;
+    }
+
+    // 🆕 Comprehensive validation function
+    function validateAllFields() {
         const startDateStr = startDateInput.value;
         const endDateStr = endDateInput.value;
+        const leaveTypeId = leaveTypeSelect.value;
+        const isHalfDay = halfDayToggle.checked;
 
-        console.log('=== Calculate Days Debug ===');
-        console.log('Start date string:', startDateStr);
-        console.log('End date string:', endDateStr);
-        console.log('Is half day:', halfDayToggle.checked);
+        // Clear previous messages
+        validationContainer.innerHTML = '';
+        submitBtn.disabled = false;
 
-        if (!startDateStr || !endDateStr) {
-            console.log('Missing date(s)');
-            daysDisplay.textContent = '0 days';
-            document.getElementById('total_days').value = '0';
-            document.getElementById('is_half_day').value = 'false';
+        // Don't validate if fields are empty
+        if (!startDateStr || !endDateStr || startDateStr === 'DD-MM-YYYY' || endDateStr === 'DD-MM-YYYY') {
             return;
         }
 
         const startDate = parseDate(startDateStr);
         const endDate = parseDate(endDateStr);
 
-        console.log('Parsed start date:', startDate);
-        console.log('Parsed end date:', endDate);
-
         if (!startDate || !endDate) {
-            console.error('Failed to parse dates');
-            daysDisplay.textContent = 'Invalid date format';
-            document.getElementById('total_days').value = '0';
-            document.getElementById('is_half_day').value = 'false';
+            showError(' Invalid date format. Please use DD-MM-YYYY format.');
             return;
         }
 
+        let hasErrors = false;
+
+        // 1️⃣ Check if dates are in the past
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (startDate < today) {
+            showError(' Cannot apply for leave in the past');
+            hasErrors = true;
+        }
+
+        // 2️⃣ Check if end_date is before start_date
         if (endDate < startDate) {
-            console.log('End date before start date');
-            daysDisplay.textContent = 'Invalid date range';
-            document.getElementById('total_days').value = '0';
-            document.getElementById('is_half_day').value = 'false';
+            showError(' End date cannot be before start date');
+            hasErrors = true;
+        }
+
+        // 3️⃣ Calculate working days
+        let workingDaysResult;
+        if (isHalfDay) {
+            workingDaysResult = { workingDays: 0.5, holidayCount: 0 };
+        } else {
+            workingDaysResult = calculateWorkingDays(startDate, endDate);
+        }
+
+        const workingDays = workingDaysResult.workingDays;
+        const holidayCount = workingDaysResult.holidayCount;
+
+        // 4️⃣ Check if there are any working days
+        if (workingDays <= 0 && !isHalfDay) {
+            showError(' No working days in selected range (all days are holidays/Sundays)');
+            hasErrors = true;
+        }
+
+        // 5️⃣ SPECIAL VALIDATION: If Optional Leave type is selected, check if dates contain optional holidays
+        if (isOptionalLeaveTypeSelected && !isHalfDay) {
+            const hasOptionalHolidays = checkDatesForOptionalHolidays(startDate, endDate);
+            
+            if (!hasOptionalHolidays) {
+                showError(' ❌ Cannot use Optional Leave type for selected dates. The selected date range does not contain any optional holidays. Please select a different leave type or choose dates that include optional holidays.');
+                hasErrors = true;
+                submitBtn.disabled = true;
+            } else {
+                showInfo(' ✅ Selected dates contain optional holidays. This will be processed as Optional Leave.');
+            }
+        }
+
+        // 6️⃣ Check advance notice (7 days for 3+ days, 15 days for 7+ days)
+        if (!isHalfDay && !hasErrors) {
+            const daysUntilStart = Math.floor((startDate - today) / (1000 * 60 * 60 * 24));
+            
+            if (workingDays >= 7 && daysUntilStart < 15) {
+                showWarning(
+                    ` Advance notice required: For ${workingDays} working days leave, ` +
+                    `please apply at least 15 days in advance. ` +
+                    `(Currently ${daysUntilStart} days in advance)`
+                );
+            } else if (workingDays >= 3 && workingDays < 7 && daysUntilStart < 7) {
+                showWarning(
+                    ` Advance notice required: For ${workingDays} working days leave, ` +
+                    `please apply at least 7 days in advance. ` +
+                    `(Currently ${daysUntilStart} days in advance)`
+                );
+            }
+        }
+
+        // Show holiday info
+        if (holidayCount > 0 && !hasErrors && !isHalfDay) {
+            showInfo(`ℹ️ ${holidayCount} holiday(s) excluded from working days calculation`);
+        }
+
+        // Disable submit if errors exist
+        if (hasErrors) {
+            submitBtn.disabled = true;
+        }
+    }
+
+    // 🆕 Helper functions to show messages
+    function showError(message) {
+        validationContainer.innerHTML += `
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle"></i> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+    }
+
+    function showWarning(message) {
+        validationContainer.innerHTML += `
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle"></i> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+    }
+
+    function showInfo(message) {
+        validationContainer.innerHTML += `
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <i class="fas fa-info-circle"></i> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+    }
+
+    function showSuccess(message) {
+        validationContainer.innerHTML += `
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle"></i> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+    }
+
+    async function calculateDaysAndFetchOptional() {
+        const startDateStr = startDateInput.value;
+        const endDateStr = endDateInput.value;
+        const leaveTypeId = leaveTypeSelect.value;
+
+        if (!startDateStr || !endDateStr || startDateStr === 'DD-MM-YYYY' || endDateStr === 'DD-MM-YYYY') {
+            daysDisplay.textContent = '0 days';
+            optionalHolidaysSection.classList.remove('show');
             return;
         }
 
-        // CHECK HALF DAY FIRST!
-        console.log('Checking half day status...');
-        console.log('halfDayToggle.checked =', halfDayToggle.checked);
+        const startDate = parseDate(startDateStr);
+        const endDate = parseDate(endDateStr);
 
-        if (halfDayToggle.checked === true) {
-            console.log('✓ Half day mode ACTIVE - setting 0.5 days');
-            daysDisplay.innerHTML = '<span class="fw-bold text-primary">0.5 days</span> <small class="text-info">(Half Day)</small>';
+        if (!startDate || !endDate || endDate < startDate) {
+            daysDisplay.textContent = 'Invalid dates';
+            optionalHolidaysSection.classList.remove('show');
+            return;
+        }
+
+        // Check if half-day
+        if (halfDayToggle.checked) {
+            daysDisplay.innerHTML = '<span class="fw-bold text-primary">0.5 days</span>';
             document.getElementById('total_days').value = '0.5';
             document.getElementById('is_half_day').value = 'true';
-            console.log('Set total_days input to:', document.getElementById('total_days').value);
-            console.log('Set is_half_day input to:', document.getElementById('is_half_day').value);
+            optionalHolidaysSection.classList.remove('show');
             return;
         }
-        // Calculate working days (excluding weekends)
-        let workingDays = 0;
-        let currentDate = new Date(startDate);
 
-        console.log('Calculating working days...');
-        while (currentDate <= endDate) {
-            const dayOfWeek = currentDate.getDay();
-            console.log(`Date: ${currentDate.toDateString()}, Day: ${dayOfWeek}`);
-            
-            // 0 = Sunday, 6 = Saturday
-            if (dayOfWeek !== 0) {
-                workingDays++;
+        // Fetch optional holidays from backend
+        try {
+            const response = await fetch(
+                `/leave/api/optional-holidays/?start_date=${dateToString(startDate)}&end_date=${dateToString(endDate)}`
+            );
+            const data = await response.json();
+
+            if (data.success) {
+                currentOptionalHolidays = data.optional_holidays;
+                currentOptionalHolidayDates = new Set(currentOptionalHolidays.map(h => h.date));
+                const workingDays = data.working_days;
+
+                // Show optional holidays section if:
+                // 1. There are optional holidays in the range
+                // 2. Leave type is NOT already "Optional Leave"
+                const leaveTypeName = leaveTypeSelect.options[leaveTypeSelect.selectedIndex]?.dataset.name || '';
+                const isOptionalLeaveType = leaveTypeName.toLowerCase().includes('optional');
+                isOptionalLeaveTypeSelected = isOptionalLeaveType;
+
+                if (currentOptionalHolidays.length > 0 && !isOptionalLeaveType) {
+                    displayOptionalHolidays();
+                    optionalHolidaysSection.classList.add('show');
+                } else {
+                    optionalHolidaysSection.classList.remove('show');
+                    selectedOptionalHolidays = [];
+                }
+
+                updateDaysDisplay(workingDays, data.mandatory_holidays_count);
+                
+                // Trigger validation after fetching optional holidays
+                validateAllFields();
             }
-            currentDate.setDate(currentDate.getDate() + 1);
+        } catch (error) {
+            console.error('Error fetching optional holidays:', error);
         }
+    }
 
-        console.log('Total working days:', workingDays);
-        
-        daysDisplay.innerHTML = `<span class="fw-bold">${workingDays} ${workingDays === 1 ? 'day' : 'days'}</span>`;
+    function displayOptionalHolidays() {
+        optionalHolidaysList.innerHTML = '';
+
+        currentOptionalHolidays.forEach(holiday => {
+            const isSelected = selectedOptionalHolidays.includes(holiday.date);
+            const holidayDate = new Date(holiday.date);
+            const formattedDate = holidayDate.toLocaleDateString('en-GB', { 
+                day: '2-digit', 
+                month: 'short', 
+                year: 'numeric' 
+            });
+
+            const itemDiv = document.createElement('div');
+            itemDiv.className = `optional-holiday-item ${isSelected ? 'selected' : ''}`;
+            itemDiv.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <input type="checkbox" 
+                           name="optional_holidays" 
+                           value="${holiday.date}" 
+                           class="optional-holiday-checkbox me-3"
+                           ${isSelected ? 'checked' : ''}
+                           id="opt_${holiday.date}">
+                    <label for="opt_${holiday.date}" class="flex-grow-1 mb-0" style="cursor: pointer;">
+                        <strong>${holiday.name}</strong>
+                        <span class="holiday-info-badge">${formattedDate}</span>
+                        <br>
+                        <small class="text-muted">${holiday.region}</small>
+                    </label>
+                </div>
+            `;
+
+            itemDiv.addEventListener('click', function(e) {
+                if (e.target.type !== 'checkbox') {
+                    const checkbox = itemDiv.querySelector('input[type="checkbox"]');
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change'));
+                }
+            });
+
+            const checkbox = itemDiv.querySelector('input[type="checkbox"]');
+            checkbox.addEventListener('change', function() {
+                if (this.checked) {
+                    itemDiv.classList.add('selected');
+                    if (!selectedOptionalHolidays.includes(holiday.date)) {
+                        selectedOptionalHolidays.push(holiday.date);
+                    }
+                } else {
+                    itemDiv.classList.remove('selected');
+                    selectedOptionalHolidays = selectedOptionalHolidays.filter(d => d !== holiday.date);
+                }
+                updateDaysDisplayWithOptional();
+            });
+
+            optionalHolidaysList.appendChild(itemDiv);
+        });
+    }
+
+    function updateDaysDisplay(workingDays, mandatoryCount) {
         document.getElementById('total_days').value = workingDays.toString();
         document.getElementById('is_half_day').value = 'false';
-    }
 
-    // Check same month accrual restriction
-    function checkSameMonthAccrual() {
-        const selectedType = leaveTypeSelect.value;
-        if (!selectedType || !leaveBalances[selectedType]) return;
-
-        const leaveType = leaveBalances[selectedType];
-        const startDateStr = startDateInput.value;
-        
-        if (!startDateStr) return;
-        
-        const startDate = parseDate(startDateStr);
-        if (!startDate) return;
-        
-        const currentDate = new Date();
-        
-        if (!leaveType.can_use_same_month && 
-            startDate.getMonth() === currentDate.getMonth() && 
-            startDate.getFullYear() === currentDate.getFullYear()) {
-            leaveTypeInfo.innerHTML = '<span class="text-warning">⚠️ This leave type cannot be used in the same month it is accrued</span>';
-        } else {
-            if (!leaveType.is_optional) {
-                leaveTypeInfo.innerHTML = '';
-            }
+        daysDisplay.innerHTML = `<span class="fw-bold">${workingDays} days</span>`;
+        if (mandatoryCount > 0) {
+            daysDisplay.innerHTML += `<small class="text-muted d-block">${mandatoryCount} mandatory holiday(s) excluded</small>`;
         }
     }
 
-    // Update balance display when leave type changes
+    function updateDaysDisplayWithOptional() {
+        const totalDaysInput = document.getElementById('total_days');
+        const currentWorkingDays = parseFloat(totalDaysInput.value) || 0;
+        const optionalCount = selectedOptionalHolidays.length;
+        const adjustedDays = currentWorkingDays - optionalCount;
+
+        daysDisplay.innerHTML = `<span class="fw-bold">${adjustedDays} days</span>`;
+        
+        if (optionalCount > 0) {
+            daysDisplay.innerHTML += `
+                <br><small class="text-success">✓ Using ${optionalCount} optional holiday(s)</small>
+                <br><small class="text-muted">${adjustedDays} from ${leaveTypeSelect.options[leaveTypeSelect.selectedIndex]?.text || 'selected leave'}, 
+                ${optionalCount} from Optional Leave</small>
+            `;
+        }
+    }
+
+    // Update balance display
     leaveTypeSelect.addEventListener('change', function() {
         const selectedType = this.value;
+        const selectedOption = this.options[this.selectedIndex];
+        const leaveTypeName = selectedOption ? selectedOption.dataset.name || '' : '';
+        isOptionalLeaveTypeSelected = leaveTypeName.toLowerCase().includes('optional');
+        
         if (selectedType && leaveBalances[selectedType]) {
             const balance = leaveBalances[selectedType];
             let infoHtml = '';
@@ -908,61 +1126,71 @@ function calculateWorkingDaysBetween(startDate, endDate) {
             `;
             
             leaveTypeInfo.innerHTML = infoHtml;
+            
+            // If Optional Leave type is selected, show warning
+            if (isOptionalLeaveTypeSelected) {
+                const startDateStr = startDateInput.value;
+                const endDateStr = endDateInput.value;
+                
+                if (startDateStr && endDateStr && startDateStr !== 'DD-MM-YYYY' && endDateStr !== 'DD-MM-YYYY') {
+                    showInfo('⚠️ Note: Optional Leave type can only be used for dates that are optional holidays.');
+                }
+            }
+            
+            // Hide optional holidays section if Optional Leave type is selected
+            if (isOptionalLeaveTypeSelected) {
+                optionalHolidaysSection.classList.remove('show');
+                selectedOptionalHolidays = [];
+            }
         } else {
             balanceDisplay.textContent = 'Select a leave type to see balance';
             leaveTypeInfo.innerHTML = '';
         }
         
-        checkSameMonthAccrual();
+        validateAllFields();
     });
 
-    // Half day toggle functionality
-halfDayToggle.addEventListener('change', function() {
-    console.log('Half-day toggle changed:', this.checked);
-    
-    if (this.checked) {
-        halfOptions.classList.add('active');
-        
-        // If start date is already selected, copy it to end date
-        if (startDateInput.value && startDateInput.value !== 'DD-MM-YYYY') {
-            console.log('Copying start date to end date:', startDateInput.value);
-            endDateInput.value = startDateInput.value;
+    // Half day toggle
+    halfDayToggle.addEventListener('change', function() {
+        if (this.checked) {
+            halfOptions.classList.add('active');
             
-            // Parse the date and set it in datepicker
-            const startDate = parseDate(startDateInput.value);
-            if (startDate) {
-                $(endDateInput).datepicker('setDate', startDate);
-                $(endDateInput).datepicker('update');
+            if (startDateInput.value && startDateInput.value !== 'DD-MM-YYYY') {
+                endDateInput.value = startDateInput.value;
+                const startDate = parseDate(startDateInput.value);
+                if (startDate) {
+                    $(endDateInput).datepicker('setDate', startDate);
+                    $(endDateInput).datepicker('update');
+                }
             }
+            
+            endDateInput.disabled = true;
+            endDateInput.readOnly = true;
+            $(endDateInput).datepicker('disable');
+            
+            calculateDaysAndFetchOptional();
+            validateAllFields();
+        } else {
+            halfOptions.classList.remove('active');
+            firstHalfRadio.checked = false;
+            secondHalfRadio.checked = false;
+            firstHalfLabel.classList.remove('selected');
+            secondHalfLabel.classList.remove('selected');
+            
+            endDateInput.disabled = false;
+            endDateInput.readOnly = false;
+            $(endDateInput).datepicker('enable');
+            
+            calculateDaysAndFetchOptional();
+            validateAllFields();
         }
-        
-        // Disable end date field for half-day
-        endDateInput.disabled = true;
-        endDateInput.readOnly = true;
-        $(endDateInput).datepicker('disable');
-        
-        calculateDays(); // This should set 0.5 days
-    } else {
-        halfOptions.classList.remove('active');
-        firstHalfRadio.checked = false;
-        secondHalfRadio.checked = false;
-        firstHalfLabel.classList.remove('selected');
-        secondHalfLabel.classList.remove('selected');
-        
-        // Re-enable end date field
-        endDateInput.disabled = false;
-        endDateInput.readOnly = false;
-        $(endDateInput).datepicker('enable');
-        
-        calculateDays();
-    }
-});
-    // Half day option selection - Listen to radio button changes
+    });
+
+    // Half day option selection
     firstHalfRadio.addEventListener('change', function() {
         if (this.checked) {
             firstHalfLabel.classList.add('selected');
             secondHalfLabel.classList.remove('selected');
-            console.log('First half selected');
         }
     });
 
@@ -970,36 +1198,20 @@ halfDayToggle.addEventListener('change', function() {
         if (this.checked) {
             secondHalfLabel.classList.add('selected');
             firstHalfLabel.classList.remove('selected');
-            console.log('Second half selected');
         }
-    });
-
-    // Manual input handlers (in case user types the date)
-    startDateInput.addEventListener('input', function() {
-        console.log("Start date input:", this.value);
-        if (halfDayToggle.checked) {
-            endDateInput.value = this.value;
-        }
-        calculateDays();
-        checkSameMonthAccrual();
-    });
-
-    endDateInput.addEventListener('input', function() {
-        console.log("End date input:", this.value);
-        calculateDays();
     });
 
     // Form submission validation
     document.querySelector('form').addEventListener('submit', function(e) {
         const totalDays = document.getElementById('total_days').value;
-        const isHalfDay = document.getElementById('is_half_day').value;
+        const startDateStr = startDateInput.value;
+        const endDateStr = endDateInput.value;
+        const leaveTypeId = leaveTypeSelect.value;
+        const selectedOption = leaveTypeSelect.options[leaveTypeSelect.selectedIndex];
+        const leaveTypeName = selectedOption ? selectedOption.dataset.name || '' : '';
+        const isOptionalLeaveType = leaveTypeName.toLowerCase().includes('optional');
         
-        console.log("Form submit - total_days:", totalDays);
-        console.log("Form submit - is_half_day:", isHalfDay);
-        console.log("Form submit - first_half checked:", firstHalfRadio.checked);
-        console.log("Form submit - second_half checked:", secondHalfRadio.checked);
-        
-        // Validate half-day period selection
+        // Final validation before submission
         if (halfDayToggle.checked) {
             if (!firstHalfRadio.checked && !secondHalfRadio.checked) {
                 e.preventDefault();
@@ -1008,10 +1220,34 @@ halfDayToggle.addEventListener('change', function() {
             }
             if (parseFloat(totalDays) <= 0) {
                 e.preventDefault();
-                alert('Please select valid dates. Total working days cannot be 0.');
+                alert('Please select valid dates.');
                 return false;
             }
-        }    
+        }
+        
+        // Validate Optional Leave type selection
+        if (isOptionalLeaveType && startDateStr && endDateStr) {
+            const startDate = parseDate(startDateStr);
+            const endDate = parseDate(endDateStr);
+            
+            if (startDate && endDate) {
+                const hasOptionalHolidays = checkDatesForOptionalHolidays(startDate, endDate);
+                
+                if (!hasOptionalHolidays) {
+                    e.preventDefault();
+                    alert('❌ Cannot use Optional Leave type for selected dates. The selected date range does not contain any optional holidays. Please select a different leave type or choose dates that include optional holidays.');
+                    return false;
+                }
+            }
+        }
+        
+        // Check if there are any validation errors
+        const errorAlerts = validationContainer.querySelectorAll('.alert-danger');
+        if (errorAlerts.length > 0) {
+            e.preventDefault();
+            alert('Please fix the validation errors before submitting.');
+            return false;
+        }
     });
 });
 </script>

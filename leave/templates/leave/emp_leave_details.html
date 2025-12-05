@@ -455,51 +455,7 @@
 
     
 
-    <!-- Leave Balance Overview -->
-    <div class="leave-balance-card">
-        <div class="row">
-            <div class="col-md-3">
-                <div class="balance-item">
-                    <div class="balance-number">{{ leave_stats.Earned.remaining|floatformat:1}}</div>
-                    <div class="balance-label">Earned Leave</div>
-                    <small>1.5 days/month</small>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="balance-item"style="padding: 32px">
-                    {% if leave_stats.Optional %}
-                    <div class="balance-number">{{ leave_stats.Optional.remaining|floatformat:1 }}</div>
-                    <div class="balance-label">Optional Leave</div>
-                    
-                    {% else %}
-                    <div class="balance-number">0</div>
-                    <div class="balance-label">Optional Leave</div>
-                    
-                    {% endif %}
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="balance-item">
-                    <div class="balance-number">{{ pending_leaves }}</div>
-                    <div class="balance-label">Pending Requests</div>
-                    <small>Waiting for approval</small>
-                </div>
-            </div>
-            <div class="col-md-3">
-    <div class="balance-item">
-        {% if annual_leave_info %}
-        <div class="balance-number">{{ annual_leave_info.current_carry_forward|floatformat:1 }}</div>
-        <div class="balance-label">Carry Forward</div>
-        <small>Max {{ annual_leave_info.max_carry_forward }}</small>
-        {% else %}
-        <div class="balance-number">0</div>
-        <div class="balance-label">Carry Forward</div>
-        <small>From last year</small>
-        {% endif %}
-    </div>
-</div>
-        </div>
-    </div>
+    
 
     <!-- Detailed Leave Types Breakdown -->
     <div class="row mb-4">
@@ -563,6 +519,51 @@
             </div>
         </div>
         {% endfor %}
+    </div>
+    <!-- Leave Balance Overview -->
+    <div class="leave-balance-card">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="balance-item">
+                    <div class="balance-number">{{ leave_stats.Earned.remaining|floatformat:1}}</div>
+                    <div class="balance-label">Earned Leave Available</div>
+                    <small>1.5 days/month</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="balance-item"style="padding: 32px">
+                    {% if leave_stats.Optional %}
+                    <div class="balance-number">{{ leave_stats.Optional.remaining|floatformat:1 }}</div>
+                    <div class="balance-label">Optional Leave Available</div>
+                    
+                    {% else %}
+                    <div class="balance-number">0</div>
+                    <div class="balance-label">Optional Leave</div>
+                    
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="balance-item">
+                    <div class="balance-number">{{ pending_leaves }}</div>
+                    <div class="balance-label">Pending Requests</div>
+                    <small>Waiting for approval</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+    <div class="balance-item">
+        {% if annual_leave_info %}
+        <div class="balance-number">{{ annual_leave_info.current_carry_forward|floatformat:1 }}</div>
+        <div class="balance-label">Carry Forward</div>
+        <small>Max {{ annual_leave_info.max_carry_forward }}</small>
+        {% else %}
+        <div class="balance-number">0</div>
+        <div class="balance-label">Carry Forward</div>
+        <small>From last year</small>
+        {% endif %}
+    </div>
+</div>
+        </div>
     </div>
 
     <!-- Optional Leave Specific Information -->

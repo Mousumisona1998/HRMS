@@ -19,7 +19,8 @@ urlpatterns = [
     path('add-leave-balance/', views.add_leave_balance, name='add_leave_balance'),
     path('edit-leave-balance/', views.edit_leave_balance, name='edit_leave_balance'),
     path('withdraw-leave/<int:leave_id>/', views.withdraw_leave, name='withdraw_leave'),
-
+    path('get-region-holidays/', views.get_region_holidays_api, name='get_region_holidays'),
+    path('api/optional-holidays/', views.get_optional_holidays_api, name='get_optional_holidays_api'),
     path('master_data/add-leave-type/', views.add_leave_type, name='add_leave_type'),
     path('master_data/leave-type/update/<int:pk>/', views.update_leave_type, name='update_leave_type'),
     path('master_data/leave-type/delete/<int:pk>/', views.delete_leave_type, name='delete_leave_type'),
