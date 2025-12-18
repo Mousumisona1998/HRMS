@@ -1,168 +1,826 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}View Payslip - HRMS{% endblock %}
+{% block title %}View Payslip • HR System{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-light: #4895ef;
+        --secondary: #7209b7;
+        --accent: #4cc9f0;
+        --warning: #f72585;
+        --success: #10b981;
+        --dark: #1a1a2e;
+        --light: #f8f9fa;
+        --gray-100: #f8f9fa;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-400: #ced4da;
+        --gray-500: #adb5bd;
+        --gray-600: #6c757d;
+        --gray-700: #495057;
+        --gray-800: #343a40;
+        --gray-900: #212529;
+        --white: #ffffff;
+        --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+        --hover-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    }
+
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+
+    /* Header */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--gray-200);
+        margin-bottom: 24px;
+    }
+
+    .page-header h1 {
+        font-size: 30px;
+        font-weight: 700;
+        color: var(--dark);
+        letter-spacing: -0.5px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .page-header h1 i {
+        color: var(--primary);
+        background: rgba(67, 97, 238, 0.1);
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    .page-subtitle {
+        font-size: 16px;
+        color: var(--gray-600);
+        margin-top: 4px;
+        max-width: 600px;
+    }
+
+    /* Main Content */
+    .payslip-content {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 24px;
+    }
+
+    @media (max-width: 992px) {
+        .payslip-content {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Left Column - Main Payslip */
+    .main-payslip {
+        background: var(--white);
+        border-radius: 16px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        overflow: hidden;
+    }
+
+    .payslip-header {
+        padding: 24px;
+        border-bottom: 1px solid var(--gray-200);
+        background: var(--white);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .payslip-header h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .payslip-body {
+        padding: 24px;
+    }
+
+    /* Company Header */
+    .company-header {
+        text-align: center;
+        margin-bottom: 32px;
+        padding: 24px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.05), rgba(114, 9, 183, 0.05));
+        border: 1px solid var(--gray-200);
+    }
+
+    .company-header h3 {
+        color: var(--primary);
+        margin-bottom: 8px;
+        font-size: 24px;
+    }
+
+    .company-header p {
+        color: var(--gray-600);
+        margin-bottom: 16px;
+    }
+
+    .company-header h4 {
+        color: var(--dark);
+        font-size: 20px;
+        font-weight: 700;
+    }
+
+    /* Info Sections */
+    .info-sections {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+
+    @media (max-width: 768px) {
+        .info-sections {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .info-box {
+        background: var(--gray-100);
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid var(--gray-200);
+    }
+
+    .info-box h6 {
+        color: var(--gray-600);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 16px;
+        font-weight: 600;
+    }
+
+    .info-box p {
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: var(--gray-800);
+    }
+
+    .info-box strong {
+        color: var(--dark);
+        font-weight: 600;
+    }
+
+    /* Employee Info Styling */
+    .employee-display {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 16px;
+        padding: 16px;
+        background: var(--white);
+        border-radius: 12px;
+        border: 1px solid var(--gray-200);
+    }
+
+    .avatar-img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .avatar-initials {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 18px;
+    }
+
+    .employee-details h4 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 4px;
+    }
+
+    .employee-details p {
+        font-size: 14px;
+        color: var(--gray-600);
+        margin: 0;
+    }
+
+    /* Salary Breakdown */
+    .salary-breakdown {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        margin-bottom: 32px;
+    }
+
+    @media (max-width: 768px) {
+        .salary-breakdown {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .breakdown-box {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--gray-200);
+    }
+
+    .breakdown-header {
+        padding: 16px 20px;
+        color: var(--white);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+    }
+
+    .breakdown-header.earnings {
+        background: rgba(16, 185, 129, 0.15);
+        color: #065f46;
+    }
+
+    .breakdown-header.deductions {
+        background: rgba(239, 68, 68, 0.15);
+        color: #991b1b;
+    }
+
+    .breakdown-body {
+        padding: 20px;
+        background: var(--white);
+    }
+
+    .component-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--gray-100);
+    }
+
+    .component-row:last-child {
+        border-bottom: none;
+    }
+
+    .component-name {
+        font-size: 14px;
+        color: var(--gray-700);
+    }
+
+    .component-amount {
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .component-amount.positive {
+        color: var(--success);
+    }
+
+    .component-amount.negative {
+        color: #ef4444;
+    }
+
+    .breakdown-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 16px;
+        margin-top: 16px;
+        border-top: 2px solid var(--gray-200);
+        font-weight: 700;
+        font-size: 16px;
+    }
+
+    /* Net Salary Display */
+    .net-salary-box {
+        background: linear-gradient(135deg, #9c9da1, #8ca9c5);
+        border-radius: 12px;
+        padding: 32px;
+        text-align: center;
+        margin-bottom: 32px;
+        color: var(--white);
+    }
+
+    .net-salary-box h5 {
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+        opacity: 0.9;
+    }
+
+    .net-salary-box h2 {
+        font-size: 42px;
+        font-weight: 800;
+        margin-bottom: 8px;
+    }
+
+    .net-salary-box small {
+        opacity: 0.8;
+        font-size: 14px;
+    }
+
+    /* Right Column - Summary */
+    .summary-sidebar {
+        background: var(--white);
+        border-radius: 16px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        overflow: hidden;
+    }
+
+    .sidebar-header {
+        padding: 24px;
+        border-bottom: 1px solid var(--gray-200);
+        background: var(--white);
+    }
+
+    .sidebar-header h4 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .sidebar-body {
+        padding: 24px;
+    }
+
+    /* Quick Stats */
+    .quick-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .stat-box {
+        background: var(--gray-100);
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+        border: 1px solid var(--gray-200);
+    }
+
+    .stat-value {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 4px;
+    }
+
+    .stat-value.earnings {
+        color: var(--success);
+    }
+
+    .stat-value.deductions {
+        color: #ef4444;
+    }
+
+    .stat-value.net {
+        color: var(--primary);
+    }
+
+    .stat-value.days {
+        color: var(--accent);
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: var(--gray-600);
+        font-weight: 500;
+    }
+
+    /* Attendance Summary */
+    .attendance-summary {
+        background: var(--gray-100);
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid var(--gray-200);
+    }
+
+    .attendance-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .attendance-header h6 {
+        color: var(--dark);
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .attendance-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+    .attendance-item {
+        text-align: center;
+    }
+
+    .attendance-value {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .attendance-value.working {
+        color: var(--primary);
+    }
+
+    .attendance-value.paid {
+        color: var(--success);
+    }
+
+    .attendance-value.leave {
+        color: #f59e0b;
+    }
+
+    .attendance-label {
+        font-size: 12px;
+        color: var(--gray-600);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Badge Styles */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .badge-warning {
+        background: rgba(247, 37, 133, 0.1);
+        color: var(--warning);
+        border: 1px solid rgba(247, 37, 133, 0.2);
+    }
+
+    .badge-success {
+        background: rgba(16, 185, 129, 0.1);
+        color: #065f46;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .badge-info {
+        background: rgba(76, 201, 240, 0.1);
+        color: #0369a1;
+        border: 1px solid rgba(76, 201, 240, 0.2);
+    }
+
+    /* Button Styles */
+    .btn-success {
+        background: var(--success);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+
+    .btn-success:hover {
+        background: #0da271;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-secondary {
+        background: var(--gray-600);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+
+    .btn-secondary:hover {
+        background: var(--gray-700);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-container {
+            padding: 16px;
+        }
+        
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+        
+        .page-header h1 {
+            font-size: 26px;
+        }
+        
+        .btn-group {
+            width: 100%;
+        }
+        
+        .btn-group a {
+            flex: 1;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 576px) {
+
+    .payslip-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .payslip-header h3 {
+        font-size: 16px;
+        line-height: 1.3;
+    }
+
+    .payslip-status {
+        width: 100%;
+    }
+
+    .payslip-status .badge {
+        display: inline-flex;
+        width: auto;
+        font-size: 13px;
+        padding: 6px 12px;
+    }
+}
+
+</style>
+
+<div class="page-container">
+    <!-- Header -->
     <div class="page-header">
-        <div class="row align-items-center">
-            <div class="col">
-                <h1 class="h3 mb-0">Payslip Details</h1>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="{% url 'payslips' %}">Payslips</a></li>
-                        <li class="breadcrumb-item active">Payslip #{{ payslip.payslip_number }}</li>
-                    </ol>
-                </nav>
-            </div>
-            <div class="col-auto">
-                <div class="btn-group">
-                    <a href="{% url 'download_payslip' payslip.id %}" class="btn btn-success">
-                        <i class="fas fa-download me-2"></i>Download PDF
-                    </a>
-                    <a href="{% url 'payslips' %}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Payslips
-                    </a>
-                </div>
-            </div>
+        <div>
+            <h1>
+                <i class="fas fa-file-invoice-dollar"></i>
+                Payslip Details
+            </h1>
+            <p class="page-subtitle">View detailed payslip information for {{ payslip.employee.first_name }} {{ payslip.employee.last_name }}</p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'download_payslip' payslip.id %}" class="btn-success">
+                <i class="fas fa-download"></i>
+                Download PDF
+            </a>
+            <a href="{% url 'payslips' %}" class="btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Back to Payslips
+            </a>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-lg-8">
-            <!-- Payslip Preview -->
-            <div class="custom-card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Payslip Preview - {{ payslip.payslip_number }}</h5>
+    <!-- Main Content -->
+    <div class="payslip-content">
+        <!-- Left Column - Main Payslip -->
+        <div class="main-payslip">
+            <div class="payslip-header">
+                <h3>
+                    <i class="fas fa-receipt"></i>
+                    Payslip #{{ payslip.payslip_number }}
+                </h3>
+                <div class="payslip-status">
+                    <span class="badge 
+                        {% if payslip.status == 'generated' %}badge-warning
+                        {% elif payslip.status == 'approved' %}badge-success
+                        {% elif payslip.status == 'paid' %}badge-info
+                        {% else %}badge-secondary{% endif %}">
+                        {{ payslip.get_status_display }}
+                    </span>
                 </div>
-                <div class="card-body">
-                    <!-- Company Header -->
-                    <div class="text-center mb-4 p-4 border rounded bg-light">
-                        <h3 class="text-primary mb-1">HR Management System</h3>
-                        <p class="text-muted mb-2">Your Company Address • Phone: +1234567890</p>
-                        <h4 class="text-dark">PAYSLIP</h4>
+            </div>
+            
+            <div class="payslip-body">
+                <!-- Company Header -->
+                <div class="company-header">
+                   
+                    <h4>PAYSLIP</h4>
+                </div>
+
+                <!-- Employee Info -->
+                <div class="employee-display">
+                    {% if payslip.employee.profile_picture %}
+                    <img src="{{ payslip.employee.profile_picture.url }}" 
+                         alt="{{ payslip.employee.first_name }}" 
+                         class="avatar-img">
+                    {% else %}
+                    <div class="avatar-initials">
+                        {{ payslip.employee.first_name|first }}{{ payslip.employee.last_name|first }}
+                    </div>
+                    {% endif %}
+                    <div class="employee-details">
+                        <h4>{{ payslip.employee.first_name }} {{ payslip.employee.last_name }}</h4>
+                        <p>{{ payslip.employee.designation }} • Employee ID: {{ payslip.employee.employee_id }}</p>
+                    </div>
+                </div>
+
+                <!-- Info Sections -->
+                <div class="info-sections">
+                    <!-- Employee Information -->
+                    <div class="info-box">
+                        <h6>Employee Information</h6>
+                        <p><strong>Employee ID:</strong> {{ payslip.employee.employee_id }}</p>
+                        <p><strong>Department:</strong> {{ payslip.employee.department }}</p>
+                        <p><strong>Designation:</strong> {{ payslip.employee.designation }}</p>
                     </div>
 
-                    <!-- Employee & Payment Info -->
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <h6 class="text-muted">EMPLOYEE INFORMATION</h6>
-                            <p class="mb-1"><strong>Name:</strong> {{ payslip.employee.first_name }} {{ payslip.employee.last_name }}</p>
-                            <p class="mb-1"><strong>ID:</strong> {{ payslip.employee.employee_id }}</p>
-                            <p class="mb-1"><strong>Department:</strong> {{ payslip.employee.department }}</p>
-                            <p class="mb-1"><strong>Designation:</strong> {{ payslip.employee.designation }}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="text-muted">PAYMENT INFORMATION</h6>
-                            <p class="mb-1"><strong>Payslip No:</strong> {{ payslip.payslip_number }}</p>
-                            <p class="mb-1"><strong>Payment Date:</strong> {{ payslip.generated_at|date:"d M Y" }}</p>
-                            <p class="mb-1"><strong>Pay Period:</strong> {{ payslip.payroll_run.payroll_month }}/{{ payslip.payroll_run.payroll_year }}</p>
-                            <p class="mb-1"><strong>Status:</strong> 
-                                <span class="badge 
-                                    {% if payslip.status == 'generated' %}bg-warning
-                                    {% elif payslip.status == 'approved' %}bg-success
-                                    {% elif payslip.status == 'paid' %}bg-info
-                                    {% else %}bg-secondary{% endif %}">
-                                    {{ payslip.get_status_display }}
-                                </span>
-                            </p>
-                        </div>
+                    <!-- Payment Information -->
+                    <div class="info-box">
+                        <h6>Payment Information</h6>
+                        <p><strong>Payslip Number:</strong> {{ payslip.payslip_number }}</p>
+                        <p><strong>Payment Date:</strong> {{ payslip.generated_at|date:"d M Y" }}</p>
+                        <p><strong>Pay Period:</strong> {{ payslip.payroll_run.payroll_month }}/{{ payslip.payroll_run.payroll_year }}</p>
                     </div>
+                </div>
 
-                    <!-- Salary Breakdown -->
-                    <div class="row">
-                        <!-- Earnings -->
-                        <div class="col-md-6 mb-4">
-                            <div class="border rounded">
-                                <div class="bg-success text-white p-3">
-                                    <h6 class="mb-0"><i class="fas fa-arrow-up me-2"></i>EARNINGS</h6>
-                                </div>
-                                <div class="p-3">
-                                    {% for component in components %}
-                                    {% if component.component_type == 'earning' %}
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span>{{ component.component.name }}</span>
-                                        <strong class="text-success">+ ₹{{ component.amount }}</strong>
-                                    </div>
-                                    {% endif %}
-                                    {% endfor %}
-                                    <hr>
-                                    <div class="d-flex justify-content-between">
-                                        <strong>Total Earnings</strong>
-                                        <strong class="text-success">₹{{ payslip.gross_earnings }}</strong>
-                                    </div>
-                                </div>
+                <!-- Salary Breakdown -->
+                <div class="salary-breakdown">
+                    <!-- Earnings -->
+                    <div class="breakdown-box">
+                        <div class="breakdown-header earnings">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>EARNINGS</span>
+                        </div>
+                        <div class="breakdown-body">
+                            {% for component in components %}
+                            {% if component.component_type == 'earning' %}
+                            <div class="component-row">
+                                <span class="component-name">{{ component.component.name }}</span>
+                                <span class="component-amount positive">+ ₹{{ component.amount }}</span>
                             </div>
-                        </div>
-
-                        <!-- Deductions -->
-                        <div class="col-md-6 mb-4">
-                            <div class="border rounded">
-                                <div class="bg-danger text-white p-3">
-                                    <h6 class="mb-0"><i class="fas fa-arrow-down me-2"></i>DEDUCTIONS</h6>
-                                </div>
-                                <div class="p-3">
-                                    {% for component in components %}
-                                    {% if component.component_type == 'deduction' %}
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span>{{ component.component.name }}</span>
-                                        <strong class="text-danger">- ₹{{ component.amount }}</strong>
-                                    </div>
-                                    {% endif %}
-                                    {% endfor %}
-                                    <hr>
-                                    <div class="d-flex justify-content-between">
-                                        <strong>Total Deductions</strong>
-                                        <strong class="text-danger">₹{{ payslip.total_deductions }}</strong>
-                                    </div>
-                                </div>
+                            {% endif %}
+                            {% endfor %}
+                            <div class="breakdown-total">
+                                <span>Total Earnings</span>
+                                <span class="component-amount positive">₹{{ payslip.gross_earnings }}</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Summary -->
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="border rounded text-black">
-                                <div class="p-3 text-center">
-                                    <h5 class="mb-2">NET SALARY</h5>
-                                    <h2 class="mb-0">₹{{ payslip.net_salary }}</h2>
-                                    <small>Paid via Bank Transfer</small>
-                                </div>
+                    <!-- Deductions -->
+                    <div class="breakdown-box">
+                        <div class="breakdown-header deductions">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>DEDUCTIONS</span>
+                        </div>
+                        <div class="breakdown-body">
+                            {% for component in components %}
+                            {% if component.component_type == 'deduction' %}
+                            <div class="component-row">
+                                <span class="component-name">{{ component.component.name }}</span>
+                                <span class="component-amount negative">- ₹{{ component.amount }}</span>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                            <div class="breakdown-total">
+                                <span>Total Deductions</span>
+                                <span class="component-amount negative">₹{{ payslip.total_deductions }}</span>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Attendance Summary -->
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="border rounded">
-                                <div class="text-balack p-3">
-                                    <h6 class="mb-0"><i class="fas fa-calendar me-2"></i>ATTENDANCE SUMMARY</h6>
-                                </div>
-                                <div class="p-3">
-                                    <div class="row text-center">
-                                        <div class="col-md-4">
-                                            <h5 class="text-primary">{{ payslip.working_days }}</h5>
-                                            <small class="text-muted">Working Days</small>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <h5 class="text-success">{{ payslip.paid_days }}</h5>
-                                            <small class="text-muted">Paid Days</small>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <h5 class="text-warning">{{ payslip.leave_days }}</h5>
-                                            <small class="text-muted">Leave Days</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                <!-- Net Salary Display -->
+                <div class="net-salary-box">
+                    <h5>Net Salary</h5>
+                    <h2>₹{{ payslip.net_salary }}</h2>
+                    <small>Paid via Bank Transfer</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Summary -->
+        <div class="summary-sidebar">
+            <div class="sidebar-header">
+                <h4>
+                    <i class="fas fa-chart-bar"></i>
+                    Salary Summary
+                </h4>
+            </div>
+            
+            <div class="sidebar-body">
+                <!-- Quick Stats -->
+                <div class="quick-stats">
+                    <div class="stat-box">
+                        <div class="stat-value earnings">₹{{ payslip.gross_earnings }}</div>
+                        <div class="stat-label">Gross Earnings</div>
+                    </div>
+                    
+                    <div class="stat-box">
+                        <div class="stat-value deductions">₹{{ payslip.total_deductions }}</div>
+                        <div class="stat-label">Total Deductions</div>
+                    </div>
+                    
+                    <div class="stat-box">
+                        <div class="stat-value net">₹{{ payslip.net_salary }}</div>
+                        <div class="stat-label">Net Salary</div>
+                    </div>
+                    
+                    <div class="stat-box">
+                        <div class="stat-value days">{{ payslip.paid_days }}</div>
+                        <div class="stat-label">Paid Days</div>
+                    </div>
+                </div>
+
+                <!-- Attendance Summary -->
+                <div class="attendance-summary">
+                    <div class="attendance-header">
+                        <i class="fas fa-calendar"></i>
+                        <h6>Attendance Summary</h6>
+                    </div>
+                    <div class="attendance-stats">
+                        <div class="attendance-item">
+                            <div class="attendance-value working">{{ payslip.working_days }}</div>
+                            <div class="attendance-label">Working Days</div>
                         </div>
+                        <div class="attendance-item">
+                            <div class="attendance-value paid">{{ payslip.paid_days }}</div>
+                            <div class="attendance-label">Paid Days</div>
+                        </div>
+                        <div class="attendance-item">
+                            <div class="attendance-value leave">{{ payslip.leave_days }}</div>
+                            <div class="attendance-label">Leave Days</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Info -->
+                <div style="margin-top: 24px;">
+                    <div style="font-size: 14px; color: var(--gray-600); margin-bottom: 8px;">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Additional Information</strong>
+                    </div>
+                    <div style="font-size: 13px; color: var(--gray-700); line-height: 1.6;">
+                        <p style="margin-bottom: 4px;">• Payment Method: Bank Transfer</p>
+                        <p style="margin-bottom: 4px;">• Generated On: {{ payslip.generated_at|date:"d M Y, h:i A" }}</p>
+                        <p style="margin-bottom: 4px;">• Payroll Run: {{ payslip.payroll_run.name }}</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add any client-side interactivity here if needed
+    console.log('Payslip details page loaded');
+});
+</script>
+
 {% endblock %}

@@ -145,3 +145,11 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 LOGIN_URL = '/login/'  # or wherever your login page is
 LOGIN_REDIRECT_URL = '/dashboard/'  # or your main dashboard
 ALLOWED_HOSTS = ["Mousumi", "localhost", "127.0.0.1"]
+
+# # Session settings
+# SESSION_COOKIE_AGE = 3600  # 30 minutes
+# SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+# SESSION_SAVE_EVERY_REQUEST = True  # This extends session on each request
+
+# # Database-backed sessions (recommended for production)
+# SESSION_ENGINE = 'django.contrib.sessions.backends.db'

@@ -6,7 +6,7 @@ from django.db.models import Q, Sum
 from django.utils import timezone
 from datetime import datetime, date
 from decimal import Decimal
-from hr.models import Employee
+from hr.models import Department, Employee
 from hrms import settings
 from leave.models import LeaveBalance
 from .models import SalaryComponent, EmployeeSalary, EmployeeSalaryComponent, PayrollRun, Payslip, PayslipComponent
@@ -29,8 +29,18 @@ def salary_components(request):
     
     components = SalaryComponent.objects.all().order_by('component_type', 'name')
     
+    # Calculate statistics
+    total_count = components.count()
+    earning_count = components.filter(component_type='earning').count()
+    deduction_count = components.filter(component_type='deduction').count()
+    active_count = components.filter(is_active=True).count()
+    
     context = {
         'components': components,
+        'total_count': total_count,
+        'earning_count': earning_count,
+        'deduction_count': deduction_count,
+        'active_count': active_count,
         'user_name': request.session.get('user_name'),
         'user_role': request.session.get('user_role'),
         'today_date': date.today(),
@@ -138,12 +148,14 @@ def employee_salaries(request):
         return redirect('login')
     
     salaries = EmployeeSalary.objects.select_related('employee').filter(is_active=True).order_by('-effective_date')
-    
+    # Get all active departments for the dropdown
+    departments = Department.objects.filter(is_active=True).order_by('name')
     context = {
         'salaries': salaries,
         'user_name': request.session.get('user_name'),
         'user_role': request.session.get('user_role'),
         'today_date': date.today(),
+        'departments': departments,
     }
     return render(request, 'payroll/employee_salaries.html', context)
 
@@ -270,7 +282,7 @@ def calculate_salary_api(request):
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 
-# Payroll Run Views
+# payroll/views.py
 def payroll_runs(request):
     """List all payroll runs"""
     if not request.session.get('user_authenticated'):
@@ -278,8 +290,22 @@ def payroll_runs(request):
     
     payroll_runs_list = PayrollRun.objects.all().order_by('-payroll_year', '-payroll_month', '-created_at')
     
+    total_count = payroll_runs_list.count()
+    draft_count = payroll_runs_list.filter(status='draft').count()
+    processing_count = payroll_runs_list.filter(status='processing').count()
+    completed_count = payroll_runs_list.filter(status='completed').count()
+    month_choices = [
+        (1, 'January'), (2, 'February'), (3, 'March'), (4, 'April'),
+        (5, 'May'), (6, 'June'), (7, 'July'), (8, 'August'),
+        (9, 'September'), (10, 'October'), (11, 'November'), (12, 'December')
+    ]
     context = {
         'payroll_runs': payroll_runs_list,
+        'total_count': total_count,
+        'draft_count': draft_count,
+        'processing_count': processing_count,
+        'completed_count': completed_count,
+        'month_choices': month_choices, 
         'user_name': request.session.get('user_name'),
         'user_role': request.session.get('user_role'),
         'today_date': date.today(),
@@ -297,8 +323,6 @@ def create_payroll_run(request):
             payroll_year = int(request.POST.get('payroll_year'))
             payroll_month = int(request.POST.get('payroll_month'))
             selected_employees = request.POST.getlist('employees')
-            
-            # ALLOW multiple payroll runs per month - REMOVED duplicate check
             
             if not selected_employees:
                 messages.error(request, 'Please select at least one employee.')
@@ -326,35 +350,57 @@ def create_payroll_run(request):
     current_year = date.today().year
     current_month = date.today().month
     
+    # Get selected month/year from request parameters
+    selected_year = request.GET.get('year')
+    selected_month = request.GET.get('month')
+    
+    # Use provided values or current values
+    try:
+        if selected_year:
+            selected_year = int(selected_year)
+        else:
+            selected_year = current_year
+            
+        if selected_month:
+            selected_month = int(selected_month)
+        else:
+            selected_month = current_month
+    except ValueError:
+        selected_year = current_year
+        selected_month = current_month
+    
     # Get employees with active salary structures
     employees_with_salary = Employee.objects.filter(
         status='active',
         employeesalary__is_active=True
     ).distinct()
     
-    # FILTER: Only show employees NOT processed in ANY payroll run for selected month
-    # Get month from request or use current month
-    selected_month = int(request.GET.get('month', current_month))
-    selected_year = int(request.GET.get('year', current_year))
-    
-    processed_employees = Payslip.objects.filter(
+    # Get employees already processed for selected month/year
+    processed_employee_ids = Payslip.objects.filter(
         payroll_run__payroll_year=selected_year,
         payroll_run__payroll_month=selected_month
-    ).values_list('employee_id', flat=True)
+    ).values_list('employee_id', flat=True).distinct()
     
-    available_employees = employees_with_salary.exclude(id__in=processed_employees)
+    # Exclude already processed employees
+    available_employees = employees_with_salary.exclude(id__in=processed_employee_ids)
+    
+    # Prepare month list
+    months = [
+        (1, 'January'), (2, 'February'), (3, 'March'), (4, 'April'),
+        (5, 'May'), (6, 'June'), (7, 'July'), (8, 'August'),
+        (9, 'September'), (10, 'October'), (11, 'November'), (12, 'December')
+    ]
+    
+    # Generate years list (current year, previous year, next year)
+    years = [current_year - 1, current_year, current_year + 1]
     
     context = {
         'current_year': current_year,
         'current_month': current_month,
         'selected_year': selected_year,
         'selected_month': selected_month,
-        'years': range(current_year - 1, current_year + 2),
-        'months': [
-            (1, 'January'), (2, 'February'), (3, 'March'), (4, 'April'),
-            (5, 'May'), (6, 'June'), (7, 'July'), (8, 'August'),
-            (9, 'September'), (10, 'October'), (11, 'November'), (12, 'December')
-        ],
+        'years': years,
+        'months': months,
         'available_employees': available_employees,
         'user_name': request.session.get('user_name'),
         'user_role': request.session.get('user_role'),
@@ -528,13 +574,18 @@ def payslips(request):
         try:
             employee = Employee.objects.get(email=user_email)
             payslips_list = Payslip.objects.filter(employee=employee).select_related('payroll_run').order_by('-generated_at')
+            # Get total salary for the employee
+            total_salary = payslips_list.aggregate(total=Sum('net_salary'))['total'] or 0
         except Employee.DoesNotExist:
             payslips_list = Payslip.objects.none()
+            total_salary = 0
     else:
         payslips_list = Payslip.objects.select_related('employee', 'payroll_run').order_by('-generated_at')
-    
+        # Get total salary sum for all employees
+        total_salary = payslips_list.aggregate(total=Sum('net_salary'))['total'] or 0
     context = {
         'payslips': payslips_list,
+        'total_salary_sum': total_salary,
         'user_name': request.session.get('user_name'),
         'user_role': user_role,
         'today_date': date.today(),
@@ -793,8 +844,10 @@ def number_to_words(number):
 
 
 class PayslipPDF(FPDF):
-    def __init__(self):
+    def __init__(self, month_name="", year=""):
         super().__init__()
+        self.month_name = month_name
+        self.year = year
         # ✅ Use Unicode-supported DejaVuSans font
         font_path = os.path.join(settings.BASE_DIR, "static", "fonts", "DejaVuSans.ttf")
         self.add_font("DejaVu", "", font_path, uni=True)
@@ -811,7 +864,13 @@ class PayslipPDF(FPDF):
             pass
 
         self.set_font("DejaVu", "B", 16)
-        self.cell(0, 10, "PAYSLIP - JUN 2025", ln=True, align="L")
+        self.cell(
+            0,
+            10,
+            f"PAYSLIP - {self.month_name.upper()} {self.year}",
+            ln=True,
+            align="L",
+        )
 
         self.set_font("DejaVu", "", 9)
         self.multi_cell(
@@ -898,9 +957,23 @@ def download_payslip(request, payslip_id):
         # If you still want totals in Python (for logging/debug, not used in PDF now)
         total_earn = sum(float(c.amount) for c in earnings)
         total_deduct = sum(float(c.amount) for c in deductions)
+        
+        # ---- Month & Year (SINGLE SOURCE) ----
+        if payslip.payroll_run and payslip.payroll_run.payroll_month:
+            month_name = datetime(
+                1900, int(payslip.payroll_run.payroll_month), 1
+            ).strftime("%B")
+        else:
+            month_name = "Month"
 
-        # Create PDF
-        pdf = PayslipPDF()
+        year = (
+            payslip.payroll_run.payroll_year
+            if payslip.payroll_run and payslip.payroll_run.payroll_year
+            else "Year"
+        )
+
+        # ---- PDF ----
+        pdf = PayslipPDF(month_name=month_name, year=year)
         pdf.add_page()
 
         # Employee Info

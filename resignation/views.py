@@ -58,7 +58,7 @@ def resignation_dashboard(request):
     user_email = request.session.get('user_email')
     
     # Statistics
-    total_resignations = Resignation.objects.count()
+    total_resignations = Resignation.objects.filter(status__in=['applied', 'accepted']).count()
     pending_resignations = Resignation.objects.filter(status='applied').count()
     active_notice = Resignation.objects.filter(status='accepted', exit_status='serving_notice').count()
     completed_this_month = Resignation.objects.filter(
@@ -317,6 +317,35 @@ def all_resignations(request):
         except Employee.DoesNotExist:
             print("Current user not found in Employee table")
             resignations = Resignation.objects.none()
+            
+    elif user_role == 'BRANCH MANAGER':
+        # Branch Managers can see resignations from their location
+        try:
+            current_user_emp = Employee.objects.get(email=user_email)
+            branch_manager_location = current_user_emp.location
+            
+            if branch_manager_location:
+                # Get all employees from the same location
+                location_employees = Employee.objects.filter(
+                    location__iexact=branch_manager_location
+                )
+                print(f"Branch Manager Location: {branch_manager_location}")
+                print(f"Employees in location: {location_employees.count()}")
+                
+                # Filter resignations to only employees from this location, excluding own resignation
+                resignations = Resignation.objects.filter(
+                    employee_id__in=location_employees.values_list('id', flat=True)
+                ).exclude(employee=current_user_emp).select_related('employee', 'applied_to', 'approved_by')
+                
+                print(f"Location resignations found: {resignations.count()}")
+            else:
+                print("Branch manager location not set")
+                resignations = Resignation.objects.none()
+                
+        except Employee.DoesNotExist:
+            print("Branch manager profile not found")
+            resignations = Resignation.objects.none()
+                    
     else:
         # Regular employees can only see their own resignations
         try:
@@ -349,9 +378,10 @@ def all_resignations(request):
             Q(employee__employee_id__icontains=search_query) |
             Q(reason__icontains=search_query)
         )
-    
+    total_resignations = resignations.filter(status__in=['applied', 'accepted']).count()
     context = {
         'resignations': resignations.order_by('-created_at'),
+        'total_resignations': total_resignations,
         'status_choices': Resignation.RESIGNATION_STATUS,
         'departments': Employee.objects.values_list('department', flat=True).distinct(),
         'user_name': request.session.get('user_name'),
@@ -627,9 +657,19 @@ def resignation_history(request):
     try:
         employee = Employee.objects.get(email=request.session.get('user_email'))
         resignations = Resignation.objects.filter(employee=employee).order_by('-created_at')
+        active_notice = resignations.filter(status__in=['applied', 'under_review', 'accepted']
+).count()
+
+        withdrawn_count = resignations.filter(status='withdrawn').count()
+
+        completed_count = resignations.filter(status='accepted').count()
         
         context = {
             'resignations': resignations,
+            'active_notice': active_notice,
+            'active_count': active_notice,
+            'withdrawn_count': withdrawn_count,
+            'completed_count': completed_count,
             'user_name': request.session.get('user_name'),
             'user_role': request.session.get('user_role'),
             'today_date': date.today(),

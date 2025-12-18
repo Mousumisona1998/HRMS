@@ -134,6 +134,10 @@ def all_attendance(request):
 
     office_start_time = time(9, 30)   # REQUIRED FOR PUNCTUALITY
 
+    late_arrivals_count = 0
+    halfday_count = 0 
+    total_extra_minutes = 0 
+
     for d in reversed(all_dates):
         record = attendance_dict.get(d)
 
@@ -161,6 +165,7 @@ def all_attendance(request):
                     record.day_status = "LOP"
                 elif worked_hours < 5:
                     record.day_status = "Half Day"
+                    halfday_count += 1  
                 else:
                     record.day_status = "Present"
 
@@ -175,11 +180,15 @@ def all_attendance(request):
 
                 extra_hours = worked_hours - standard_hours
                 if extra_hours > 0:
-                    eh_hours = int(extra_hours)
-                    eh_minutes = int((extra_hours - eh_hours) * 60)
-                    record.extra_hours_display = f"{eh_hours}h {eh_minutes}m"
+                    eh_minutes = int(extra_hours * 60)        # ✅ convert to minutes
+                    total_extra_minutes += eh_minutes         # ✅ add month-wise
+
+                    eh_hours = eh_minutes // 60
+                    eh_mins = eh_minutes % 60
+                    record.extra_hours_display = f"{eh_hours}h {eh_mins}m"
                 else:
                     record.extra_hours_display = "0h 0m"
+
 
             elif record.check_in and not record.check_out:
                 record.duration_display = "In Progress"
@@ -195,6 +204,7 @@ def all_attendance(request):
                     record.day_status = "LOP"
                 elif worked_hours < 5:
                     record.day_status = "Half Day"
+                    halfday_count += 1  
                 else:
                     record.day_status = "Present"
 
@@ -207,6 +217,7 @@ def all_attendance(request):
                     record.punctuality = "On Time"
                 else:
                     record.punctuality = "Late"
+                    late_arrivals_count += 1 
 
 
             full_attendance_list.append(record)
@@ -233,6 +244,10 @@ def all_attendance(request):
             full_attendance_list.append(fake_record)
 
     full_attendance_list.sort(key=lambda x: x.date, reverse=True)
+    total_extra_hours = total_extra_minutes // 60
+    total_extra_mins = total_extra_minutes % 60
+    total_extra_display = f"{total_extra_hours}h {total_extra_mins}m"
+
 
     if not month_filter:
         month_filter = today.strftime("%Y-%m")
@@ -242,6 +257,9 @@ def all_attendance(request):
         'employee': employee,
         'selected_month': month_filter,
         'today': today,
+        'late_arrivals_count': late_arrivals_count,
+        'halfday_count': halfday_count,
+        'total_extra_display': total_extra_display,
     }
     return render(request, 'attendance/all_attendance.html', context)
 
@@ -262,12 +280,12 @@ def attendance_report(request):
     office_start_time = time(9, 30)
 
     try:
-        start_date = datetime.strptime(date_from, '%Y-%m-%d').date() if date_from else today
+        start_date = datetime.strptime(date_from, '%d/%m/%Y').date() if date_from else today
     except ValueError:
         start_date = today
 
     try:
-        end_date = datetime.strptime(date_to, '%Y-%m-%d').date() if date_to else today
+        end_date = datetime.strptime(date_to, '%d/%m/%Y').date() if date_to else today
     except ValueError:
         end_date = today
 
@@ -461,12 +479,12 @@ def download_admin_attendance_report(request):
 
     # Parse date range
     try:
-        start_date = datetime.strptime(date_from, '%Y-%m-%d').date() if date_from else None
+        start_date = datetime.strptime(date_from, '%d/%m/%Y').date() if date_from else None
     except ValueError:
         start_date = None
 
     try:
-        end_date = datetime.strptime(date_to, '%Y-%m-%d').date() if date_to else None
+        end_date = datetime.strptime(date_to, '%d/%m/%Y').date() if date_to else None
     except ValueError:
         end_date = None
 

@@ -1,89 +1,1075 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}My Resignation - HR System{% endblock %}
+{% block title %}My Resignation • HR System{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <!-- Page Header -->
-            <div class="page-header">
-                <div class="row align-items-center">
-                    <div class="col">
-                        <h1 class="h2 mb-0"> My Resignation</h1>
-                        <p class="text-muted mb-0">Track your resignation status and exit process</p>
-                        
-                        <!-- Resignation Selector Dropdown -->
-                        <!-- {% if resignations|length > 1 %}
-                        <div class="mt-3">
-                            <label class="form-label"><strong>Select Resignation to View:</strong></label>
-                            <select class="form-select resignation-selector" style="max-width: 300px;">
-                                {% for res in resignations %}
-                                <option value="{{ res.id }}" 
-                                        {% if current_resignation.id == res.id %}selected{% endif %}
-                                        data-status="{{ res.status }}">
-                                    {{ res.created_at|date:"M d, Y" }} - 
-                                    {{ res.get_status_display }}
-                                    {% if res.status == 'withdrawn' %}(Withdrawn){% endif %}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        {% endif %} -->
-                    </div>
-                    <div class="col-auto">
-                        {% if not resignations %}
-                        <a href="{% url 'resignation:submit_resignation' %}" class="btn btn-primary">
-                            <i class="fas fa-paper-plane me-2"></i>Submit Resignation
-                        </a>
-                        {% endif %}
-                    </div>
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-light: #4895ef;
+        --secondary: #7209b7;
+        --accent: #4cc9f0;
+        --warning: #f72585;
+        --success: #10b981;
+        --dark: #1a1a2e;
+        --light: #f8f9fa;
+        --gray-100: #f8f9fa;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-400: #ced4da;
+        --gray-500: #adb5bd;
+        --gray-600: #6c757d;
+        --gray-700: #495057;
+        --gray-800: #343a40;
+        --gray-900: #212529;
+        --white: #ffffff;
+        --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+        --hover-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background-color: #f8fafc;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: var(--gray-800);
+    }
+
+    .dashboard-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+
+    /* Header */
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+    }
+
+    .dashboard-header h1 {
+        font-size: 30px;
+        font-weight: 700;
+        color: var(--dark);
+        letter-spacing: -0.5px;
+    }
+
+    .header-subtitle {
+        font-size: 16px;
+        color: var(--gray-600);
+        margin-top: 8px;
+        font-weight: 400;
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    /* Stats Grid */
+    .stats-summary {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin-bottom: 32px;
+    }
+
+    @media (max-width: 1200px) {
+        .stats-summary {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 640px) {
+        .stats-summary {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .stat-card {
+        background: var(--white);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--hover-shadow);
+        border-color: var(--primary-light);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(to bottom, var(--primary), var(--secondary));
+    }
+
+    .stat-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .stat-info h3 {
+        font-size: 30px;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 4px;
+        line-height: 1;
+    }
+
+    .stat-info p {
+        font-size: 14px;
+        color: var(--gray-600);
+        font-weight: 500;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(67, 97, 238, 0.1);
+        color: var(--primary);
+        font-size: 22px;
+    }
+
+    /* Main Content */
+    .resignation-content {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+
+    @media (max-width: 1200px) {
+        .resignation-content {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Cards */
+    .info-card {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+
+    .info-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--hover-shadow);
+        border-color: var(--primary-light);
+    }
+
+    .info-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(to bottom, var(--primary), var(--secondary));
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .card-header h2 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        gap: 6px;
+    }
+
+    .badge-accepted {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .badge-pending {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .badge-rejected {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .badge-withdrawn {
+        background: rgba(107, 114, 128, 0.1);
+        color: #6b7280;
+        border: 1px solid rgba(107, 114, 128, 0.2);
+    }
+
+    /* Timeline */
+    .status-timeline {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        padding: 20px 0;
+    }
+
+    .status-timeline::before {
+        content: '';
+        position: absolute;
+        top: 40px;
+        left: 20px;
+        right: 20px;
+        height: 2px;
+        background: var(--gray-200);
+        z-index: 1;
+    }
+
+    @media (max-width: 768px) {
+        .status-timeline {
+            flex-direction: column;
+            gap: 30px;
+        }
+        
+        .status-timeline::before {
+            top: 0;
+            left: 20px;
+            bottom: 0;
+            right: auto;
+            width: 2px;
+            height: auto;
+        }
+    }
+
+    .timeline-step {
+        flex: 1;
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        padding: 0 10px;
+    }
+
+    .step-marker {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--white);
+        border: 2px solid var(--gray-300);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+    }
+
+    .timeline-step.completed .step-marker {
+        background: var(--success);
+        border-color: var(--success);
+        color: white;
+    }
+
+    .timeline-step.active .step-marker {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+        animation: pulse 2s infinite;
+    }
+
+    .timeline-step.pending .step-marker {
+        background: var(--white);
+        border-color: var(--gray-300);
+        color: var(--gray-500);
+    }
+
+    .step-content {
+        margin-top: 8px;
+    }
+
+    .step-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 4px;
+    }
+
+    .step-date {
+        font-size: 12px;
+        color: var(--gray-600);
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    /* Progress Stats */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin: 20px 0;
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .stat-box {
+        background: var(--gray-100);
+        border: 1px solid var(--gray-200);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+
+    .stat-box:hover {
+        border-color: var(--primary-light);
+        transform: translateY(-2px);
+    }
+
+    .stat-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--primary);
+        line-height: 1;
+        margin-bottom: 8px;
+    }
+
+    .stat-label {
+        font-size: 14px;
+        color: var(--gray-600);
+        font-weight: 500;
+    }
+
+    /* Progress Bars */
+    .progress-container {
+        margin: 20px 0;
+    }
+
+    .progress-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: var(--gray-600);
+    }
+
+    .progress-bar {
+        height: 10px;
+        background: var(--gray-200);
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--primary-light));
+        border-radius: 5px;
+        transition: width 0.3s ease;
+    }
+
+    /* Exit Process Grid */
+    .process-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin: 20px 0;
+    }
+
+    @media (max-width: 768px) {
+        .process-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .process-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px;
+        border-radius: 10px;
+        border: 1px solid var(--gray-200);
+        background: var(--white);
+        transition: all 0.2s ease;
+    }
+
+    .process-item:hover {
+        border-color: var(--primary-light);
+        transform: translateY(-1px);
+    }
+
+    .process-item.completed {
+        background: rgba(16, 185, 129, 0.05);
+        border-color: rgba(16, 185, 129, 0.2);
+    }
+
+    .process-item.pending {
+        background: rgba(247, 37, 133, 0.05);
+        border-color: rgba(247, 37, 133, 0.2);
+    }
+
+    .process-item .icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+    }
+
+    .process-item.completed .icon {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    .process-item.pending .icon {
+        background: rgba(247, 37, 133, 0.1);
+        color: var(--warning);
+    }
+
+    .process-text {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--dark);
+        flex: 1;
+        margin: 0 12px;
+    }
+
+    /* Details Grid */
+    .details-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+        margin: 20px 0;
+    }
+
+    @media (max-width: 768px) {
+        .details-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .detail-section {
+        margin-bottom: 20px;
+    }
+
+    .section-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--gray-100);
+    }
+
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        font-size: 14px;
+        color: var(--gray-600);
+        font-weight: 500;
+    }
+
+    .detail-value {
+        font-size: 14px;
+        color: var(--dark);
+        font-weight: 600;
+        text-align: right;
+    }
+
+    /* Reason Box */
+    .reason-box {
+        background: var(--gray-100);
+        border: 1px solid var(--gray-200);
+        border-radius: 12px;
+        padding: 20px;
+        margin: 20px 0;
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--gray-700);
+    }
+
+    /* Alert Boxes */
+    .alert-box {
+        padding: 16px;
+        border-radius: 10px;
+        margin: 20px 0;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .alert-warning {
+        background: rgba(247, 37, 133, 0.05);
+        border: 1px solid rgba(247, 37, 133, 0.2);
+        color: var(--warning);
+    }
+
+    .alert-info {
+        background: rgba(76, 201, 240, 0.05);
+        border: 1px solid rgba(76, 201, 240, 0.2);
+        color: var(--accent);
+    }
+
+    .alert-icon {
+        font-size: 18px;
+        margin-top: 2px;
+    }
+
+    /* Buttons */
+    .btn-action {
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        border: none;
+        text-decoration: none;
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+        border: 1px solid var(--primary);
+    }
+
+    .btn-primary:hover {
+        background: #3a56d4;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+    }
+
+    .btn-outline {
+        background: var(--white);
+        color: var(--primary);
+        border: 2px solid var(--primary);
+    }
+
+    .btn-outline:hover {
+        background: rgba(67, 97, 238, 0.05);
+        transform: translateY(-1px);
+    }
+
+    .btn-warning {
+        background: var(--warning);
+        color: white;
+    }
+
+    .btn-warning:hover {
+        background: #e11478;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(247, 37, 133, 0.3);
+    }
+
+    .btn-danger {
+        background: #ef4444;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background: #dc2626;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 12px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+    }
+
+    /* Checklist Table */
+    .table-container {
+        overflow-x: auto;
+        margin: 20px 0;
+    }
+
+    .custom-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: var(--white);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--gray-200);
+    }
+
+    .custom-table thead {
+        background: var(--gray-100);
+    }
+
+    .custom-table th {
+        padding: 16px;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--gray-700);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--gray-200);
+    }
+
+    .custom-table td {
+        padding: 16px;
+        font-size: 14px;
+        color: var(--gray-700);
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .custom-table tbody tr:hover {
+        background: var(--gray-100);
+    }
+
+    .custom-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Documents Grid */
+    .documents-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 16px;
+        margin: 20px 0;
+    }
+
+    @media (max-width: 768px) {
+        .documents-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .document-card {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.2s ease;
+        text-align: center;
+    }
+
+    .document-card:hover {
+        border-color: var(--primary-light);
+        transform: translateY(-2px);
+        box-shadow: var(--hover-shadow);
+    }
+
+    .document-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        background: rgba(239, 68, 68, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ef4444;
+        font-size: 20px;
+        margin: 0 auto 16px;
+    }
+
+    .document-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 8px;
+    }
+
+    .document-meta {
+        font-size: 13px;
+        color: var(--gray-600);
+        margin-bottom: 16px;
+    }
+
+    /* Sidebar Cards */
+    .sidebar-card {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        margin-bottom: 24px;
+    }
+
+    .sidebar-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .sidebar-header h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+
+    .sidebar-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(67, 97, 238, 0.1);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 40px;
+        background: var(--gray-100);
+        border-radius: 12px;
+        border: 2px dashed var(--gray-300);
+        margin: 20px 0;
+    }
+
+    .empty-state-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--white);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        color: var(--gray-400);
+        font-size: 36px;
+        border: 2px solid var(--gray-200);
+    }
+
+    .empty-state h3 {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 12px;
+    }
+
+    .empty-state p {
+        color: var(--gray-600);
+        margin-bottom: 24px;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+        line-height: 1.6;
+    }
+
+    /* Policy List */
+    .policy-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .policy-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 14px;
+        padding: 12px;
+        background: var(--gray-100);
+        border-radius: 8px;
+        border: 1px solid var(--gray-200);
+        transition: all 0.2s ease;
+    }
+
+    .policy-list li:hover {
+        background: var(--white);
+        border-color: var(--primary-light);
+        transform: translateX(4px);
+    }
+
+    .policy-list li i {
+        color: var(--success);
+        font-size: 14px;
+        margin-top: 2px;
+    }
+
+    .policy-list li span {
+        flex: 1;
+        font-size: 14px;
+        color: var(--gray-700);
+        line-height: 1.5;
+    }
+
+    .policy-list li strong {
+        color: var(--dark);
+        font-weight: 600;
+    }
+
+    /* Modal */
+    .modal-content {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border-radius: 16px 16px 0 0;
+        padding: 20px 24px;
+        border: none;
+    }
+
+    .modal-title {
+        font-weight: 600;
+        font-size: 18px;
+    }
+
+    .modal-body {
+        padding: 24px;
+    }
+
+    .form-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 8px;
+    }
+
+    .form-control {
+        border: 1px solid var(--gray-300);
+        border-radius: 8px;
+        padding: 12px;
+        font-size: 14px;
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 16px;
+        }
+        
+        .dashboard-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+        
+        .header-actions {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        .btn-action {
+            padding: 10px 16px;
+            font-size: 14px;
+        }
+    }
+</style>
+
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div>
+            <h1>My Resignation</h1>
+            <p class="header-subtitle">Track your resignation status and exit process</p>
+        </div>
+        <div class="header-actions">
+            {% if not resignations %}
+                <a href="{% url 'resignation:submit_resignation' %}" class="btn-action btn-primary">
+                    <i class="fas fa-paper-plane"></i>
+                    Submit Resignation
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if not resignations %}
+    <!-- Empty State -->
+    <div class="info-card">
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <h3>No Resignation Submitted</h3>
+            <p>You haven't submitted any resignation request yet. Start the resignation process by submitting your resignation.</p>
+            <a href="{% url 'resignation:submit_resignation' %}" class="btn-action btn-primary" style="padding: 16px 32px; font-size: 16px;">
+                <i class="fas fa-paper-plane"></i>
+                Submit Resignation
+            </a>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Stats Summary -->
+    <div class="stats-summary">
+        <div class="stat-card">
+            <div class="stat-content">
+                <div class="stat-info">
+                    <h3>{{ resignations|length }}</h3>
+                    <p>Total Submissions</p>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-file-alt"></i>
                 </div>
             </div>
+        </div>
 
-            {% if not resignations %}
-            <!-- No Resignation Card -->
-            <div class="custom-card text-center py-5">
-                <i class="fas fa-file-alt fa-4x text-muted mb-3"></i>
-                <h3 class="text-muted">No Resignation Submitted</h3>
-                <p class="text-muted mb-4">You haven't submitted any resignation request yet.</p>
-                <a href="{% url 'resignation:submit_resignation' %}" class="btn btn-primary btn-lg">
-                    <i class="fas fa-paper-plane me-2"></i>Submit Resignation
-                </a>
+        <div class="stat-card">
+            <div class="stat-content">
+                <div class="stat-info">
+                    <h3>
+                        {% if current_resignation.status == 'accepted' %}
+                            1
+                        {% elif current_resignation.status == 'applied' or current_resignation.status == 'under_review' %}
+                            1
+                        {% else %}
+                            0
+                        {% endif %}
+                    </h3>
+                    <p>Active Request</p>
+                </div>
+                <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                    <i class="fas fa-clock"></i>
+                </div>
             </div>
-            {% else %}
-            
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-content">
+                <div class="stat-info">
+                    <h3>
+                        {% if current_resignation.withdrawal_requested %}
+                            1
+                        {% else %}
+                            0
+                        {% endif %}
+                    </h3>
+                    <p>Withdrawn</p>
+                </div>
+                <div class="stat-icon" style="background: rgba(107, 114, 128, 0.1); color: #6b7280;">
+                    <i class="fas fa-undo"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-content">
+                <div class="stat-info">
+                    <h3>{{ current_resignation.actual_notice_days }}</h3>
+                    <p>Notice Days</p>
+                </div>
+                <div class="stat-icon" style="background: rgba(76, 201, 240, 0.1); color: #4cc9f0;">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="resignation-content">
+        <!-- Left Column: Main Content -->
+        <div>
             <!-- Status Timeline -->
             {% if status_timeline %}
-            <div class="custom-card mb-4">
+            <div class="info-card">
                 <div class="card-header">
-                    <h4 class="card-title mb-0"> Your Resignation Status</h4>
-                    <span class="badge bg-{% if current_resignation.status == 'accepted' %}success{% elif current_resignation.status == 'rejected' %}danger{% elif current_resignation.status == 'withdrawn' %}secondary{% else %}warning{% endif %} fs-6">
-                        {{ current_resignation.get_status_display }}
-                        {% if current_resignation.status == 'withdrawn' %}(Withdrawn){% endif %}
+                    <h2><i class="fas fa-stream"></i> Resignation Status Timeline</h2>
+                    <span class="status-badge badge-{{ current_resignation.status }}">
+                        {% if current_resignation.status == 'accepted' %}
+                            <i class="fas fa-check-circle"></i> Accepted
+                        {% elif current_resignation.status == 'rejected' %}
+                            <i class="fas fa-times-circle"></i> Rejected
+                        {% elif current_resignation.status == 'withdrawn' %}
+                            <i class="fas fa-undo"></i> Withdrawn
+                        {% else %}
+                            <i class="fas fa-clock"></i> {{ current_resignation.get_status_display }}
+                        {% endif %}
                     </span>
                 </div>
                 <div class="card-body">
                     <div class="status-timeline">
                         {% for step in status_timeline %}
-                        <div class="timeline-step {% if step.completed %}completed{% elif step.active %}active{% else %}pending{% endif %}">
-                            <div class="step-marker">
-                                {% if step.completed %}
-                                <i class="fas fa-check"></i>
-                                {% elif step.active %}
-                                <i class="fas fa-spinner fa-spin"></i>
-                                {% else %}
-                                <i class="fas fa-clock"></i>
-                                {% endif %}
+                            <div class="timeline-step {% if step.completed %}completed{% elif step.active %}active{% else %}pending{% endif %}">
+                                <div class="step-marker">
+                                    {% if step.completed %}
+                                        <i class="{{ step.icon|default:'fas fa-check' }}"></i>
+                                    {% elif step.active %}
+                                        <i class="{{ step.icon|default:'fas fa-spinner fa-spin' }}"></i>
+                                    {% else %}
+                                        <i class="{{ step.icon|default:'fas fa-clock' }}"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="step-content">
+                                    <div class="step-title">{{ step.label }}</div>
+                                    {% if step.date %}
+                                        <div class="step-date">{{ step.date }}</div>
+                                    {% endif %}
+                                </div>
                             </div>
-                            <div class="step-content">
-                                <h6 class="step-title">{{ step.label }}</h6>
-                                {% if step.date %}
-                                <small class="text-muted">{{ step.date }}</small>
-                                {% endif %}
-                            </div>
-                        </div>
                         {% endfor %}
                     </div>
                 </div>
@@ -95,48 +1081,45 @@
             
             <!-- Notice Period Countdown -->
             {% if notice_progress %}
-            <div class="custom-card mb-4">
+            <div class="info-card">
                 <div class="card-header">
-                    <h4 class="card-title mb-0"> Notice Period Countdown</h4>
+                    <h2><i class="fas fa-hourglass-half"></i> Notice Period Countdown</h2>
                 </div>
                 <div class="card-body">
-                    <div class="row text-center mb-3">
-                        <div class="col-md-4">
-                            <div class="countdown-box">
-                                <div class="countdown-number text-primary">{{ notice_progress.days_completed }}</div>
-                                <div class="countdown-label">Days Completed</div>
-                            </div>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-value">{{ notice_progress.days_completed }}</div>
+                            <div class="stat-label">Days Completed</div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="countdown-box">
-                                <div class="countdown-number text-warning">{{ notice_progress.days_remaining }}</div>
-                                <div class="countdown-label">Days Remaining</div>
-                            </div>
+                        <div class="stat-box">
+                            <div class="stat-value" style="color: var(--warning);">{{ notice_progress.days_remaining }}</div>
+                            <div class="stat-label">Days Remaining</div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="countdown-box">
-                                <div class="countdown-number text-success">{{ notice_progress.total_days }}</div>
-                                <div class="countdown-label">Total Days</div>
-                            </div>
+                        <div class="stat-box">
+                            <div class="stat-value" style="color: var(--success);">{{ notice_progress.total_days }}</div>
+                            <div class="stat-label">Total Days</div>
                         </div>
                     </div>
-                    <div class="progress" style="height: 20px;">
-                        <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" 
-                             role="progressbar" 
-                             style="width: {{ notice_progress.completion_percentage|floatformat:0 }}%"
-                             aria-valuenow="{{ notice_progress.completion_percentage|floatformat:0 }}" 
-                             aria-valuemin="0" 
-                             aria-valuemax="100">
-                            {{ notice_progress.completion_percentage|floatformat:0 }}%
+                    
+                    <div class="progress-container">
+                        <div class="progress-label">
+                            <span>Notice Period Progress</span>
+                            <span>{{ notice_progress.completion_percentage|floatformat:0 }}%</span>
                         </div>
-                    </div>
-                    <div class="text-center mt-2">
-                        <small class="text-muted">
-                            Last working day: <strong>{{ current_resignation.last_working_date }}</strong>
-                            {% if notice_progress.days_remaining <= 7 %}
-                            <span class="badge bg-danger ms-2">⚠️ Ending Soon</span>
-                            {% endif %}
-                        </small>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: {{ notice_progress.completion_percentage|floatformat:0 }}%"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 12px; font-size: 13px; color: var(--gray-600);">
+                            <span>Start: {{ current_resignation.resignation_date|date:"M d, Y" }}</span>
+                            <span>End: {{ current_resignation.last_working_date|date:"M d, Y" }}</span>
+                        </div>
+                        {% if notice_progress.days_remaining <= 7 %}
+                            <div style="text-align: center; margin-top: 12px;">
+                                <span class="status-badge badge-rejected">
+                                    <i class="fas fa-exclamation-triangle"></i> Notice Period Ending Soon
+                                </span>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -144,62 +1127,74 @@
 
             <!-- Exit Process Status -->
             {% if exit_status %}
-            <div class="custom-card mb-4">
+            <div class="info-card">
                 <div class="card-header">
-                    <h4 class="card-title mb-0"> Exit Process Status</h4>
+                    <h2><i class="fas fa-door-open"></i> Exit Process Status</h2>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="exit-process-item {% if exit_status.no_due_certificate %}completed{% else %}pending{% endif %}">
-                                <i class="fas {% if exit_status.no_due_certificate %}fa-check-circle text-success{% else %}fa-clock text-warning{% endif %} me-2"></i>
-                                <span>No Due Certificate</span>
+                    <div class="process-grid">
+                        <div class="process-item {% if exit_status.no_due_certificate %}completed{% else %}pending{% endif %}">
+                            <div class="icon">
+                                <i class="fas fa-file-certificate"></i>
+                            </div>
+                            <span class="process-text">No Due Certificate</span>
+                            <span class="status-badge {% if exit_status.no_due_certificate %}badge-accepted{% else %}badge-pending{% endif %}">
                                 {% if exit_status.no_due_certificate %}
-                                <span class="badge bg-success ms-2">Completed</span>
+                                    <i class="fas fa-check"></i> Done
                                 {% else %}
-                                <span class="badge bg-warning ms-2">Pending</span>
+                                    <i class="fas fa-clock"></i> Pending
                                 {% endif %}
-                            </div>
+                            </span>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="exit-process-item {% if exit_status.exit_interview %}completed{% else %}pending{% endif %}">
-                                <i class="fas {% if exit_status.exit_interview %}fa-check-circle text-success{% else %}fa-clock text-warning{% endif %} me-2"></i>
-                                <span>Exit Interview</span>
+                        
+                        <div class="process-item {% if exit_status.exit_interview %}completed{% else %}pending{% endif %}">
+                            <div class="icon">
+                                <i class="fas fa-comments"></i>
+                            </div>
+                            <span class="process-text">Exit Interview</span>
+                            <span class="status-badge {% if exit_status.exit_interview %}badge-accepted{% else %}badge-pending{% endif %}">
                                 {% if exit_status.exit_interview %}
-                                <span class="badge bg-success ms-2">Completed</span>
+                                    <i class="fas fa-check"></i> Done
                                 {% else %}
-                                <span class="badge bg-warning ms-2">Pending</span>
+                                    <i class="fas fa-clock"></i> Pending
                                 {% endif %}
-                            </div>
+                            </span>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="exit-process-item {% if exit_status.final_settlement %}completed{% else %}pending{% endif %}">
-                                <i class="fas {% if exit_status.final_settlement %}fa-check-circle text-success{% else %}fa-clock text-warning{% endif %} me-2"></i>
-                                <span>Final Settlement</span>
+                        
+                        <div class="process-item {% if exit_status.final_settlement %}completed{% else %}pending{% endif %}">
+                            <div class="icon">
+                                <i class="fas fa-hand-holding-usd"></i>
+                            </div>
+                            <span class="process-text">Final Settlement</span>
+                            <span class="status-badge {% if exit_status.final_settlement %}badge-accepted{% else %}badge-pending{% endif %}">
                                 {% if exit_status.final_settlement %}
-                                <span class="badge bg-success ms-2">Completed</span>
+                                    <i class="fas fa-check"></i> Done
                                 {% else %}
-                                <span class="badge bg-warning ms-2">Pending</span>
+                                    <i class="fas fa-clock"></i> Pending
                                 {% endif %}
-                            </div>
+                            </span>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="exit-process-item">
-                                <i class="fas fa-tasks me-2 text-info"></i>
-                                <span>Checklist Progress</span>
-                                <span class="badge bg-info ms-2">{{ exit_status.checklist_completed }}/{{ exit_status.checklist_total }}</span>
+                        
+                        <div class="process-item">
+                            <div class="icon" style="background: rgba(76, 201, 240, 0.1); color: var(--accent);">
+                                <i class="fas fa-tasks"></i>
                             </div>
+                            <span class="process-text">Checklist Progress</span>
+                            <span class="status-badge" style="background: rgba(76, 201, 240, 0.1); color: var(--accent); border-color: rgba(76, 201, 240, 0.2);">
+                                {{ exit_status.checklist_completed }}/{{ exit_status.checklist_total }}
+                            </span>
                         </div>
                     </div>
-                    <div class="progress mt-2" style="height: 12px;">
-                        <div class="progress-bar bg-info" role="progressbar" 
-                             style="width: {{ exit_status.checklist_progress|floatformat:0 }}%"
-                             aria-valuenow="{{ exit_status.checklist_progress|floatformat:0 }}" 
-                             aria-valuemin="0" 
-                             aria-valuemax="100">
+                    
+                    <div class="progress-container">
+                        <div class="progress-label">
+                            <span>Overall Exit Progress</span>
+                            <span>{{ exit_status.checklist_progress|floatformat:0 }}%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="background: linear-gradient(90deg, var(--accent), #3bd8f7); width: {{ exit_status.checklist_progress|floatformat:0 }}%"></div>
                         </div>
                     </div>
-                    <small class="text-muted">{{ exit_status.checklist_progress|floatformat:0 }}% checklist completed</small>
                 </div>
             </div>
             {% endif %}
@@ -207,148 +1202,138 @@
             {% endif %} <!-- End of active resignation specific content -->
 
             <!-- Resignation Details -->
-            <div class="custom-card">
+            <div class="info-card">
                 <div class="card-header">
-                    <h4 class="card-title mb-0">Resignation Details</h4>
-                    <span class="badge bg-{% if current_resignation.status == 'accepted' %}success{% elif current_resignation.status == 'rejected' %}danger{% elif current_resignation.status == 'withdrawn' %}secondary{% else %}warning{% endif %} fs-6">
+                    <h2><i class="fas fa-info-circle"></i> Resignation Details</h2>
+                    <span class="status-badge badge-{{ current_resignation.status }}">
                         {{ current_resignation.get_status_display }}
                         {% if current_resignation.status == 'withdrawn' %}(Withdrawn){% endif %}
                     </span>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="border-bottom pb-2">Basic Information</h6>
-                            <div class="row mb-2">
-                                <div class="col-5"><strong>Employee Name:</strong></div>
-                                <div class="col-7">{{ current_resignation.employee.first_name }} {{ current_resignation.employee.last_name }}</div>
+                    <div class="details-grid">
+                        <div class="detail-section">
+                            <div class="section-title">Basic Information</div>
+                            <div class="detail-row">
+                                <span class="detail-label">Employee Name</span>
+                                <span class="detail-value">{{ current_resignation.employee.first_name }} {{ current_resignation.employee.last_name }}</span>
                             </div>
-                            <div class="row mb-2">
-                                <div class="col-5"><strong>Employee ID:</strong></div>
-                                <div class="col-7">{{ current_resignation.employee.employee_id }}</div>
+                            <div class="detail-row">
+                                <span class="detail-label">Employee ID</span>
+                                <span class="detail-value">{{ current_resignation.employee.employee_id }}</span>
                             </div>
-                            <div class="row mb-2">
-                                <div class="col-5"><strong>Department:</strong></div>
-                                <div class="col-7">{{ current_resignation.employee.department }}</div>
+                            <div class="detail-row">
+                                <span class="detail-label">Department</span>
+                                <span class="detail-value">{{ current_resignation.employee.department }}</span>
                             </div>
-                            <div class="row mb-2">
-                                <div class="col-5"><strong>Designation:</strong></div>
-                                <div class="col-7">{{ current_resignation.employee.designation }}</div>
+                            <div class="detail-row">
+                                <span class="detail-label">Designation</span>
+                                <span class="detail-value">{{ current_resignation.employee.designation }}</span>
                             </div>
                         </div>
                         
-                        <div class="col-md-6">
-                            <h6 class="border-bottom pb-2">Resignation Timeline</h6>
-                            <div class="row mb-2">
-                                <div class="col-5"><strong>Resignation Date:</strong></div>
-                                <div class="col-7">{{ current_resignation.resignation_date }}</div>
+                        <div class="detail-section">
+                            <div class="section-title">Resignation Timeline</div>
+                            <div class="detail-row">
+                                <span class="detail-label">Resignation Date</span>
+                                <span class="detail-value">{{ current_resignation.resignation_date }}</span>
                             </div>
-                            <div class="row mb-2">
-                                <div class="col-5"><strong>Last Working Date:</strong></div>
-                                <div class="col-7">{{ current_resignation.last_working_date }}</div>
+                            <div class="detail-row">
+                                <span class="detail-label">Last Working Date</span>
+                                <span class="detail-value">{{ current_resignation.last_working_date }}</span>
                             </div>
-                            <div class="row mb-2">
-                                <div class="col-5"><strong>Notice Period:</strong></div>
-                                <div class="col-7">{{ current_resignation.actual_notice_days }} days</div>
+                            <div class="detail-row">
+                                <span class="detail-label">Notice Period</span>
+                                <span class="detail-value">{{ current_resignation.actual_notice_days }} days</span>
                             </div>
-                            <div class="row mb-2">
-                                <div class="col-5"><strong>Applied To:</strong></div>
-                                <div class="col-7">
+                            <div class="detail-row">
+                                <span class="detail-label">Applied To</span>
+                                <span class="detail-value">
                                     {% if current_resignation.applied_to %}
-                                    {{ current_resignation.applied_to.first_name }} {{ current_resignation.applied_to.last_name }}
+                                        {{ current_resignation.applied_to.first_name }} {{ current_resignation.applied_to.last_name }}
                                     {% else %}
-                                    <span class="text-muted">Not assigned</span>
+                                        <span style="color: var(--gray-500);">Not assigned</span>
                                     {% endif %}
-                                </div>
+                                </span>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Reason -->
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <h6 class="border-bottom pb-2">Reason for Resignation</h6>
-                            <p class="mb-0">{{ current_resignation.reason }}</p>
+                    <div style="margin-top: 24px;">
+                        <div class="section-title">Reason for Resignation</div>
+                        <div class="reason-box">
+                            {{ current_resignation.reason }}
                         </div>
                     </div>
                     
-                    <!-- Withdrawal Reason (for withdrawn resignations) -->
+                    <!-- Withdrawal Reason -->
                     {% if current_resignation.status == 'withdrawn' and current_resignation.withdrawal_reason %}
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <h6 class="border-bottom pb-2">Withdrawal Reason</h6>
-                            <div class="alert alert-info">
-                                <i class="fas fa-undo me-2"></i>
-                                {{ current_resignation.withdrawal_reason }}
+                        <div class="alert-box alert-info" style="margin-top: 24px;">
+                            <i class="fas fa-undo alert-icon"></i>
+                            <div>
+                                <div style="font-weight: 600; margin-bottom: 4px;">Withdrawal Reason</div>
+                                <div style="font-size: 14px;">{{ current_resignation.withdrawal_reason }}</div>
                             </div>
                         </div>
-                    </div>
                     {% endif %}
                     
                     <!-- Withdrawal Option -->
                     {% if current_resignation.status == 'applied' or current_resignation.status == 'under_review' %}
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <div class="alert alert-warning">
-                                <h6><i class="fas fa-exclamation-triangle me-2"></i>Want to withdraw your resignation?</h6>
-                                <p class="mb-2">You can withdraw your resignation as it's still under review.</p>
-                                <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#withdrawModal">
-                                    <i class="fas fa-undo me-1"></i>Withdraw Resignation
+                        <div class="alert-box alert-warning" style="margin-top: 24px;">
+                            <i class="fas fa-exclamation-triangle alert-icon"></i>
+                            <div>
+                                <div style="font-weight: 600; margin-bottom: 4px;">Want to withdraw your resignation?</div>
+                                <div style="font-size: 14px; margin-bottom: 12px;">You can withdraw your resignation as it's still under review.</div>
+                                <button class="btn-action btn-outline" data-bs-toggle="modal" data-bs-target="#withdrawModal" style="padding: 10px 20px; font-size: 14px;">
+                                    <i class="fas fa-undo"></i>
+                                    Withdraw Resignation
                                 </button>
                             </div>
                         </div>
-                    </div>
                     {% endif %}
                     
                     <!-- Feedback -->
                     {% if current_resignation.feedback %}
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <h6 class="border-bottom pb-2">Manager Feedback</h6>
-                            <div class="alert alert-info">
-                                <i class="fas fa-comment me-2"></i>
-                                {{ current_resignation.feedback }}
+                        <div class="alert-box alert-info" style="margin-top: 24px;">
+                            <i class="fas fa-comment alert-icon"></i>
+                            <div>
+                                <div style="font-weight: 600; margin-bottom: 4px;">Manager Feedback</div>
+                                <div style="font-size: 14px;">{{ current_resignation.feedback }}</div>
                             </div>
                         </div>
-                    </div>
                     {% endif %}
 
                     <!-- Action Buttons -->
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <div class="d-flex gap-2 flex-wrap">
-                                {% if current_resignation.status == 'accepted' %}
-                                <a href="{% url 'resignation:no_due_certificate' current_resignation.id %}" class="btn btn-warning">
-                                    <i class="fas fa-file-certificate me-1"></i>No Due Certificate
-                                </a>
-                                <a href="{% url 'resignation:exit_interview' current_resignation.id %}" class="btn btn-info">
-                                    <i class="fas fa-comments me-1"></i>Exit Interview
-                                </a>
-                                {% endif %}
-                                {% if user_role in 'HR,ADMIN,SUPER ADMIN' and not is_self_resignation %}
-                                <a href="{% url 'resignation:resignation_detail' current_resignation.id %}" class="btn btn-outline-primary">
-                                    <i class="fas fa-eye me-1"></i>View Full Details
-                                </a>
-                                {% endif %}
-                            </div>
-                        </div>
+                    <div class="btn-group">
+                        {% if current_resignation.status == 'accepted' %}
+                            <a href="{% url 'resignation:no_due_certificate' current_resignation.id %}" class="btn-action btn-warning">
+                                <i class="fas fa-file-certificate"></i>
+                                No Due Certificate
+                            </a>
+                            <a href="{% url 'resignation:exit_interview' current_resignation.id %}" class="btn-action btn-outline">
+                                <i class="fas fa-comments"></i>
+                                Exit Interview
+                            </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
 
-            <!-- Exit Checklist (only for active/accepted resignations) -->
+            <!-- Exit Checklist -->
             {% if checklist and current_resignation.status == 'accepted' %}
-            <div class="custom-card mt-4">
+            <div class="info-card">
                 <div class="card-header">
-                    <h4 class="card-title mb-0"> Exit Checklist</h4>
-                    <span class="badge bg-info">
-                        {{ exit_status.checklist_total }} tasks - 
-                        {{ exit_status.checklist_completed }} completed
+                    <h2><i class="fas fa-clipboard-check"></i> Exit Checklist</h2>
+                    <span style="display: flex; align-items: center; gap: 8px;">
+                        <span class="status-badge" style="background: rgba(76, 201, 240, 0.1); color: var(--accent); border-color: rgba(76, 201, 240, 0.2);">
+                            {{ exit_status.checklist_completed }}/{{ exit_status.checklist_total }} tasks
+                        </span>
                     </span>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
+                    <div class="table-container">
+                        <table class="custom-table">
                             <thead>
                                 <tr>
                                     <th>Task</th>
@@ -360,25 +1345,33 @@
                             </thead>
                             <tbody>
                                 {% for item in checklist %}
-                                <tr>
-                                    <td>{{ item.task_name }}</td>
-                                    <td>{{ item.department }}</td>
-                                    <td>{{ item.due_date }}</td>
-                                    <td>
-                                        {% if item.completed %}
-                                        <span class="badge bg-success">Completed</span>
-                                        {% else %}
-                                        <span class="badge bg-warning">Pending</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if item.remarks %}
-                                        <small class="text-muted">{{ item.remarks }}</small>
-                                        {% else %}
-                                        <span class="text-muted">-</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
+                                    <tr>
+                                        <td>{{ item.task_name }}</td>
+                                        <td>
+                                            <span class="status-badge" style="background: rgba(108, 117, 125, 0.1); color: var(--gray-600); border-color: rgba(108, 117, 125, 0.2);">
+                                                {{ item.department }}
+                                            </span>
+                                        </td>
+                                        <td>{{ item.due_date }}</td>
+                                        <td>
+                                            {% if item.completed %}
+                                                <span class="status-badge badge-accepted">
+                                                    <i class="fas fa-check"></i> Completed
+                                                </span>
+                                            {% else %}
+                                                <span class="status-badge badge-pending">
+                                                    <i class="fas fa-clock"></i> Pending
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if item.remarks %}
+                                                <small class="text-muted">{{ item.remarks }}</small>
+                                            {% else %}
+                                                <span style="color: var(--gray-400);">-</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
@@ -389,35 +1382,117 @@
 
             <!-- Documents -->
             {% if documents %}
-            <div class="custom-card mt-4">
+            <div class="info-card">
                 <div class="card-header">
-                    <h4 class="card-title mb-0"> Documents</h4>
+                    <h2><i class="fas fa-file-alt"></i> Documents</h2>
                 </div>
                 <div class="card-body">
-                    <div class="row">
+                    <div class="documents-grid">
                         {% for doc in documents %}
-                        <div class="col-md-4 mb-3">
-                            <div class="card document-card">
-                                <div class="card-body text-center">
-                                    <i class="fas fa-file-pdf fa-2x text-danger mb-2"></i>
-                                    <h6 class="card-title">{{ doc.document_type }}</h6>
-                                    <small class="text-muted">Uploaded: {{ doc.uploaded_at|date:"M d, Y" }}</small>
-                                    <div class="mt-2">
-                                        <a href="{{ doc.document_file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
-                                            <i class="fas fa-download me-1"></i>Download
-                                        </a>
-                                    </div>
+                            <div class="document-card">
+                                <div class="document-icon">
+                                    <i class="fas fa-file-pdf"></i>
                                 </div>
+                                <div class="document-title">
+                                    {% if doc.document_type == 'exit_interview' %}
+                                        Exit Interview Form
+                                    {% else %}
+                                        No Due Certificate
+                                    {% endif %}
+                                </div>
+                                <div class="document-meta">
+                                    <i class="far fa-calendar"></i> {{ doc.uploaded_at|date:"M d, Y" }}
+                                </div>
+                                <a href="{{ doc.document_file.url }}" class="btn-action btn-outline" target="_blank" style="padding: 10px 20px; font-size: 14px;">
+                                    <i class="fas fa-download"></i>
+                                    Download
+                                </a>
                             </div>
-                        </div>
                         {% endfor %}
                     </div>
                 </div>
             </div>
             {% endif %}
-            {% endif %}
+        </div>
+
+        <!-- Right Column: Sidebar -->
+        <div>
+            <!-- Policy Card -->
+            <div class="sidebar-card">
+                <div class="sidebar-header">
+                    <div class="sidebar-icon">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <h3>Resignation Policy</h3>
+                </div>
+                <ul class="policy-list">
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span><strong>Only one active resignation</strong> request is allowed at a time</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-clock" style="color: #f59e0b;"></i>
+                        <span><strong>30-day cooldown period</strong> applies after withdrawal</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-user-check" style="color: var(--accent);"></i>
+                        <span><strong>Manager approval</strong> is required for all resignations</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="sidebar-card">
+                <div class="sidebar-header">
+                    <div class="sidebar-icon" style="background: rgba(247, 37, 133, 0.1); color: var(--warning);">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3>Quick Actions</h3>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    {% if current_resignation.status == 'accepted' %}
+                        <a href="{% url 'resignation:no_due_certificate' current_resignation.id %}" class="btn-action btn-warning" style="justify-content: flex-start; padding: 14px;">
+                            <i class="fas fa-file-certificate"></i>
+                            No Due Certificate
+                        </a>
+                        <a href="{% url 'resignation:exit_interview' current_resignation.id %}" class="btn-action btn-outline" style="justify-content: flex-start; padding: 14px;">
+                            <i class="fas fa-comments"></i>
+                            Exit Interview
+                        </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'resignation:resignation_history' %}" class="btn-action btn-outline" style="justify-content: flex-start; padding: 14px; border-color: var(--gray-300); color: var(--gray-700);">
+                        <i class="fas fa-history"></i>
+                        View History
+                    </a>
+                </div>
+            </div>
+
+            <!-- Help Card -->
+            <div class="sidebar-card" style="background: linear-gradient(135deg, rgba(67, 97, 238, 0.05), rgba(114, 9, 183, 0.05)); border-color: rgba(67, 97, 238, 0.2);">
+                <div class="sidebar-header">
+                    <div class="sidebar-icon" style="background: rgba(67, 97, 238, 0.15);">
+                        <i class="fas fa-question-circle"></i>
+                    </div>
+                    <h3>Need Help?</h3>
+                </div>
+                <div style="color: var(--gray-700); line-height: 1.6;">
+                    <p style="margin-bottom: 16px; font-size: 14px;">If you have questions about the resignation process or need assistance:</p>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255, 255, 255, 0.5); border-radius: 8px;">
+                            <i class="fas fa-envelope" style="color: var(--primary);"></i>
+                            <span style="font-size: 14px;">Email: <strong>hr.team@ikontel.com</strong></span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255, 255, 255, 0.5); border-radius: 8px;">
+                            <i class="fas fa-phone" style="color: var(--success);"></i>
+                            <span style="font-size: 14px;">Phone: <strong>+91 8867858986</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+    {% endif %}
 </div>
 
 <!-- Withdrawal Modal -->
@@ -427,14 +1502,17 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Withdraw Resignation</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(1);"></button>
             </div>
             <form method="POST" action="{% url 'resignation:withdraw_resignation' current_resignation.id %}">
                 {% csrf_token %}
                 <div class="modal-body">
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        Are you sure you want to withdraw your resignation? This action cannot be undone.
+                    <div class="alert-box alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div>
+                            <div style="font-weight: 600; margin-bottom: 4px;">Warning</div>
+                            <div style="font-size: 14px;">Are you sure you want to withdraw your resignation? This action cannot be undone.</div>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Reason for Withdrawal</label>
@@ -442,9 +1520,14 @@
                                   placeholder="Please provide reason for withdrawal..." required></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">Withdraw Resignation</button>
+                <div class="modal-footer" style="border-top: 1px solid var(--gray-200); padding: 20px 24px;">
+                    <button type="button" class="btn-action btn-outline" data-bs-dismiss="modal" style="padding: 10px 20px;">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-action btn-danger" style="padding: 10px 20px;">
+                        <i class="fas fa-undo"></i>
+                        Withdraw Resignation
+                    </button>
                 </div>
             </form>
         </div>
@@ -452,105 +1535,38 @@
 </div>
 {% endif %}
 
-<style>
-.status-timeline {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-.timeline-step {
-    display: flex;
-    align-items: flex-start;
-    gap: 15px;
-}
-.step-marker {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-.timeline-step.completed .step-marker {
-    background: #28a745;
-    color: white;
-}
-.timeline-step.active .step-marker {
-    background: #007bff;
-    color: white;
-    animation: pulse 2s infinite;
-}
-.timeline-step.pending .step-marker {
-    background: #6c757d;
-    color: white;
-}
-.step-content {
-    flex: 1;
-}
-.step-title {
-    margin-bottom: 5px;
-    font-weight: 600;
-}
-.countdown-box {
-    padding: 15px;
-    border-radius: 10px;
-    background: #f8f9fa;
-    border: 2px solid #e9ecef;
-}
-.countdown-number {
-    font-size: 2rem;
-    font-weight: bold;
-    margin-bottom: 5px;
-}
-.countdown-label {
-    font-size: 0.9rem;
-    color: #6c757d;
-}
-.exit-process-item {
-    padding: 10px;
-    border-radius: 8px;
-    background: #f8f9fa;
-    display: flex;
-    align-items: center;
-}
-.exit-process-item.completed {
-    background: #d4edda;
-    border-left: 4px solid #28a745;
-}
-.exit-process-item.pending {
-    background: #fff3cd;
-    border-left: 4px solid #ffc107;
-}
-.document-card {
-    transition: transform 0.2s;
-    border: 1px solid #e0e0e0;
-}
-.document-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-/* .resignation-selector {
-    border: 2px solid #007bff;
-} */
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
-</style>
-
-<!-- <script>
-// Handle resignation selection
+<script>
 document.addEventListener('DOMContentLoaded', function() {
-    const selector = document.querySelector('.resignation-selector');
-    if (selector) {
-        selector.addEventListener('change', function() {
-            const resignationId = this.value;
-            // Redirect to same page with selected resignation_id
-            window.location.href = `{% url 'resignation:my_resignation' %}?resignation_id=${resignationId}`;
+    // Add animation to progress bars
+    const progressBars = document.querySelectorAll('.progress-fill');
+    progressBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.width = width;
+        }, 300);
+    });
+
+    // Modal handling
+    const modal = document.getElementById('withdrawModal');
+    if (modal) {
+        modal.addEventListener('shown.bs.modal', function () {
+            modal.querySelector('textarea').focus();
         });
     }
+
+    // Add animation to stat cards on load
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.4s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
 });
-</script> -->
+</script>
 {% endblock %}

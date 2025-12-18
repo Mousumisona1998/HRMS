@@ -1,974 +1,1275 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Employee Dashboard - HR System{% endblock %}
+{% block title %}Dashboard • HR System{% endblock %}
 
 {% block content %}
 <style>
+ 
     :root {
         --primary: #4361ee;
-        --secondary: #3f37c9;
-        --success: #4cc9f0;
-        --info: #4895ef;
+        --primary-light: #4895ef;
+        --secondary: #7209b7;
+        --accent: #4cc9f0;
         --warning: #f72585;
+        --success: #10b981;
+        --dark: #1a1a2e;
         --light: #f8f9fa;
-        --dark: #212529;
-        --gray: #6c757d;
+        --gray-100: #f8f9fa;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-400: #ced4da;
+        --gray-500: #adb5bd;
+        --gray-600: #6c757d;
+        --gray-700: #495057;
+        --gray-800: #343a40;
+        --gray-900: #212529;
         --white: #ffffff;
+        --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+        --hover-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background-color: #f8fafc;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: var(--gray-800);
+        overflow-x: hidden; /* Prevent horizontal scroll */
     }
 
     .dashboard-container {
-        background-color: #f5f7fb;
-        min-height: calc(100vh - 70px);
-        padding: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+        min-height: 100vh;
+        position: relative;
     }
 
+    /* Header */
     .dashboard-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background-color: var(--white);
-        padding: 15px 25px;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        margin-bottom: 25px;
+        margin-bottom: 32px;
+        flex-wrap: wrap;
+        gap: 16px;
     }
 
     .dashboard-header h1 {
-        font-size: 1.8rem;
-        color: var(--primary);
-        font-weight: 600;
-        margin: 0;
+        font-size: 30px;
+        font-weight: 700;
+        color: var(--dark);
+        letter-spacing: -0.5px;
+        line-height: 1.2;
     }
 
-    .dashboard-cards {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 20px;
-        margin-bottom: 25px;
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
     }
 
-    .dashboard-card {
-        background-color: var(--white);
+    .date-badge {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        padding: 8px 16px;
         border-radius: 10px;
-        padding: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        transition: transform 0.3s;
-        border: none;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--gray-600);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: var(--card-shadow);
+        white-space: nowrap;
     }
 
-    .dashboard-card:hover {
-        transform: translateY(-5px);
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin-bottom: 32px;
     }
 
-    .card-header-custom {
+    @media (max-width: 1200px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 640px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .stat-card {
+        background: var(--white);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+        min-width: 0; /* Prevent overflow */
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--hover-shadow);
+        border-color: var(--primary-light);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(to bottom, var(--primary), var(--secondary));
+    }
+
+    .stat-main {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-        border-bottom: none;
-        background: transparent;
-        padding: 0;
+        align-items: flex-start;
+        margin-bottom: 12px;
     }
 
-    .card-header-custom h3 {
-        font-size: 1rem;
-        color: var(--gray);
+    .stat-numbers h3 {
+        font-size: 30px;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 4px;
+        line-height: 1;
+        word-break: break-word;
+    }
+
+    .stat-numbers p {
+        font-size: 14px;
+        color: var(--gray-600);
         font-weight: 500;
-        margin: 0;
+        white-space: nowrap;
     }
 
-    .card-header-custom i {
-        font-size: 1.5rem;
+    .stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(67, 97, 238, 0.1);
         color: var(--primary);
+        font-size: 20px;
+        flex-shrink: 0;
     }
 
-    .card-body-custom h2 {
-        font-size: 1.8rem;
+    .stat-trend {
+        font-size: 13px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding-top: 12px;
+        border-top: 1px solid var(--gray-200);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .stat-trend.positive {
+        color: var(--success);
+    }
+
+    .stat-trend.negative {
+        color: #ef4444;
+    }
+
+    /* Main Content Grid */
+    .content-grid {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+
+    @media (max-width: 1200px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Charts Section */
+    .charts-section {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        margin-bottom: 24px;
+        overflow: hidden; /* Prevent content overflow */
+    }
+
+    .section-header {
+        margin-bottom: 24px;
+    }
+
+    .section-header h2 {
+        font-size: 18px;
         font-weight: 600;
         color: var(--dark);
-        margin: 0;
+        margin-bottom: 8px;
+        line-height: 1.3;
     }
 
-    .card-body-custom p {
-        font-size: 0.8rem;
-        color: var(--gray);
-        margin-top: 5px;
-        margin-bottom: 0;
+    .section-header p {
+        font-size: 14px;
+        color: var(--gray-600);
+        line-height: 1.5;
     }
 
-    /* Modern Information Section */
-    .modern-info-section {
+    .chart-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 30px;
-        margin-bottom: 30px;
+        gap: 24px;
     }
 
-    .info-card {
-        background-color: var(--white);
-        border-radius: 15px;
-        padding: 30px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        border: none;
+    @media (max-width: 768px) {
+        .chart-row {
+            grid-template-columns: 1fr;
+        }
     }
 
-    .info-header {
-        border-bottom: 2px solid #f0f0f0;
-        padding-bottom: 20px;
-        margin-bottom: 25px;
-    }
-
-    .info-header h3 {
-        font-size: 1.4rem;
-        font-weight: 600;
-        color: var(--dark);
-        margin: 0;
-    }
-
-    .info-item {
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 25px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid #f5f5f5;
-    }
-
-    .info-item:last-child {
-        border-bottom: none;
-        margin-bottom: 0;
-        padding-bottom: 0;
-    }
-
-    .info-label {
-        font-size: 0.85rem;
-        color: var(--gray);
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 8px;
-    }
-
-    .info-value {
-        font-size: 1.1rem;
-        color: var(--dark);
-        font-weight: 500;
-    }
-
-    .profile-main {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 15px;
-        padding: 30px;
-        color: white;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        position: relative;
+    .chart-container {
+        padding: 20px;
+        background: var(--gray-100);
+        border-radius: 12px;
+        border: 1px solid var(--gray-200);
         overflow: hidden;
     }
 
-    .profile-main::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -50%;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.1);
-        transform: rotate(30deg);
+    .chart-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 12px;
+        line-height: 1.3;
+    }
+
+    .chart-metric {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 4px;
+        line-height: 1.2;
+    }
+
+    .chart-subtext {
+        font-size: 14px;
+        color: var(--gray-600);
+        margin-bottom: 16px;
+        line-height: 1.4;
+    }
+
+    .chart-extra {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: rgba(67, 97, 238, 0.1);
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--primary);
+        white-space: nowrap;
+    }
+
+    /* Side Panel */
+    .side-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    /* Attendance Card */
+    .attendance-card {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        overflow: hidden;
+    }
+
+    .attendance-time {
+        margin: 24px 0;
+    }
+
+    .time-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    @media (max-width: 640px) {
+        .time-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .time-block {
+        background: linear-gradient(135deg, rgba(72, 149, 239, 0.08), rgba(16, 185, 129, 0.08));
+        border: 1px solid var(--gray-200);
+        border-radius: 12px;
+        padding: 14px;
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+    }
+
+    .time-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--dark);
+        background: var(--white);
+        padding: 6px 10px;
+        border-radius: 20px;
+        border: 1px solid var(--gray-200);
+        margin-bottom: 10px;
+        white-space: nowrap;
+    }
+
+    .time-display {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--primary);
+        letter-spacing: -1px;
+        margin-bottom: 6px;
+        line-height: 1.1;
+        word-break: break-word;
+    }
+
+    .time-display.out {
+        color: #ef4444;
+    }
+
+    .time-label {
+        font-size: 14px;
+        color: var(--gray-600);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .location-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--white);
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px dashed var(--gray-300);
+        color: var(--gray-700);
+        font-size: 12px;
+        margin-top: 10px;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: normal;
+    }
+
+    .attendance-status {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--success);
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+
+    .geo-status {
+        margin-top: 12px;
+        font-size: 13px;
+        color: var(--gray-700);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px;
+        background: var(--gray-100);
+        border: 1px dashed var(--gray-200);
+        border-radius: 10px;
+        flex-wrap: wrap;
+    }
+
+    .geo-status i {
+        color: var(--primary);
+    }
+
+    .attendance-form {
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid var(--gray-200);
+    }
+
+    .btn-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .btn-attendance {
+        padding: 14px;
+        border: none;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        white-space: nowrap;
+        min-height: 48px;
+    }
+
+    .btn-checkin {
+        background: var(--success);
+        color: white;
+    }
+
+    .btn-checkin:hover {
+        background: #0da271;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-checkout {
+        background: #ef4444;
+        color: white;
+    }
+
+    .btn-checkout:hover {
+        background: #dc2626;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-disabled {
+        background: var(--gray-300);
+        color: var(--gray-600);
+        cursor: not-allowed;
+        grid-column: span 2;
+    }
+
+    /* Profile Card */
+    .profile-card {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        overflow: hidden;
     }
 
     .profile-header {
         display: flex;
         align-items: center;
-        margin-bottom: 25px;
-        position: relative;
-        z-index: 2;
-    }
-
-    .profile-avatar {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 20px;
-        border: 3px solid rgba(255, 255, 255, 0.3);
-    }
-
-    .profile-avatar i {
-        font-size: 2.5rem;
-        color: white;
-    }
-
-    .profile-info h2 {
-        font-size: 1.8rem;
-        font-weight: 600;
-        margin: 0 0 5px 0;
-    }
-
-    .profile-info .designation {
-        font-size: 1.1rem;
-        opacity: 0.9;
-        margin: 0;
-    }
-
-    .profile-details {
-        position: relative;
-        z-index: 2;
-    }
-
-    .profile-details .info-item {
-        border-bottom-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .profile-details .info-label {
-        color: rgba(255, 255, 255, 0.8);
-    }
-
-    .profile-details .info-value {
-        color: white;
-    }
-
-    .status-badge {
-        display: inline-flex;
-        align-items: center;
-        background: rgba(255, 255, 255, 0.2);
-        padding: 8px 15px;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        margin-top: 10px;
-    }
-
-    .status-badge i {
-        margin-right: 8px;
-    }
-
-    /* Charts Section */
-    .charts-section {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 20px;
-        margin-bottom: 25px;
-    }
-
-    .chart-container {
-        background-color: var(--white);
-        border-radius: 10px;
-        padding: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        border: none;
-    }
-
-    .chart-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-    }
-
-    .chart-header h3 {
-        font-size: 1.2rem;
-        font-weight: 600;
-        color: var(--dark);
-        margin: 0;
-    }
-
-    .chart-body {
-        height: 300px;
-        position: relative;
-    }
-
-    /* Quick Actions */
-    .quick-actions {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 20px;
-        margin-bottom: 25px;
-    }
-
-    .action-card {
-        background-color: var(--white);
-        border-radius: 10px;
-        padding: 25px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        text-align: center;
-        transition: transform 0.3s;
-        border: none;
-    }
-
-    .action-card:hover {
-        transform: translateY(-5px);
-    }
-
-    .card-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 15px;
-        color: white;
-        font-size: 1.5rem;
-    }
-
-    /* Custom Card Styles */
-    .custom-card {
-        background-color: var(--white);
-        border-radius: 10px;
-        padding: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        margin-bottom: 20px;
-        border: none;
-    }
-
-    .custom-card .card-header {
-        border-radius: 10px 10px 0 0;
-        padding: 15px 20px;
-    }
-
-    .custom-card .card-body {
-        padding: 20px;
-    }
-
-    /* Responsive Design */
-    @media (max-width: 992px) {
-
-        .charts-section,
-        .modern-info-section {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    @media (max-width: 576px) {
-
-        .dashboard-cards,
-        .quick-actions {
-            grid-template-columns: 1fr;
-        }
-
-        .dashboard-header {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .btn-toolbar {
-            margin-top: 15px;
-        }
-
-        .profile-header {
-            flex-direction: column;
-            text-align: center;
-        }
-
-        .profile-avatar {
-            margin-right: 0;
-            margin-bottom: 15px;
-        }
-         .attendance-card .d-flex {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 8px;
-    }
-
-    #attendanceTopInfo {
-        width: 100%;
-        display: flex;
-        justify-content: flex-start;
-        gap: 10px;
+        gap: 16px;
+        margin-bottom: 24px;
         flex-wrap: wrap;
     }
 
-    #attendanceTopInfo .badge {
-        font-size: 0.85rem;
-        padding: 6px 10px;
-    }
-
-    #workDuration {
-        padding: 6px 10px !important;
-        font-size: 0.85rem !important;
-    }
-    }
-
-    /* ✅ Professional Attendance Card */
-    .attendance-card {
-        background: #ffffff;
-        border-radius: 18px;        
-        padding: 25px 30px;
-        transition: all 0.3s ease-in-out;
-        margin-bottom: 23px;
-    }
-
-    .attendance-card:hover {
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.06);
-    }
-
-    /* Subtle borders for tiles */
-    .attendance-tile {
-        background-color: #fafafa;
-        transition: all 0.3s ease;
-    }
-
-    .attendance-tile:hover {
-        background-color: #f8f9fa;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-    }
-
-    /* Light gradient for header badge */
-    .badge.bg-light.text-dark {
-        background: linear-gradient(to right, #f8fafc, #f1f5f9);
-        border: 1px solid #e2e8f0;
-    }
-
-    /* On-Time and Late badges */
-    .bg-success-subtle {
-        background-color: #e8f5e9 !important;
-    }
-
-    .bg-warning-subtle {
-        background-color: #fff8e1 !important;
-    }
-
-    /* Icons */
-    .icon {
+    .profile-avatar {
         width: 60px;
         height: 60px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 24px;
+        font-weight: 600;
+        flex-shrink: 0;
     }
 
-    /* Buttons hover */
-    .btn-success:hover {
-        background-color: #198754 !important;
-        transform: translateY(-2px);
+    .profile-info h4 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 4px;
+        line-height: 1.3;
     }
 
-    .btn-danger:hover {
-        background-color: #bb2d3b !important;
-        transform: translateY(-2px);
+    .profile-info p {
+        font-size: 14px;
+        color: var(--gray-600);
+        line-height: 1.4;
     }
 
-    /* Responsive behavior */
-    @media (max-width: 768px) {
-        .attendance-tile {
-            margin-bottom: 15px;
-        }
-    }
-    /* 🔔 Notification Bell */
-.notification-bell {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    background: #4361ee;
-    color: white;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.6rem;
-    box-shadow: 0 6px 20px rgba(67, 97, 238, 0.3);
-    cursor: pointer;
-    transition: transform 0.3s ease;
-    z-index: 1050;
-}
-
-.notification-bell:hover {
-    transform: scale(1.1);
-}
-
-.notification-bell .badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: #f72585;
-    color: white;
-    font-size: 0.75rem;
-    padding: 3px 6px;
-    border-radius: 50%;
-}
-
-/* 🔔 Notification Popup */
-.notification-popup {
-    position: fixed;
-    bottom: 100px;
-    right: 30px;
-    width: 380px;
-    max-height: 500px;
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    overflow-y: auto;
-    overflow-x: hidden; /* ✅ prevents horizontal scroll */
-    transform: translateY(20px);
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-    z-index: 1051;
-    word-wrap: break-word; /* ✅ breaks long text */
-    overflow-wrap: break-word;
-}
-
-.notification-popup.show {
-    transform: translateY(0);
-    opacity: 1;
-    visibility: visible;
-}
-
-.notification-popup-header {
-    background: linear-gradient(135deg, #4361ee, #4895ef);
-    color: white;
-    padding: 15px 20px;
-    border-radius: 15px 15px 0 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.notification-popup-header h5 {
-    margin: 0;
-    font-size: 1.1rem;
-    font-weight: 600;
-}
-
-.notification-popup-body {
-    padding: 15px 20px;
-}
-
-/* ✅ Fix message wrapping */
-.notification-item {
-    display: flex;
-    align-items: flex-start;
-    border-bottom: 1px solid #f1f1f1;
-    padding: 12px 0;
-    transition: background-color 0.2s ease;
-    flex-wrap: wrap; /* ✅ allows text to wrap to next line */
-}
-
-.notification-item:last-child {
-    border-bottom: none;
-}
-
-.notification-item:hover {
-    background-color: #f8f9fa;
-}
-
-.notification-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 12px;
-    font-size: 1rem;
-}
-
-.notification-icon.warning {
-    background: rgba(220, 53, 69, 0.1);
-    color: #dc3545;
-}
-
-.notification-icon.appreciation {
-    background: rgba(40, 167, 69, 0.1);
-    color: #28a745;
-}
-
-.notification-content {
-    flex: 1;
-    min-width: 0; /* ✅ ensures wrapping inside flexbox */
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    white-space: normal; /* ✅ forces text to wrap downwards */
-}
-
-.notification-content h6 {
-    margin: 0;
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: #212529;
-}
-
-.notification-content p {
-    margin: 5px 0 8px;
-    font-size: 0.85rem;
-    color: #555;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    white-space: normal; /* ✅ ensures no sideways scroll */
-}
-
-.notification-meta {
-    font-size: 0.8rem;
-    color: #888;
-    flex-wrap: wrap;
-}
-
-.notification-empty {
-    text-align: center;
-    padding: 30px 10px;
-    color: #999;
-}
-
-.notification-empty i {
-    font-size: 2rem;
-    margin-bottom: 10px;
-}
-
-/* ✅ Responsive for mobile */
-@media (max-width: 768px) {
-    .notification-popup {
-        width: 90%;
-        right: 5%;
-        bottom: 80px;
-        max-height: 70vh;
+    .profile-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin: 24px 0;
+        padding: 20px;
+        background: var(--gray-100);
+        border-radius: 12px;
+        border: 1px solid var(--gray-200);
     }
 
-    .notification-item {
+    .profile-stat {
+        text-align: center;
+    }
+
+    .profile-stat .value {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--primary);
+        display: block;
+        line-height: 1;
+    }
+
+    .profile-stat .label {
+        font-size: 13px;
+        color: var(--gray-600);
+        margin-top: 6px;
+        line-height: 1.3;
+    }
+
+    .profile-details {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .profile-detail {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--gray-200);
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .profile-detail:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        font-size: 14px;
+        color: var(--gray-600);
+        min-width: 100px;
+    }
+
+    .detail-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--dark);
+        text-align: right;
+        word-break: break-word;
+        max-width: 200px;
+    }
+
+    /* Notification Bell - FIXED POSITION */
+    .notification-bell {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        cursor: pointer;
+        box-shadow: 0 8px 25px rgba(67, 97, 238, 0.3);
+        z-index: 1000;
+        border: none;
+        transition: all 0.3s ease;
+        pointer-events: auto;
+    }
+
+    .notification-bell:hover {
+        transform: scale(1.1) rotate(10deg);
+        box-shadow: 0 12px 30px rgba(67, 97, 238, 0.4);
+    }
+
+    .notification-bell .badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: #ef4444;
+        color: white;
+        font-size: 12px;
+        font-weight: 700;
+        min-width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 3px solid var(--white);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+
+    /* Notification Toast */
+    .notification-toast {
+        position: fixed;
+        top: 30px;
+        right: 30px;
+        width: 380px;
+        max-width: calc(100vw - 60px);
+        background: var(--white);
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        border: 1px solid var(--gray-200);
+        z-index: 1001;
+        transform: translateX(400px);
+        transition: transform 0.4s ease;
+        overflow: hidden;
+        max-height: calc(100vh - 60px);
+        display: flex;
         flex-direction: column;
     }
 
-    .notification-icon {
-        margin-right: 0;
-        margin-bottom: 10px;
+    .notification-toast.show {
+        transform: translateX(0);
     }
-}
+
+    .toast-header {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        padding: 18px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .toast-header h5 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        line-height: 1.3;
+    }
+
+    .toast-body {
+        padding: 20px 24px;
+        overflow-y: auto;
+        flex: 1;
+        max-height: 400px;
+    }
+
+    .toast-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 16px;
+        border-radius: 10px;
+        margin-bottom: 12px;
+        background: var(--gray-100);
+        border: 1px solid var(--gray-200);
+        transition: all 0.2s ease;
+        cursor: pointer;
+        overflow: hidden;
+    }
+
+    .toast-item:hover {
+        background: var(--white);
+        border-color: var(--primary-light);
+        transform: translateX(-2px);
+    }
+
+    .toast-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+
+    .toast-icon.warning {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    .toast-icon.success {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    .toast-icon.info {
+        background: rgba(67, 97, 238, 0.1);
+        color: var(--primary);
+    }
+
+    .toast-content {
+        flex: 1;
+        min-width: 0; /* Allow text truncation */
+    }
+
+    .toast-content h6 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 4px;
+        line-height: 1.3;
+        word-break: break-word;
+    }
+
+    .toast-content p {
+        font-size: 13px;
+        color: var(--gray-600);
+        line-height: 1.5;
+        margin-bottom: 6px;
+        word-break: break-word;
+    }
+
+    .toast-meta {
+        font-size: 12px;
+        color: var(--gray-500);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .toast-empty {
+        text-align: center;
+        padding: 30px 20px;
+        color: var(--gray-500);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .toast-empty i {
+        font-size: 40px;
+        margin-bottom: 12px;
+        opacity: 0.5;
+    }
+
+    /* Chart Canvas */
+    .chart-canvas {
+        height: 200px;
+        width: 100%;
+        margin-top: 16px;
+    }
+
+    /* Progress Bar */
+    .progress-container {
+        margin: 20px 0;
+    }
+
+    .progress-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: var(--gray-600);
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .progress-bar {
+        height: 8px;
+        background: var(--gray-200);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--primary-light));
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+
+    /* Map Container */
+    #liveMap {
+        width: 100%;
+        height: 200px;
+        border-radius: 10px;
+        margin-top: 16px;
+        border: 1px solid var(--gray-200);
+        overflow: hidden;
+    }
+
+    /* Loading State */
+    .loading {
+        opacity: 0.7;
+        pointer-events: none;
+    }
+
+    .spinner {
+        border: 3px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        border-top: 3px solid var(--primary);
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 16px;
+        }
+       
+        .dashboard-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+       
+        .header-actions {
+            width: 100%;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+       
+        .content-grid {
+            gap: 16px;
+        }
+       
+        .notification-toast {
+            width: 90%;
+            right: 5%;
+            left: 5%;
+            max-width: none;
+        }
+       
+        .notification-bell {
+            bottom: 20px;
+            right: 20px;
+        }
+    }
+
+    /* Additional fixes for small screens */
+    @media (max-width: 480px) {
+        .stat-numbers h3 {
+            font-size: 24px;
+        }
+       
+        .time-display {
+            font-size: 28px;
+        }
+       
+        .profile-detail {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+        }
+       
+        .detail-value {
+            text-align: left;
+            max-width: 100%;
+        }
+    }
+
+    /* Prevent body scroll when toast is open */
+    body.toast-open {
+        overflow: hidden;
+    }
 
 
 </style>
 
 <div class="dashboard-container">
-    <div class="dashboard-header d-flex justify-content-between align-items-center mb-4">
-        <h3 class="mb-0">Welcome {{ employee.first_name }}</h3>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <div class="btn-group me-2">
-                <span class="btn btn-sm btn-outline-secondary">
-                    <i class="fas fa-calendar"></i> {{ today_date|date:"d M, Y" }}
-                </span>
+    <!-- Header -->
+    <div class="dashboard-header">
+        <h1>Dashboard</h1>
+        <div class="header-actions">
+            <div class="date-badge">
+                <i class="fas fa-calendar-alt"></i>
+                {{ today_date|date:"d F Y" }}
             </div>
         </div>
     </div>
-
 
     {% if employee %}
-    <!-- Dashboard Cards -->
-    <div class="dashboard-cards">
-        <!-- <div class="dashboard-card">
-            <div class="card-header-custom">
-                <h3>Days Worked</h3>
-                <i class="fas fa-calendar-check"></i>
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <!-- Total Team Members -->
+        <div class="stat-card">
+            <div class="stat-main">
+                <div class="stat-numbers">
+                    <h3>{{ total_team_members|default:"0" }}</h3>
+                    <p>Total Team Members</p>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
             </div>
-            <div class="card-body-custom">
-                <h2>
-                    {% if employee.date_of_joining %}
-                        {{ employee.date_of_joining|timesince:today_date }}
-                    {% else %}
-                        N/A
-                    {% endif %}
-                </h2>
-                <p>Since joining</p>
+            <div class="stat-trend positive">
+                <i class="fas fa-arrow-up"></i>
+                <a href="{% url 'total_team_members' %}"style="color:#10b981;" >
+                    View details
+                 </a>
             </div>
-        </div> -->
-        <div class="dashboard-card">
-            <div class="card-header-custom">
-                <h3>Total Team Members</h3>
-                <i class="fas fa-users"></i>
+        </div>
+
+        <!-- Leaves Available -->
+        <div class="stat-card">
+            <div class="stat-main">
+                <div class="stat-numbers">
+                    <h3>{{ total_remaining_leaves }}</h3>
+                    <p>Leaves Available</p>
+                </div>
+                <div class="stat-icon" style="background: rgba(76, 201, 240, 0.1); color: #4cc9f0;">
+                    <i class="fas fa-umbrella-beach"></i>
+                </div>
             </div>
-            <div class="card-body-custom">
-                {% if total_team_members %}
-                <h2>{{ total_team_members }}</h2>
-                <p>
-                    <a href="{% url 'total_team_members' %}" style="color: inherit; text-decoration: none;">
-                        Active Team Members
-                    </a>
-                </p>
+            <div class="stat-trend positive">
+                <i class="fas fa-arrow-up"></i>
+                <a href="{% url 'employee_leave_details' %}"style="color:#10b981;" >View details</a>
+            </div>
+        </div>
+
+        <!-- Today Present -->
+        <div class="stat-card">
+            <div class="stat-main">
+                <div class="stat-numbers">
+                    <h3>{% if today_attendance and today_attendance.check_in %}1{% else %}0{% endif %}</h3>
+                    <p>Today Present</p>
+                </div>
+                <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                    <i class="fas fa-user-check"></i>
+                </div>
+            </div>
+            <div class="stat-trend {% if today_attendance and today_attendance.check_in %}positive{% else %}negative{% endif %}">
+                {% if today_attendance and today_attendance.check_in %}
+                <i class="fas fa-check"></i>
+                Present
                 {% else %}
-                <h2>-</h2>
-                <p>Department not assigned</p>
+                <i class="fas fa-times"></i>
+                Absent
                 {% endif %}
             </div>
         </div>
 
-
-        <div class="dashboard-card">
-            <div class="card-header-custom">
-                <h3>Leaves Available</h3>
-                <i class="fas fa-umbrella-beach"></i>
+        <!-- Upcoming Holidays -->
+        <div class="stat-card">
+            <div class="stat-main">
+                <div class="stat-numbers">
+                    <h3>{{ upcoming_holidays }}</h3>
+                    <p>Upcoming Holidays</p>
+                </div>
+                <div class="stat-icon" style="background: rgba(247, 37, 133, 0.1); color: #f72585;">
+                    <i class="fas fa-glass-cheers"></i>
+                </div>
             </div>
-            <div class="card-body-custom">
-                <h2>{{ total_remaining_leaves }}</h2>
-                <p> <a href="{% url 'employee_leave_details' %}" style="color: inherit; text-decoration: none;">
-                        Remaining this year
-                    </a></p>
-            </div>
-        </div>
-        <div class="dashboard-card">
-            <div class="card-header-custom">
-                <h3>Upcoming Holidays</h3>
-                <i class="fas fa-glass-cheers"></i>
-            </div>
-            <div class="card-body-custom">
-                <h2>{{ upcoming_holidays }}</h2>
-                <a href="{% url 'leave_dashboard' %}" style="color: inherit; text-decoration: none;">
-                <p>In next 30 days</p></a>
+            <div class="stat-trend negative">
+                <i class="fas fa-arrow-down"></i>
+                <a href="{% url 'leave_dashboard' %}"style="color:#10b981;">View details</a>
             </div>
         </div>
-
     </div>
 
-
-    <!-- Charts Section -->
-    <!-- <div class="charts-section">
-        <div class="chart-container">
-            <div class="chart-header">
-                <h3>Monthly Attendance Overview</h3>
-            </div>
-            <div class="chart-body">
-                <canvas id="workHoursChart"></canvas>
-            </div>
-        </div>
-        <div class="chart-container">
-            <div class="chart-header">
-                <h3>Leave Details</h3>
-            </div>
-            <div class="chart-body">
-                <canvas id="taskChart"></canvas>
-            </div>
-        </div>
-    </div> -->
-
-
- <!-- ✅ Attendance Section -->
-    <div class="attendance-card">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="text-primary fw-bold mb-0"><i class="fas fa-user-clock me-2"></i>Today’s Attendance</h5>
-           <div id="attendanceTopInfo" class="d-flex align-items-center gap-2">
+    <!-- Main Content Grid -->
+    <div class="content-grid">
+        <!-- Left Column: Charts -->
+        <div>
+            <!-- Average Work Hours -->
+            <div class="charts-section">
+                <div class="section-header">
+                    <h2>Average Work Hours</h2>
+                    <p>Track the average hours worked across all employees</p>
+                </div>
                 
-
-                {% if today_attendance and today_attendance.check_in and not today_attendance.check_out %}
-                    <span id="workDuration"
-                        class="badge bg-primary text-white fw-bold"
-                        style="font-size: 1rem; padding: 6px 22px; border-radius: 8px;"
-                        data-checkin="{{ today_attendance.check_in|date:'Y-m-d H:i:s' }}"
-                        data-checkedout="false">
-                    </span>
-                {% endif %}
-                <!-- <span class="badge bg-light text-dark border"  style="font-size: 1rem; padding: 6px 22px; border-radius: 8px;">
-                    {% if today_attendance %}
-                        {{ today_attendance.date|date:"d M, Y" }}
-                    {% else %}
-                        Today
-                    {% endif %}
-                </span> -->
-            </div>
-        </div>
-
-        {% if today_attendance %}
-        <div class="row g-3 text-center">
-            <div class="col-md-6">
-                <div class="attendance-tile">
-                    <i class="fas fa-sign-in-alt text-success fs-3 mb-2"></i>
-                    <h6 class="text-muted mb-1">Check-In</h6>
-                    <h4 class="fw-bold text-success">{{ today_attendance.check_in|date:"h:i A" }}</h4>
-
-                    {% if punctuality_status %}
-                        <span class="badge {% if punctuality_status == 'Late' %}bg-danger-subtle text-danger{% else %}bg-success-subtle text-success{% endif %} px-3 py-2 rounded-pill">
-                            {{ punctuality_status }}
-                        </span>
-                    {% endif %}
-
-                    {% if today_attendance.checkin_address %}
-                    <p class="text-muted small mt-2">
-                        <i class="fas fa-map-marker-alt text-danger me-1"></i>
-                        {{ today_attendance.checkin_address }}
-                        <a href="https://www.google.com/maps?q={{ today_attendance.checkin_latitude }},{{ today_attendance.checkin_longitude }}" target="_blank" class="text-primary small">(View Map)</a>
-                    </p>
-                    {% endif %}
+                <div class="chart-row">
+                    <div class="chart-container">
+                        <div class="chart-metric">{{ average_work_hours|default:"0.0" }} hours</div>
+                        <div class="chart-subtext">Average from the last 7 days</div>
+                        <div class="chart-extra">
+                            <span>{{ lost_days }}</span>
+                            <span style="font-size: 12px; color: var(--gray-600);">Idle days this week</span>
+                        </div>
+                        <div class="chart-canvas">
+                            <canvas id="avgWorkHoursChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-title">Work Hours Per Month</div>
+                        <div class="chart-subtext">Total hours worked by all employees each month</div>
+                        <div class="chart-canvas">
+                            <canvas id="monthlyHoursChart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="col-md-6">
-                <div class="attendance-tile">
-                    <i class="fas fa-sign-out-alt text-danger fs-3 mb-2"></i>
-                    <h6 class="text-muted mb-1">Check-Out</h6>
-                    <h4 class="fw-bold text-danger">
-                        {% if today_attendance.check_out %}
-                        {{ today_attendance.check_out|date:"h:i A" }}
-                        {% else %}
-                        Not Yet
-                        {% endif %}
-                    </h4>
-
-                    {% if today_attendance.checkout_address %}
-                    <p class="text-muted small mt-2">
-                        <i class="fas fa-map-marker-alt text-success me-1"></i>
-                        {{ today_attendance.checkout_address }}
-                        <a href="https://www.google.com/maps?q={{ today_attendance.checkout_latitude }},{{ today_attendance.checkout_longitude }}" target="_blank" class="text-primary small">(View Map)</a>
-                    </p>
-                    {% endif %}
+            <!-- Recent Activity Section -->
+            <div class="charts-section">
+                <div class="section-header">
+                    <h2>Recent Activity</h2>
+                    <p>Latest updates from your team and organization</p>
                 </div>
-            </div>
-        </div>
-        {% else %}
-        <div class="text-center py-4">
-            <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
-            <p class="text-secondary mb-1 fw-semibold">No attendance marked yet</p>
-            <small class="text-muted">Click below to mark your check-in for today.</small>
-        </div>
-        {% endif %}
-
-        <div class="text-center mt-4">
-            <form method="POST" id="attendanceForm">
-                {% csrf_token %}
-                <input type="hidden" name="latitude" id="latitude">
-                <input type="hidden" name="longitude" id="longitude">
-                <input type="hidden" name="address" id="address">
-
-                {% if not today_attendance %}
-                <button type="submit" name="action" value="check_in" class="btn btn-success px-4 py-2 rounded-pill">
-                    <i class="fas fa-sign-in-alt me-2"></i> Check In
-                </button>
-                {% elif not today_attendance.check_out %}
-                <button type="submit" name="action" value="check_out" class="btn btn-danger px-4 py-2 rounded-pill">
-                    <i class="fas fa-sign-out-alt me-2"></i> Check Out
-                </button>
+                
+                {% if recent_activity %}
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    {% for activity in recent_activity %}
+                    <div class="toast-item">
+                        <div class="toast-icon info">
+                            <i class="fas fa-bullhorn"></i>
+                        </div>
+                        <div class="toast-content">
+                            <h6>{{ activity.title }}</h6>
+                            <p>{{ activity.description }}</p>
+                            <div class="toast-meta">
+                                <i class="far fa-clock"></i>
+                                {{ activity.timestamp|timesince }} ago
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
                 {% else %}
-                <button type="button" class="btn btn-secondary px-4 py-2 rounded-pill" disabled>
-                    <i class="fas fa-check-circle me-2"></i> Attendance Complete
-                </button>
+                <div class="toast-empty">
+                    <i class="fas fa-inbox"></i>
+                    <p>No recent activity</p>
+                </div>
                 {% endif %}
-            </form>
-        </div>
-    </div>
-    <!-- ✅ Live Map & Location Script -->
-
-
-    <!-- Modern Information Section -->
-    <div class="modern-info-section">
-        <!-- Personal Information Card -->
-        <div class="info-card">
-            <div class="info-header">
-                <h3>Personal Information</h3>
             </div>
-            <div class="info-content">
-                <div class="info-item">
-                    <div class="info-label">Email</div>
-                    <div class="info-value">{{ employee.email }}</div>
+        </div>
+
+        <!-- Right Column: Attendance & Profile -->
+        <div class="side-panel">
+            <!-- Today's Attendance -->
+            <div class="attendance-card">
+                <div class="section-header" style="margin-bottom: 0;">
+                    <h2>Today's Attendance</h2>
                 </div>
-                <div class="info-item">
-                    <div class="info-label">Phone</div>
-                    <div class="info-value">{{ employee.phone|default:"Not specified" }}</div>
+                
+                <div class="attendance-time">
+                    <div class="time-grid">
+                        <div class="time-block">
+                            <div class="time-chip">
+                                <i class="fas fa-sign-in-alt"></i>
+                                Check In
+                            </div>
+                            <div class="time-display">
+                                {% if today_attendance and today_attendance.check_in %}
+                                    {{ today_attendance.check_in|date:"h:i A" }}
+                                {% else %}
+                                    --:--
+                                {% endif %}
+                            </div>
+                            <div class="time-label">
+                                {% if today_attendance and today_attendance.check_in %}
+                                    <i class="far fa-clock"></i> Logged at {{ today_attendance.check_in|date:"h:i A" }}
+                                {% else %}
+                                    <i class="far fa-clock"></i> Waiting to check in
+                                {% endif %}
+                            </div>
+                            {% if today_attendance and today_attendance.checkin_address %}
+                            <div class="location-pill">
+                                <i class="fas fa-map-marker-alt"></i>
+                                {{ today_attendance.checkin_address|truncatechars:60 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="time-block">
+                            <div class="time-chip" style="background: var(--white); border-color: #ffd5d5;">
+                                <i class="fas fa-sign-out-alt" style="color:#ef4444;"></i>
+                                Check Out
+                            </div>
+                            <div class="time-display out">
+                                {% if today_attendance and today_attendance.check_out %}
+                                    {{ today_attendance.check_out|date:"h:i A" }}
+                                {% else %}
+                                    --:--
+                                {% endif %}
+                            </div>
+                            <div class="time-label">
+                                {% if today_attendance and today_attendance.check_out %}
+                                    <i class="far fa-clock"></i> Logged at {{ today_attendance.check_out|date:"h:i A" }}
+                                {% elif today_attendance and today_attendance.check_in %}
+                                    <i class="far fa-clock"></i> Awaiting check out
+                                {% else %}
+                                    <i class="far fa-clock"></i> Start with a check in
+                                {% endif %}
+                            </div>
+                            {% if today_attendance and today_attendance.checkout_address %}
+                            <div class="location-pill">
+                                <i class="fas fa-map-marker-alt"></i>
+                                {{ today_attendance.checkout_address|truncatechars:60 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
-                <div class="info-item">
-                    <div class="info-label">Reporting Manager</div>
-                    <div class="info-value">{{ employee.reporting_manager|default:"Not assigned" }}</div>
+                
+                {% if punctuality_status %}
+                <div class="attendance-status">
+                    <i class="fas {% if punctuality_status == 'Late' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %}"></i>
+                    {{ punctuality_status }}
                 </div>
-                <div class="info-item">
-                    <div class="info-label">Date of Joining</div>
-                    <div class="info-value">{{ employee.date_of_joining|date:"d M, Y"|default:"Not available" }}</div>
+                {% endif %}
+                
+                {% if today_attendance and today_attendance.check_in and not today_attendance.check_out %}
+                <div class="progress-container">
+                    <div class="progress-label">
+                        <span>Work Duration</span>
+                        <span id="workDuration" data-checkin="{{ today_attendance.check_in|date:'Y-m-d H:i:s' }}">00:00:00</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="workProgress"></div>
+                    </div>
                 </div>
-                <div class="info-item">
-                    <div class="info-label">Date of Birth</div>
-                    <div class="info-value">
-                        {% if employee.date_of_birth and employee.date_of_birth %}
-                        {{ employee.date_of_birth|date:"d M, Y" }}
+                {% endif %}
+                
+                <form method="POST" id="attendanceForm" class="attendance-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="latitude" id="latitude">
+                    <input type="hidden" name="longitude" id="longitude">
+                    <input type="hidden" name="address" id="address">
+                    
+                    <div class="btn-group">
+                        {% if not today_attendance %}
+                        <button type="submit" name="action" value="check_in" class="btn-attendance btn-checkin">
+                            <i class="fas fa-sign-in-alt"></i>
+                            Check In
+                        </button>
+                        {% elif not today_attendance.check_out %}
+                        <button type="submit" name="action" value="check_out" class="btn-attendance btn-checkout">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Check Out
+                        </button>
                         {% else %}
-                        Not specified
+                        <button type="button" class="btn-attendance btn-disabled" disabled>
+                            <i class="fas fa-check-circle"></i>
+                            Attendance Complete
+                        </button>
                         {% endif %}
                     </div>
-                </div>
+                    
+                    <div class="geo-status" id="geoStatus">
+                        <i class="fas fa-map-pin"></i>
+                        <span>Trying to lock your location…</span>
+                    </div>
+                </form>
             </div>
-        </div>
 
-        <!-- Profile Main Card -->
-        <div class="profile-main">
-            <div class="profile-header">
-                <div class="profile-avatar">
-                    {% if employee.profile_picture %}
-                    <img src="{{ employee.profile_picture.url }}" alt="Profile"
-                        style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
-                    {% else %}
-                    <i class="fas fa-user"></i>
-                    {% endif %}
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        {% if employee.profile_picture %}
+                            <img src="{{ employee.profile_picture.url }}" alt="{{ employee.first_name }}" style="width: 100%; height: 100%; border-radius: 12px; object-fit: cover;">
+                        {% else %}
+                            {{ employee.first_name|slice:"1" }}{{ employee.last_name|slice:"1" }}
+                        {% endif %}
+                    </div>
+                    <div class="profile-info">
+                        <h4>{{ employee.first_name }} {{ employee.last_name }}</h4>
+                        <p>{{ employee.designation }}</p>
+                    </div>
                 </div>
-                <div class="profile-info">
-                    <h2>{{ employee.first_name }} {% if employee.middle_name %}{{ employee.middle_name }} {% endif %}  {{ employee.last_name }}</h2>
-                    <p style="color: white;" class="designation">{{ employee.designation }}</p>
+                
+                <div class="profile-stats">
+                    <div class="profile-stat">
+                        <span class="value">{{ total_remaining_leaves }}</span>
+                        <span class="label">Leaves Left</span>
+                    </div>
+                    <div class="profile-stat">
+                        <span class="value">
+                            {% if punctuality_status == 'On Time' %}100%{% else %}85%{% endif %}
+                        </span>
+                        <span class="label">Punctuality</span>
+                    </div>
                 </div>
-            </div>
-            <div class="profile-details">
-                <div class="info-item">
-                    <div class="info-label">Employee ID</div>
-                    <div class="info-value">{{ employee.employee_id }}</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Department</div>
-                    <div class="info-value">{{ employee.department }}</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Location</div>
-                    <div class="info-value">{{ employee.location|default:"Not specified" }}</div>
-                </div>
-                <div class="status-badge">
-                    {% if employee.status == 'active' %}
-                    <i class="fas fa-check-circle"></i> Active
-                    {% else %}
-                    <i class="fas fa-exclamation-circle"></i> Inactive
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Employment Details -->
-
-
-    <!-- Status-based Alert -->
-    {% if employee.status != 'active' %}
-    <div class="row mt-3">
-        <div class="col-12">
-            <div class="alert alert-warning">
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-exclamation-triangle me-3" style="font-size: 1.5rem;"></i>
-                    <div>
-                        <h5 class="alert-heading mb-1">Account Inactive</h5>
-                        <p class="mb-0">Your account is currently inactive. Self-service features like profile updates
-                            and password changes are disabled. Please contact your HR department to activate your
-                            account.</p>
+                
+                <div class="profile-details">
+                    <div class="profile-detail">
+                        <span class="detail-label">Employee ID</span>
+                        <span class="detail-value">{{ employee.employee_id }}</span>
+                    </div>
+                    <div class="profile-detail">
+                        <span class="detail-label">Department</span>
+                        <span class="detail-value">{{ employee.department }}</span>
+                    </div>
+                    <div class="profile-detail">
+                        <span class="detail-label">Location</span>
+                        <span class="detail-value">{{ employee.location|default:"Office" }}</span>
+                    </div>
+                    <div class="profile-detail">
+                        <span class="detail-label">Manager</span>
+                        <span class="detail-value">{{ employee.reporting_manager|default:"Not assigned" }}</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    {% endif %}
 
     {% else %}
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="custom-card">
-                <div class="card-body text-center py-5">
-                    <i class="fas fa-exclamation-triangle text-warning mb-3" style="font-size: 4rem;"></i>
-                    <h3>Profile Not Found</h3>
-                    <p class="text-muted">Your employee profile could not be found in the system.</p>
-                    <p class="text-muted">Please contact your HR department to set up your employee profile.</p>
-                    <div class="mt-4">
-                        <p><strong>Your login email:</strong> {{ request.session.user_email }}</p>
-                    </div>
-                    <div class="mt-3">
-                        <a href="mailto:hr@yourcompany.com" class="btn btn-primary">
-                            <i class="fas fa-envelope"></i> Contact HR
-                        </a>
-                    </div>
-                </div>
-            </div>
+    <!-- No Profile Found -->
+    <div class="charts-section" style="text-align: center; padding: 60px 40px;">
+        <div style="width: 80px; height: 80px; background: var(--gray-100); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 36px; color: #f59e0b;"></i>
         </div>
+        <h2 style="margin-bottom: 12px; color: var(--dark);">Profile Not Found</h2>
+        <p style="color: var(--gray-600); margin-bottom: 24px; max-width: 600px; margin-left: auto; margin-right: auto;">
+            Your employee profile could not be found in the system. Please contact your HR department to set up your employee profile.
+        </p>
+        <div style="background: var(--gray-100); padding: 16px; border-radius: 10px; margin-bottom: 24px; display: inline-block;">
+            <strong>Your login email:</strong> {{ request.session.user_email }}
+        </div>
+        <a href="mailto:hr@yourcompany.com" style="display: inline-flex; align-items: center; gap: 10px; padding: 14px 28px; background: var(--primary); color: white; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 15px;">
+            <i class="fas fa-envelope"></i>
+            Contact HR Department
+        </a>
     </div>
     {% endif %}
 </div>
-<!-- 🔴🟢 Notifications Section - Warnings & Appreciations -->
 
-<!-- ✅ Notification Bell Icon -->
+{{ weekly_labels|json_script:"weeklyLabels" }}
+{{ weekly_hours|json_script:"weeklyHours" }}
+{{ monthly_labels|json_script:"monthlyLabels" }}
+{{ monthly_hours|json_script:"monthlyHours" }}
+
+<!-- Notification Bell -->
 <div class="notification-bell" id="notificationBell">
     <i class="fas fa-bell"></i>
     {% if notifications_count > 0 %}
@@ -976,357 +1277,410 @@
     {% endif %}
 </div>
 
-
-<!-- ✅ Notification Popup (Hidden by Default) -->
-<div class="notification-popup" id="notificationPopup">
-    <div class="notification-popup-header">
-        <h5><i class="fas fa-bell me-2"></i>Recent Notifications</h5>
-        <i class="fas fa-times" id="closeNotification" style="cursor:pointer;"></i>
+<!-- Notification Toast -->
+<div class="notification-toast" id="notificationToast">
+    <div class="toast-header">
+        <h5><i class="fas fa-bell"></i> Notifications</h5>
+        <i class="fas fa-times" id="closeToast" style="cursor: pointer; font-size: 18px;"></i>
     </div>
-    <div class="notification-popup-body">
+    <div class="toast-body">
         {% if recent_warnings_count == 0 and recent_appreciations_count == 0 %}
-        <!-- Show empty message -->
-        <div class="notification-empty">
-            <i class="fas fa-smile text-success"></i>
-            <p>No new notifications in the last 7 days 🎉</p>
+        <div class="toast-empty">
+            <i class="fas fa-smile"></i>
+            <p>No new notifications</p>
+            <p style="font-size: 13px; margin-top: 8px; color: var(--gray-500);">You're all caught up!</p>
         </div>
         {% else %}
-        <!-- Show warnings -->
-        {% for n in notifications %}
-        <div class="notification-item">
-            <div class="notification-icon 
-        {% if n.message_category == 'Warning' %}
-            warning
-        {% else %}
-            appreciation
-        {% endif %}">
-
-                {% if n.message_category == 'Warning' %}
-                <i class="fas fa-exclamation-circle"></i>
-                {% else %}
-                <i class="fas fa-award"></i>
-                {% endif %}
-            </div>
-
-            <div class="notification-content">
-                <h6>{{ n.subject }}</h6>
-                <p>{{ n.description|default:"No details provided." }}</p>
-
-                <div class="notification-meta">
-                    <i class="fas fa-user-tie me-1"></i>{{ n.issued_by }} ·
-                    <i class="far fa-calendar-alt ms-2 me-1"></i>{{ n.warning_date|date:"d M, Y" }}
+            {% for n in notifications %}
+            <div class="toast-item">
+                <div class="toast-icon {% if n.message_category == 'Warning' %}warning{% else %}success{% endif %}">
+                    <i class="fas {% if n.message_category == 'Warning' %}fa-exclamation-circle{% else %}fa-award{% endif %}"></i>
+                </div>
+                <div class="toast-content">
+                    <h6>{{ n.subject }}</h6>
+                    <p>{{ n.description|default:"No details provided."}}</p>
+                    <div class="toast-meta">
+                        <i class="fas fa-user-tie"></i> {{ n.issued_by }}
+                        <i class="far fa-calendar-alt"></i> {{ n.warning_date|date:"M d" }}
+                    </div>
                 </div>
             </div>
-        </div>
-        {% endfor %}
-
-        <!-- Show appreciations -->
-        {% for appr in recent_appreciations %}
-        <div class="notification-item">
-            <div class="notification-icon appreciation"><i class="fas fa-award"></i></div>
-            <div class="notification-content">
-                <h6>{{ appr.subject }}</h6>
-                <p>{{ appr.description|default:"No details provided." }}</p>
-                <div class="notification-meta">
-                    <i class="fas fa-user-tie me-1"></i>{{ appr.issued_by }} &middot;
-                    <i class="far fa-calendar-alt ms-2 me-1"></i>{{ appr.warning_date|date:"M d, Y" }}
+            {% endfor %}
+            
+            {% for appr in recent_appreciations %}
+            <div class="toast-item">
+                <div class="toast-icon success">
+                    <i class="fas fa-award"></i>
+                </div>
+                <div class="toast-content">
+                    <h6>{{ appr.subject }}</h6>
+                    <p>{{ appr.description|default:"No details provided."|truncatechars:100 }}</p>
+                    <div class="toast-meta">
+                        <i class="fas fa-user-tie"></i> {{ appr.issued_by }}
+                        <i class="far fa-calendar-alt"></i> {{ appr.warning_date|date:"M d" }}
+                    </div>
                 </div>
             </div>
-        </div>
-        {% endfor %}
+            {% endfor %}
         {% endif %}
     </div>
 </div>
 
-<!-- ✅ JavaScript -->
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const bell = document.getElementById("notificationBell");
-        const popup = document.getElementById("notificationPopup");
-        const closeBtn = document.getElementById("closeNotification");
-
-        // Toggle popup when bell clicked
-        bell.addEventListener("click", () => {
-            popup.classList.toggle("show");
-        });
-
-        // Close popup when "x" clicked
-        closeBtn.addEventListener("click", () => {
-            popup.classList.remove("show");
-        });
-
-        // Close popup when clicking outside
-        document.addEventListener("click", (e) => {
-            if (!popup.contains(e.target) && !bell.contains(e.target)) {
-                popup.classList.remove("show");
-            }
-        });
-    });
-</script>
+<!-- Include Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const mapContainer = document.createElement("div");
-    mapContainer.id = "liveMap";
-    mapContainer.style.width = "100%";
-    mapContainer.style.height = "300px";
-    mapContainer.style.borderRadius = "10px";
-    mapContainer.style.marginTop = "20px";
-    mapContainer.style.display = "none";
-    document.querySelector(".attendance-card").appendChild(mapContainer);
+    document.addEventListener('DOMContentLoaded', function() {
+        // Parsed data from the backend
+        const weeklyLabelsEl = document.getElementById('weeklyLabels');
+        const weeklyHoursEl = document.getElementById('weeklyHours');
+        const monthlyLabelsEl = document.getElementById('monthlyLabels');
+        const monthlyHoursEl = document.getElementById('monthlyHours');
 
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(successCallback, errorCallback);
-    } else {
-        alert("Geolocation not supported in this browser.");
-    }
+        const weeklyLabels = weeklyLabelsEl ? JSON.parse(weeklyLabelsEl.textContent) : [];
+        const weeklyHours = weeklyHoursEl ? JSON.parse(weeklyHoursEl.textContent) : [];
+        const monthlyLabels = monthlyLabelsEl ? JSON.parse(monthlyLabelsEl.textContent) : [];
+        const monthlyHours = monthlyHoursEl ? JSON.parse(monthlyHoursEl.textContent) : [];
 
-    function successCallback(position) {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
-
-        // Fill hidden inputs for Django form
-        const latInput = document.getElementById("latitude");
-        const lonInput = document.getElementById("longitude");
-        const addrInput = document.getElementById("address");
-        if (latInput && lonInput) {
-            latInput.value = lat;
-            lonInput.value = lon;
-        }
-
-        // ✅ Reverse-geocode to get simplified city + state
-        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
-            .then(res => res.json())
-            .then(data => {
-                let city = data.address.city || data.address.town || data.address.village || "";
-                let state = data.address.state || "";
-                let country = data.address.country || "";
-
-                // ✅ Create simplified address (City, State, Country)
-                let addressName = "";
-                if (city && state) {
-                    addressName = `${city}, ${state}, ${country}`;
-                } else if (state) {
-                    addressName = `${state}, ${country}`;
-                } else {
-                    addressName = data.display_name || "Current location";
-                }
-
-                if (addrInput) addrInput.value = addressName;
-
-                // Show map preview
-                showMap(lat, lon, addressName);
-            })
-            .catch(() => {
-                if (addrInput) addrInput.value = "Address not found";
-            });
-    }
-
-    function errorCallback(err) {
-        console.error("Geolocation error:", err);
-    }
-
-    function showMap(lat, lon, label) {
-        mapContainer.style.display = "block";
-        mapContainer.innerHTML = ""; // clear previous map
-
-        // Include Leaflet map library
-        const link = document.createElement("link");
-        link.rel = "stylesheet";
-        link.href = "https://unpkg.com/leaflet/dist/leaflet.css";
-        document.head.appendChild(link);
-        const script = document.createElement("script");
-        script.src = "https://unpkg.com/leaflet/dist/leaflet.js";
-        script.onload = function () {
-            const map = L.map("liveMap").setView([lat, lon], 16);
-            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                maxZoom: 19,
-            }).addTo(map);
-            L.marker([lat, lon]).addTo(map).bindPopup(label).openPopup();
-
-            // Hide map after 60 seconds
-            setTimeout(() => {
-                mapContainer.style.display = "none";
-                map.remove();
-            }, 60000);
-        };
-        document.body.appendChild(script);
-    }
-});
-</script>
-<script>
-    // Month-wise attendance labels
-    const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-    // Static days attended for each month
-    const monthData = [22, 18, 20, 21, 19, 23, 20, 22, 21, 18, 20, 22];
-
-    // Work Hours Chart (Bar)
-    const workHoursCtx = document.getElementById('workHoursChart').getContext('2d');
-    const workHoursChart = new Chart(workHoursCtx, {
-        type: 'bar',
-        data: {
-            labels: monthLabels,
-            datasets: [{
-                label: 'Days Attended',
-                data: monthData,
-                backgroundColor: monthLabels.map((_, i) =>
-                    i % 2 === 0 ? 'rgba(67, 97, 238, 0.8)' : 'rgba(63, 55, 201, 0.8)'
-                ),
-                borderColor: monthLabels.map((_, i) =>
-                    i % 2 === 0 ? 'rgba(67, 97, 238, 1)' : 'rgba(63, 55, 201, 1)'
-                ),
-                borderWidth: 1,
-                barPercentage: 0.5,
-                categoryPercentage: 0.6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function (context) {
-                            return `${context.label}: ${context.parsed.y} days present`;
+        // Initialize Charts
+        const avgWorkHoursCtx = document.getElementById('avgWorkHoursChart').getContext('2d');
+        const avgWorkHoursChart = new Chart(avgWorkHoursCtx, {
+            type: 'line',
+            data: {
+                labels: weeklyLabels.length ? weeklyLabels : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Work Hours',
+                    data: weeklyHours.length ? weeklyHours : [0, 0, 0, 0, 0, 0, 0],
+                    borderColor: '#4361ee',
+                    backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#4361ee',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        titleColor: '#1a1a2e',
+                        bodyColor: '#6c757d',
+                        borderColor: '#e9ecef',
+                        borderWidth: 1,
+                        padding: 12,
+                        boxPadding: 6
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 10,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value + 'h';
+                            },
+                            color: '#6c757d',
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#6c757d',
+                            font: {
+                                size: 11
+                            }
                         }
                     }
                 },
-                legend: { display: false }
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+
+        const monthlyHoursCtx = document.getElementById('monthlyHoursChart').getContext('2d');
+        const monthlyHoursChart = new Chart(monthlyHoursCtx, {
+            type: 'bar',
+            data: {
+                labels: monthlyLabels.length ? monthlyLabels : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Hours',
+                    data: monthlyHours.length ? monthlyHours : [0, 0, 0, 0, 0, 0],
+                    backgroundColor: [
+                        'rgba(67, 97, 238, 0.8)',
+                        'rgba(67, 97, 238, 0.8)',
+                        'rgba(67, 97, 238, 0.8)',
+                        'rgba(67, 97, 238, 0.8)',
+                        'rgba(67, 97, 238, 0.8)',
+                        'rgba(67, 97, 238, 0.8)'
+                    ],
+                    borderColor: '#4361ee',
+                    borderWidth: 0,
+                    borderRadius: 6,
+                    borderSkipped: false
+                }]
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 31,
-                    ticks: { stepSize: 5 },
-                    title: { display: true, text: 'Days Worked' }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        titleColor: '#1a1a2e',
+                        bodyColor: '#6c757d',
+                        borderColor: '#e9ecef',
+                        borderWidth: 1,
+                        padding: 12
+                    }
                 },
-                x: {
-                    title: { display: true, text: 'Month' },
-                    grid: { offset: true } // spacing/margin between bars
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value + 'h';
+                            },
+                            color: '#6c757d',
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#6c757d',
+                            font: {
+                                size: 11
+                            }
+                        }
+                    }
                 }
             }
-        }
-    });
+        });
 
-    // Task Completion Chart (Doughnut)
-    const taskCtx = document.getElementById('taskChart').getContext('2d');
-    const taskChart = new Chart(taskCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['SickLeave', 'CasualLeave', 'Emergency Leave'],
-            datasets: [{
-                data: [5, 2, 3],
-                backgroundColor: [
-                    'rgba(67, 97, 238, 0.7)',
-                    'rgba(76, 201, 240, 0.7)',
-                    'rgba(247, 37, 133, 0.7)'
-                ],
-                borderColor: [
-                    'rgba(67, 97, 238, 1)',
-                    'rgba(76, 201, 240, 1)',
-                    'rgba(247, 37, 133, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
+        // Timer functionality
+        const timerElement = document.getElementById('workDuration');
+        if (timerElement) {
+            const checkInTime = new Date(timerElement.dataset.checkin);
+            
+            function updateTimer() {
+                const now = new Date();
+                const diff = now - checkInTime;
+                
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                timerElement.textContent = 
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                // Update progress bar (assuming 8-hour work day)
+                const progressFill = document.getElementById('workProgress');
+                if (progressFill) {
+                    const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+                    const progressPercent = Math.min((totalSeconds / (8 * 3600)) * 100, 100);
+                    progressFill.style.width = progressPercent + '%';
                 }
             }
+            
+            updateTimer();
+            setInterval(updateTimer, 1000);
+        }
+
+        // Geolocation for attendance
+        const geoStatus = document.getElementById('geoStatus');
+        const latInput = document.getElementById('latitude');
+        const lonInput = document.getElementById('longitude');
+        const addressInput = document.getElementById('address');
+        let locationReady = false;
+
+        const setGeoStatus = (text, tone = 'info') => {
+            if (!geoStatus) return;
+            const icon = geoStatus.querySelector('i');
+            geoStatus.classList.remove('error', 'ok');
+            if (tone === 'ok') {
+                geoStatus.style.borderColor = '#10b981';
+                geoStatus.style.color = '#065f46';
+                if (icon) icon.style.color = '#10b981';
+            } else if (tone === 'error') {
+                geoStatus.style.borderColor = '#ef4444';
+                geoStatus.style.color = '#7f1d1d';
+                if (icon) icon.style.color = '#ef4444';
+            } else {
+                geoStatus.style.borderColor = 'var(--gray-200)';
+                geoStatus.style.color = 'var(--gray-700)';
+                if (icon) icon.style.color = 'var(--primary)';
+            }
+            geoStatus.querySelector('span').textContent = text;
+        };
+
+        const reverseGeocode = async (lat, lon) => {
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await res.json();
+                return data.display_name || 'Location captured';
+            } catch (err) {
+                return 'Location captured';
+            }
+        };
+
+        const requestLocation = () => {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    setGeoStatus('Geolocation is not supported in this browser', 'error');
+                    addressInput.value = 'Location not available';
+                    return reject(new Error('not supported'));
+                }
+
+                setGeoStatus('Capturing your location…', 'info');
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+
+                    latInput.value = lat;
+                    lonInput.value = lon;
+
+                    const address = await reverseGeocode(lat, lon);
+                    addressInput.value = address;
+
+                    locationReady = true;
+                    setGeoStatus('Location locked in', 'ok');
+                    resolve();
+                }, (error) => {
+                    console.warn('Geolocation error:', error);
+                    locationReady = false;
+                    addressInput.value = 'Location not available';
+                    setGeoStatus('Could not fetch location. You can still continue.', 'error');
+                    reject(error);
+                }, {
+                    enableHighAccuracy: true,
+                    timeout: 12000,
+                    maximumAge: 0
+                });
+            });
+        };
+
+        // Try to fetch location on load (best UX on secure origins)
+        requestLocation().catch(() => {});
+
+        // Notification System
+        const bell = document.getElementById('notificationBell');
+        const toast = document.getElementById('notificationToast');
+        const closeToast = document.getElementById('closeToast');
+
+        // Show toast on page load if there are notifications
+        {% if notifications_count > 0 %}
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 1000);
+        {% endif %}
+
+        bell.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toast.classList.toggle('show');
+        });
+
+        closeToast.addEventListener('click', () => {
+            toast.classList.remove('show');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!toast.contains(e.target) && !bell.contains(e.target)) {
+                toast.classList.remove('show');
+            }
+        });
+
+        // Auto-hide toast after 10 seconds
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 10000);
+
+        // Show success/error messages
+        {% if messages %}
+            {% for message in messages %}
+                showNotification('{{ message.tags }}', '{{ message }}');
+            {% endfor %}
+        {% endif %}
+
+        function showNotification(type, message) {
+            const notification = document.createElement('div');
+            notification.className = `toast-item ${type}`;
+            notification.innerHTML = `
+                <div class="toast-icon ${type}">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                </div>
+                <div class="toast-content">
+                    <h6>${type === 'success' ? 'Success' : 'Error'}</h6>
+                    <p>${message}</p>
+                </div>
+            `;
+            
+            document.querySelector('.toast-body').prepend(notification);
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
+        // Attendance form handling
+        const attendanceForm = document.getElementById('attendanceForm');
+        if (attendanceForm) {
+            attendanceForm.addEventListener('submit', async function(e) {
+                const submitBtn = this.querySelector('[type="submit"]:not(.btn-disabled)');
+                if (submitBtn) {
+                    submitBtn.innerHTML = '<div class="spinner"></div>';
+                    submitBtn.classList.add('loading');
+                }
+
+                if (!locationReady) {
+                    e.preventDefault();
+                    try {
+                        await requestLocation();
+                        this.submit();
+                    } catch (err) {
+                        // Proceed but mark address as unavailable
+                        addressInput.value = addressInput.value || 'Location not available';
+                        this.submit();
+                    }
+                }
+            });
+        }
+
+        // Initialize live map if needed
+        const liveMap = document.getElementById('liveMap');
+        if (liveMap) {
+            // Map initialization code here if needed
         }
     });
-    
 </script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  try {
-    const timerEl = document.getElementById('workDuration');
-    if (!timerEl) {
-      console.log('Timer element not found.');
-      return;
-    }
-
-    // Read data attributes (already escaped from Django)
-    const checkInRaw = timerEl.dataset.checkin || '';
-    const checkedOutRaw = timerEl.dataset.checkedout || 'false';
-
-    console.log('checkInRaw:', checkInRaw, 'checkedOutRaw:', checkedOutRaw);
-
-    // Only run if checkin exists and not checked out
-    if (!checkInRaw || checkedOutRaw === 'true') {
-      console.log('No active timer: either no check-in or already checked out.');
-      return;
-    }
-
-    // Convert 'YYYY-MM-DD HH:MM:SS' -> JS Date safely (replace '-' with '/')
-    // Replace possible timezone differences — treat as local time
-    const checkInIsoLike = checkInRaw.replace(/-/g, '/'); // "2025/11/27 09:30:00"
-    const checkInDate = new Date(checkInIsoLike);
-
-    if (isNaN(checkInDate.getTime())) {
-      console.warn('Parsed check-in is invalid date:', checkInDate, checkInRaw);
-      // try fallback: use Date.parse on ISO if available
-      const fallback = Date.parse(checkInRaw);
-      if (!isNaN(fallback)) {
-        checkInDate = new Date(fallback);
-      } else {
-        return;
-      }
-    }
-
-    // Make badge visible
-    timerEl.classList.remove('d-none');
-
-    // Update function
-    let timerInterval = null;
-    function updateElapsed() {
-      const now = new Date();
-      let diff = now - checkInDate; // milliseconds
-
-      if (diff < 0) diff = 0;
-
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-      const hh = hours < 10 ? '0' + hours : '' + hours;
-      const mm = minutes < 10 ? '0' + minutes : '' + minutes;
-      const ss = seconds < 10 ? '0' + seconds : '' + seconds;
-
-     timerEl.textContent = `${hh} Hr : ${mm} Min : ${ss} Sec`;
-    }
-
-    // Start immediately and then every second
-    updateElapsed();
-    timerInterval = setInterval(updateElapsed, 1000);
-
-    // Optional: stop timer automatically if the server later shows checkout (polling)
-    // — If you don't need this, comment it out.
-    const pollForCheckout = true;
-    if (pollForCheckout) {
-      const attendanceTopInfo = document.getElementById('attendanceTopInfo');
-      setInterval(() => {
-        // If template is re-rendered via AJAX later, dataset may change.
-        const checkedOutNow = timerEl.dataset.checkedout || 'false';
-        if (checkedOutNow === 'true') {
-          clearInterval(timerInterval);
-          timerEl.classList.add('d-none');
-          console.log('Timer stopped because checked out detected.');
-        }
-      }, 3000); // every 3 seconds
-    }
-
-  } catch (err) {
-    console.error('Timer script error:', err);
-  }
-});
-</script>
-
-
 {% endblock %}

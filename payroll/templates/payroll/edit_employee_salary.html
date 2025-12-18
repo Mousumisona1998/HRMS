@@ -1,16 +1,525 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load payroll_filters %} 
+{% load payroll_filters %}
 {% block title %}Edit Employee Salary - HRMS{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="page-header">
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-light: #4895ef;
+        --secondary: #7209b7;
+        --accent: #4cc9f0;
+        --warning: #f72585;
+        --success: #10b981;
+        --dark: #1a1a2e;
+        --light: #f8f9fa;
+        --gray-100: #f8f9fa;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-400: #ced4da;
+        --gray-500: #adb5bd;
+        --gray-600: #6c757d;
+        --gray-700: #495057;
+        --gray-800: #343a40;
+        --gray-900: #212529;
+        --white: #ffffff;
+        --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background-color: #f8fafc;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: var(--gray-800);
+    }
+
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+
+    /* Page Header */
+    .page-header {
+        /* background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); */
+        color:black;
+        padding: 10px 20px;
+        /* border-radius: 20px; */
+        margin-bottom: 32px;
+        position: relative;
+        overflow: hidden;
+        z-index: 100;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        /* background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%); */
+        
+    }
+
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    .page-header h1 {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+    }
+
+    .breadcrumb-item {
+        color: rgb(0, 0, 0);
+    }
+
+    .breadcrumb-item.active {
+        color:  rgb(0, 0, 0);
+        font-weight: 500;
+    }
+
+    .breadcrumb-item a {
+        color: rgba(24, 18, 179, 0.9);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .breadcrumb-item a:hover {
+        color:rgb(0, 0, 0);
+        text-decoration: underline;
+    }
+
+    
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        color: var(--white);
+        box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(67, 97, 238, 0.4);
+    }
+
+    .btn-secondary {
+        background: #d8dde7;
+        color: #212529;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+    }
+
+    .btn-secondary:hover {
+        background: rgba(94, 95, 108, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Card Styles */
+    .custom-card {
+        background: var(--white);
+        border-radius: 20px;
+        padding: 32px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        margin: 0 40px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .custom-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--hover-shadow);
+        border-color: var(--primary-light);
+    }
+
+    .custom-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+    }
+
+    .card-header {
+        margin: -32px -32px 32px -32px;
+        padding: 24px 32px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-bottom: 1px solid var(--gray-200);
+        border-radius: 20px 20px 0 0;
+    }
+
+    .card-title {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .card-title i {
+        color: var(--primary);
+        font-size: 20px;
+    }
+
+    /* Form Styles */
+    .form-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .form-label span.text-danger {
+        color: var(--warning);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid var(--gray-300);
+        border-radius: 12px;
+        font-size: 15px;
+        color: var(--gray-800);
+        background: var(--white);
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+    }
+
+    .form-control[readonly] {
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.05) 0%, rgba(114, 9, 183, 0.05) 100%);
+        border-color: var(--gray-200);
+        color: var(--gray-700);
+        cursor: not-allowed;
+    }
+
+    /* Table Styles */
+    .table-responsive {
+        border-radius: 16px;
+        overflow: hidden;
+        border: 2px solid var(--gray-200);
+    }
+
+    .table {
+        margin: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+    }
+
+    .table thead th {
+        background: aliceblue;
+        color: #000;
+        font-weight: 600;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: none;
+        padding: 16px 20px;
+    }
+
+    .table tbody tr {
+        transition: all 0.2s ease;
+        background: var(--white);
+    }
+
+    .table tbody tr:hover {
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.05) 0%, rgba(114, 9, 183, 0.02) 100%);
+        transform: translateX(4px);
+    }
+
+    .table tbody td {
+        padding: 20px;
+        border-bottom: 1px solid var(--gray-200);
+        vertical-align: middle;
+    }
+
+    .table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Badge Styles */
+    .badge {
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        border: none;
+    }
+
+    .badge.bg-success {
+        background: linear-gradient(135deg, var(--success) 0%, #0ca678 100%) !important;
+    }
+
+    .badge.bg-danger {
+        background: linear-gradient(135deg, var(--warning) 0%, #e63946 100%) !important;
+    }
+
+    /* Input Group Styles */
+    .input-group {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 2px solid var(--gray-300);
+        transition: all 0.2s ease;
+    }
+
+    .input-group:focus-within {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+    }
+
+    .input-group-text {
+        background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-200) 100%);
+        border: none;
+        color: var(--gray-700);
+        font-weight: 600;
+        padding: 0 16px;
+    }
+
+    .input-group .form-control {
+        border: none;
+        border-radius: 0;
+        padding: 12px 16px;
+        box-shadow: none;
+    }
+
+    .input-group .form-control[readonly] {
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.05) 0%, rgba(114, 9, 183, 0.05) 100%);
+    }
+
+    /* Summary Card Styles */
+    .summary-card {
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.05) 0%, rgba(114, 9, 183, 0.05) 100%);
+        border: 2px solid var(--gray-200);
+        border-radius: 16px;
+        padding: 24px;
+        transition: all 0.3s ease;
+    }
+
+    .summary-card:hover {
+        border-color: var(--primary);
+        box-shadow: 0 8px 25px rgba(67, 97, 238, 0.1);
+    }
+
+    .summary-card h6 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid var(--gray-300);
+    }
+
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px dashed var(--gray-300);
+    }
+
+    .summary-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .summary-item span {
+        font-size: 14px;
+        color: var(--gray-700);
+    }
+
+    .summary-item strong {
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .summary-item .text-success {
+        color: var(--success);
+    }
+
+    .summary-item .text-danger {
+        color: var(--warning);
+    }
+
+    .summary-item .text-primary {
+        color: var(--primary);
+    }
+
+    hr {
+        border: none;
+        height: 1px;
+        background: linear-gradient(90deg, var(--gray-300), var(--gray-400), var(--gray-300));
+        margin: 20px 0;
+    }
+
+    /* Animation Classes */
+    .fade-in {
+        animation: fadeIn 0.5s ease;
+    }
+
+    .slide-up {
+        animation: slideUp 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .page-container {
+            padding: 16px;
+        }
+        
+        .page-header {
+            padding: 0px;
+        }
+        
+        .page-header h1 {
+            font-size: 24px;
+        }
+        
+        .custom-card {
+            padding: 24px;
+            margin: 0;
+        }
+        
+        .card-header {
+            margin: -24px -24px 24px -24px;
+            padding: 20px 24px;
+        }
+        
+        .table-responsive {
+            font-size: 14px;
+        }
+        
+        .table thead th {
+            padding: 12px 16px;
+            font-size: 13px;
+        }
+        
+        .table tbody td {
+            padding: 16px;
+        }
+        
+        .input-group {
+            flex-wrap: nowrap;
+        }
+        
+        .input-group-text {
+            padding: 0 12px;
+            font-size: 13px;
+        }
+        
+        .form-control {
+            padding: 12px;
+            font-size: 14px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .row {
+            margin-left: -8px;
+            margin-right: -8px;
+        }
+        
+        .col-lg-12, .col-md-6, .col-12 {
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+        
+        .d-flex.gap-2 {
+            flex-direction: column;
+            gap: 12px !important;
+             width: 100%;
+        }
+        .table-responsive {
+            border: none;
+        }
+        
+        .table thead {
+            display: none;
+        }
+        
+        .table tbody tr {
+            display: block;
+            margin-bottom: 20px;
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .table tbody td {
+            display: block;
+            text-align: left;
+            padding: 16px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .table tbody td:before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: var(--dark);
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .table tbody tr:last-child {
+            margin-bottom: 0;
+        }
+    }
+</style>
+
+<div class="page-container">
+    <!-- Page Header -->
+    <div class="page-header fade-in">
         <div class="row align-items-center">
             <div class="col">
-                <h1 class="h3 mb-0">Edit Employee Salary</h1>
+                <h1 class="h3 mb-2">Edit Employee Salary</h1>
                 <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
+                    <ol class="breadcrumb mb-0">
                         <li class="breadcrumb-item"><a href="{% url 'employee_salaries' %}">Employee Salaries</a></li>
                         <li class="breadcrumb-item"><a href="{% url 'view_employee_salary' salary.id %}">Salary Details</a></li>
                         <li class="breadcrumb-item active">Edit Salary</li>
@@ -26,10 +535,12 @@
     </div>
 
     <div class="row">
-        <div class="col-lg-8">
-            <div class="custom-card">
+        <div class="col-lg-12">
+            <div class="custom-card slide-up">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Edit Salary Structure</h5>
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-edit"></i> Edit Salary Structure
+                    </h5>
                 </div>
                 <div class="card-body">
                     <form method="post" id="salaryForm">
@@ -37,14 +548,18 @@
                         
                         <!-- Basic Information -->
                         <div class="row mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label">Employee</label>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-user me-2"></i>Employee
+                                </label>
                                 <input type="text" class="form-control" 
                                        value="{{ salary.employee.first_name }} {{ salary.employee.last_name }} ({{ salary.employee.employee_id }})" 
-                                       readonly style="background-color: #f8f9fa;">
+                                       readonly>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Effective Date <span class="text-danger">*</span></label>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-calendar-alt me-2"></i>Effective Date <span class="text-danger">*</span>
+                                </label>
                                 <input type="date" class="form-control" name="effective_date" 
                                        value="{{ salary.effective_date|date:'Y-m-d' }}" required>
                             </div>
@@ -53,48 +568,56 @@
                         <!-- Basic Salary -->
                         <div class="row mb-4">
                             <div class="col-12">
-                                <label class="form-label">Basic Salary <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" name="basic_salary" id="basicSalary" 
-                                       value="{{ salary.basic_salary }}" step="0.01" required>
+                                <label class="form-label">
+                                    <i class="fas fa-money-bill-wave me-2"></i>Basic Salary <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    <input type="number" class="form-control" name="basic_salary" id="basicSalary" 
+                                           value="{{ salary.basic_salary }}" step="0.01" required
+                                           placeholder="Enter basic salary amount">
+                                </div>
                             </div>
                         </div>
 
                         <!-- Salary Components -->
                         <div class="mb-4">
-                            <h6 class="mb-3">Salary Components</h6>
+                            <h6 class="mb-3">
+                                <i class="fas fa-list-alt me-2"></i>Salary Components
+                            </h6>
                             <div class="table-responsive">
-                                <table class="table table-bordered">
-                                    <thead class="table-light">
+                                <table class="table">
+                                    <thead>
                                         <tr>
-                                            <th>Component</th>
-                                            <th>Type</th>
-                                            <th>Calculation</th>
-                                            <th>Amount</th>
+                                            <th data-label="Component">Component</th>
+                                            <th data-label="Type">Type</th>
+                                            <th data-label="Calculation">Calculation</th>
+                                            <th data-label="Amount">Amount</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {% for component in components %}
                                         <tr>
-                                            <td>
+                                            <td data-label="Component">
                                                 <strong>{{ component.name }}</strong>
                                                 {% if component.calculation_type == 'percentage' %}
                                                 <br><small class="text-muted">{{ component.value }}% of Basic</small>
                                                 {% endif %}
                                             </td>
-                                            <td>
+                                            <td data-label="Type">
                                                 <span class="badge {% if component.component_type == 'earning' %}bg-success{% else %}bg-danger{% endif %}">
                                                     {{ component.get_component_type_display }}
                                                 </span>
                                             </td>
-                                            <td>{{ component.get_calculation_type_display }}</td>
-                                            <td>
+                                            <td data-label="Calculation">{{ component.get_calculation_type_display }}</td>
+                                            <td data-label="Amount">
                                                 {% if component.calculation_type == 'percentage' %}
                                                 <div class="input-group input-group-sm">
                                                     <span class="input-group-text">₹</span>
                                                     <input type="number" class="form-control" 
                                                            id="component_{{ component.id }}_calc" 
                                                            value="{% widthratio salary.basic_salary 1 component.value %}" 
-                                                           readonly style="background-color: #f8f9fa;">
+                                                           readonly>
                                                 </div>
                                                 <input type="hidden" name="component_{{ component.id }}" 
                                                        id="component_{{ component.id }}" 
@@ -106,7 +629,8 @@
                                                            name="component_{{ component.id }}" 
                                                            value="{{ existing_components|get_item:component.id|default:0 }}" 
                                                            step="0.01" 
-                                                           data-component-type="{{ component.component_type }}">
+                                                           data-component-type="{{ component.component_type }}"
+                                                           placeholder="Enter amount">
                                                 </div>
                                                 {% endif %}
                                             </td>
@@ -120,22 +644,24 @@
                         <!-- Salary Summary -->
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="custom-card bg-light">
-                                    <h6 class="mb-3">Salary Summary</h6>
-                                    <div class="d-flex justify-content-between mb-2">
+                                <div class="summary-card">
+                                    <h6>
+                                        <i class="fas fa-chart-pie me-2"></i>Salary Summary
+                                    </h6>
+                                    <div class="summary-item">
                                         <span>Basic Salary:</span>
                                         <strong id="summaryBasic">₹{{ salary.basic_salary }}</strong>
                                     </div>
-                                    <div class="d-flex justify-content-between mb-2">
+                                    <div class="summary-item">
                                         <span>Total Earnings:</span>
                                         <strong class="text-success" id="summaryEarnings">₹{{ salary.gross_salary|add:"-salary.basic_salary" }}</strong>
                                     </div>
-                                    <div class="d-flex justify-content-between mb-2">
+                                    <div class="summary-item">
                                         <span>Total Deductions:</span>
                                         <strong class="text-danger" id="summaryDeductions">₹{{ salary.gross_salary|add:"-salary.net_salary" }}</strong>
                                     </div>
                                     <hr>
-                                    <div class="d-flex justify-content-between">
+                                    <div class="summary-item">
                                         <span><strong>Net Salary:</strong></span>
                                         <strong class="text-primary" id="summaryNet">₹{{ salary.net_salary }}</strong>
                                     </div>
@@ -147,7 +673,9 @@
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-2"></i>Update Salary Structure
                             </button>
-                            <a href="{% url 'view_employee_salary' salary.id %}" class="btn btn-secondary">Cancel</a>
+                            <a href="{% url 'view_employee_salary' salary.id %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
                         </div>
                     </form>
                 </div>
@@ -155,9 +683,7 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <script>
     function calculateSalary() {
         const basicSalary = parseFloat(document.getElementById('basicSalary').value) || 0;
@@ -168,8 +694,15 @@
         {% for component in components %}
             {% if component.calculation_type == 'percentage' %}
                 const {{ component.name|slugify }}Amount = basicSalary * {{ component.value }} / 100;
-                document.getElementById('component_{{ component.id }}_calc').value = {{ component.name|slugify }}Amount.toFixed(2);
-                document.getElementById('component_{{ component.id }}').value = {{ component.name|slugify }}Amount.toFixed(2);
+                const calcInput = document.getElementById('component_{{ component.id }}_calc');
+                const hiddenInput = document.getElementById('component_{{ component.id }}');
+                
+                if (calcInput) {
+                    calcInput.value = {{ component.name|slugify }}Amount.toFixed(2);
+                }
+                if (hiddenInput) {
+                    hiddenInput.value = {{ component.name|slugify }}Amount.toFixed(2);
+                }
                 
                 {% if component.component_type == 'earning' %}
                     totalEarnings += {{ component.name|slugify }}Amount;
@@ -191,19 +724,69 @@
             }
         });
 
-        // Update summary
-        document.getElementById('summaryBasic').textContent = '₹' + basicSalary.toFixed(2);
-        document.getElementById('summaryEarnings').textContent = '₹' + totalEarnings.toFixed(2);
-        document.getElementById('summaryDeductions').textContent = '₹' + totalDeductions.toFixed(2);
+        // Format numbers with commas
+        function formatCurrency(amount) {
+            return '₹' + amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+        }
+
+        // Update summary with formatted numbers
+        document.getElementById('summaryBasic').textContent = formatCurrency(basicSalary);
+        document.getElementById('summaryEarnings').textContent = formatCurrency(totalEarnings);
+        document.getElementById('summaryDeductions').textContent = formatCurrency(totalDeductions);
         
         const netSalary = basicSalary + totalEarnings - totalDeductions;
-        document.getElementById('summaryNet').textContent = '₹' + netSalary.toFixed(2);
+        document.getElementById('summaryNet').textContent = formatCurrency(netSalary);
     }
 
     // Event listeners
     document.getElementById('basicSalary').addEventListener('input', calculateSalary);
     document.querySelectorAll('.component-input').forEach(input => {
         input.addEventListener('input', calculateSalary);
+    });
+
+    // Form validation
+    document.getElementById('salaryForm').addEventListener('submit', function(e) {
+        const basicSalary = parseFloat(document.getElementById('basicSalary').value) || 0;
+        if (basicSalary <= 0) {
+            e.preventDefault();
+            alert('Please enter a valid basic salary amount.');
+            document.getElementById('basicSalary').focus();
+            return false;
+        }
+        
+        // Validate all component inputs
+        let isValid = true;
+        document.querySelectorAll('.component-input').forEach(input => {
+            const value = parseFloat(input.value) || 0;
+            if (value < 0) {
+                isValid = false;
+                input.style.borderColor = 'var(--warning)';
+                input.style.boxShadow = '0 0 0 4px rgba(247, 37, 133, 0.1)';
+            } else {
+                input.style.borderColor = '';
+                input.style.boxShadow = '';
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please enter valid positive amounts for all components.');
+            return false;
+        }
+    });
+
+    // Add input validation styling
+    document.querySelectorAll('.component-input, #basicSalary').forEach(input => {
+        input.addEventListener('blur', function() {
+            const value = parseFloat(this.value) || 0;
+            if (value < 0) {
+                this.style.borderColor = 'var(--warning)';
+                this.style.boxShadow = '0 0 0 4px rgba(247, 37, 133, 0.1)';
+            } else {
+                this.style.borderColor = '';
+                this.style.boxShadow = '';
+            }
+        });
     });
 
     // Initial calculation

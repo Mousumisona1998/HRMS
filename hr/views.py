@@ -23,6 +23,7 @@ from django.http import HttpResponse
 from itertools import chain
 from operator import attrgetter
 from django.utils.timezone import localtime
+import calendar
 # Authentication decorator
 
 def dynamic_menu(request):
@@ -271,7 +272,7 @@ def dashboard(request):
     # ---- NEW: Resignation Data ----
     try:
         if user_role in ['ADMIN', 'HR', 'SUPER ADMIN']:
-            total_resignations = Resignation.objects.count()
+            total_resignations = Resignation.objects.filter(status__in=['applied', 'accepted']).count()
             pending_resignations = Resignation.objects.filter(status='applied').count()
             # Active notice period
             active_notice = Resignation.objects.filter(
@@ -383,16 +384,20 @@ def dashboard(request):
     # ---- NEW: Recent Resignations ----
     try:
         if user_role in ['ADMIN', 'HR', 'SUPER ADMIN']:
-            recent_resignations = Resignation.objects.select_related('employee').order_by('-resignation_date')[:3]
+            recent_resignations = Resignation.objects.select_related('employee').filter(
+                status__in=['applied', 'accepted']
+            ).order_by('-resignation_date')[:3]
         elif user_role == 'BRANCH MANAGER' and current_branch_manager_location:
             recent_resignations = Resignation.objects.select_related('employee').filter(
-                employee__location__iexact=current_branch_manager_location
+                employee__location__iexact=current_branch_manager_location,
+                status__in=['applied', 'accepted']
             ).order_by('-resignation_date')[:3]
         else:
             recent_resignations = []
     except Exception as e:
         print(f"Recent resignations error: {e}")
         recent_resignations = []
+    
 
     # ---- NEW: Location-wise Attendance Data ----
     location_present_counts = []
@@ -486,7 +491,7 @@ def dashboard(request):
         'location_counts': json.dumps(location_counts),
         'department_labels': json.dumps(department_labels),
         'department_counts': json.dumps(department_counts),
-        'today_date': today.strftime("%d %B, %Y"),
+        'today_date': today.strftime("%d %B %Y"),
         'user_name': request.session.get('user_name'),
         'user_role': user_role,
         'total_location': total_location,
@@ -610,10 +615,16 @@ def employee_dashboard(request):
 
     total_team_members = None
     if employee_profile.department:
-        total_team_members = Employee.objects.filter(
+        current_manager = Employee.objects.get(email=user_email)
+        if user_role in ['MANAGER','TL']:
+            total_team_members = Employee.objects.filter(
+                    Q(reporting_manager_id=current_manager.id) |
+                    Q(reporting_manager__icontains=current_manager.first_name)
+                    ).order_by('first_name').count()
+        else:
+            total_team_members = Employee.objects.filter(
             department__iexact=employee_profile.department,
-            status__iexact='active'
-        ).count()
+            status__iexact='active').count()
     current_year = today.year
     total_remaining_leaves = LeaveBalance.objects.filter(
         employee=employee_profile,
@@ -627,6 +638,63 @@ def employee_dashboard(request):
         date__range=(today, next_30_days),
         region__name=employee_profile.location 
     ).count() or 0
+    
+    # === Productivity metrics for charts ===
+    def calculate_hours(attendance_obj):
+        """Return worked hours for a single attendance record."""
+        if not attendance_obj or not attendance_obj.check_in:
+            return 0
+
+        end_time = attendance_obj.check_out or timezone.now()
+        duration = (timezone.localtime(end_time) - timezone.localtime(attendance_obj.check_in)).total_seconds()
+        return round(max(duration, 0) / 3600, 2)
+
+    # Last 7 days (including today)
+    weekly_labels = []
+    weekly_hours = []
+    for i in range(6, -1, -1):
+        day = today - timedelta(days=i)
+        attendance_obj = Attendance.objects.filter(employee=employee_profile, date=day).first()
+        weekly_labels.append(day.strftime('%a'))
+        weekly_hours.append(calculate_hours(attendance_obj))
+
+    worked_days = [h for h in weekly_hours if h > 0]
+    average_work_hours = round(sum(worked_days) / len(worked_days), 2) if worked_days else 0
+    lost_days = weekly_hours.count(0)
+
+    # Last 6 months totals
+    monthly_labels = []
+    monthly_hours = []
+    current_month = today.month
+    current_year = today.year
+
+    for i in range(5, -1, -1):
+        month = current_month - i
+        year = current_year
+        # adjust year/month when subtracting across year boundary
+        while month <= 0:
+            month += 12
+            year -= 1
+
+        start_date = date(year, month, 1)
+        _, last_day = calendar.monthrange(year, month)
+        end_date = date(year, month, last_day)
+
+        monthly_labels.append(start_date.strftime('%b'))
+
+        month_attendance = Attendance.objects.filter(
+            employee=employee_profile,
+            date__range=(start_date, end_date),
+            check_in__isnull=False
+        )
+
+        total_seconds = 0
+        for att in month_attendance:
+            if not att.check_out:
+                continue
+            total_seconds += (timezone.localtime(att.check_out) - timezone.localtime(att.check_in)).total_seconds()
+
+        monthly_hours.append(round(max(total_seconds, 0) / 3600, 1))
 
     # ✅ Get only recent warnings & appreciations (last 7 days)
     seven_days_ago = today - timedelta(days=7)
@@ -650,6 +718,12 @@ def employee_dashboard(request):
         'total_remaining_leaves': total_remaining_leaves,
         'today_attendance': today_attendance,
         'punctuality_status': punctuality_status,
+        'weekly_labels': weekly_labels,
+        'weekly_hours': weekly_hours,
+        'average_work_hours': average_work_hours,
+        'lost_days': lost_days,
+        'monthly_labels': monthly_labels,
+        'monthly_hours': monthly_hours,
         'recent_messages': recent_messages,
         'recent_messages_count': recent_messages.count(),
 
@@ -662,18 +736,23 @@ def employee_dashboard(request):
 @login_required
 def total_team_members(request):
     user_email = request.session.get('user_email')
-
+    user_role = request.session.get('user_role')
+    current_manager = Employee.objects.get(email=user_email)
+   
     try:
         employee = Employee.objects.get(email=user_email)
     except Employee.DoesNotExist:
         messages.error(request, "Employee not found.")
         return redirect('access_denied')
-
-    # ✅ Fetch all employees in the same department
-    team_members = Employee.objects.filter(
-        department__iexact=employee.department
-    ).exclude(id=employee.id)  # exclude self
-
+    if user_role in ['MANAGER','TL']:
+        
+        # ✅ Fetch all employees in the same department
+        team_members = Employee.objects.filter(
+                    Q(reporting_manager_id=current_manager.id) |
+                    Q(reporting_manager__icontains=current_manager.first_name)
+                    ).order_by('first_name').exclude(id=employee.id)  # exclude self
+    else:
+        team_members = Employee.objects.filter(department__iexact=employee.department).exclude(id=employee.id)  # exclude self
     context = {
         'employee': employee,
         'team_members': team_members,
@@ -2441,7 +2520,19 @@ def warning_list(request):
 
     warnings = EmployeeWarning.objects.all().order_by('-created_at')
     message_categories = MessageCategory.objects.filter(is_active=True)
+    
+    warning_count = warnings.filter(message_category="Warning").count()
 
+    appreciation_count = warnings.filter(
+        message_category__in=["Appreciation", "Appreciations"]
+    ).count()
+
+    notice_count = warnings.exclude(
+        message_category__in=["Warning", "Appreciation", "Appreciations"]
+    ).count()
+
+    total_count = warnings.count()
+    
     if request.method == "POST":
         form = EmployeeWarningForm(request.POST)
         if form.is_valid():
@@ -2473,6 +2564,10 @@ def warning_list(request):
         "warnings": warnings,
         "form": form,
         "message_categories": message_categories,
+        "warning_count": warning_count,
+        "appreciation_count": appreciation_count,
+        "notice_count": notice_count,
+        "total_count": total_count,
     })
 
 def add_warning(request):

@@ -1,122 +1,1075 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}My Resignation History - HR System{% endblock %}
+{% block title %}My Resignation History • HR System{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="page-header">
-        <div class="row align-items-center">
-            <div class="col">
-                <h1 class="h2 mb-0"> My Resignation History</h1>
-                <p class="text-muted mb-0">View your previous resignation requests</p>
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-light: #4895ef;
+        --secondary: #7209b7;
+        --accent: #4cc9f0;
+        --warning: #f72585;
+        --success: #10b981;
+        --dark: #1a1a2e;
+        --light: #f8f9fa;
+        --gray-100: #f8f9fa;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-400: #ced4da;
+        --gray-500: #adb5bd;
+        --gray-600: #6c757d;
+        --gray-700: #495057;
+        --gray-800: #343a40;
+        --gray-900: #212529;
+        --white: #ffffff;
+        --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+        --hover-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    }
+
+    .resignation-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+
+    /* Header */
+    .resignation-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+    }
+
+    .resignation-header h1 {
+        font-size: 30px;
+        font-weight: 700;
+        color: var(--dark);
+        letter-spacing: -0.5px;
+    }
+
+    .header-subtitle {
+        font-size: 16px;
+        color: var(--gray-600);
+        margin-top: 8px;
+        font-weight: 400;
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .btn-action {
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        border: none;
+        text-decoration: none;
+    }
+
+    .btn-secondary {
+        background: var(--white);
+        color: var(--gray-700);
+        border: 1px solid var(--gray-300);
+    }
+
+    .btn-secondary:hover {
+        background: var(--gray-100);
+        transform: translateY(-1px);
+        box-shadow: var(--hover-shadow);
+        border-color: var(--gray-400);
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+        border: 1px solid var(--primary);
+    }
+
+    .btn-primary:hover {
+        background: #3a56d4;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+    }
+
+    /* Stats Grid */
+    .stats-summary {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin-bottom: 32px;
+    }
+
+    @media (max-width: 1200px) {
+        .stats-summary {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 640px) {
+        .stats-summary {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .stat-card {
+        background: var(--white);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--hover-shadow);
+        border-color: var(--primary-light);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(to bottom, var(--primary), var(--secondary));
+    }
+
+    .stat-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .stat-info h3 {
+        font-size: 30px;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 4px;
+        line-height: 1;
+    }
+
+    .stat-info p {
+        font-size: 14px;
+        color: var(--gray-600);
+        font-weight: 500;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(67, 97, 238, 0.1);
+        color: var(--primary);
+        font-size: 22px;
+    }
+
+    /* Main Content */
+    .resignation-content {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+
+    @media (max-width: 1200px) {
+        .resignation-content {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* History Card */
+    .history-card {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        margin-bottom: 24px;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .card-header h2 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+
+    /* Resignation Table */
+    .resignation-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .resignation-table thead {
+        background: var(--gray-100);
+    }
+
+    .resignation-table th {
+        padding: 16px;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--gray-700);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--gray-200);
+    }
+
+    .resignation-table tbody tr {
+        transition: all 0.2s ease;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .resignation-table tbody tr:hover {
+        background: var(--gray-100);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .resignation-table td {
+        padding: 20px 16px;
+        font-size: 14px;
+        color: var(--gray-800);
+        vertical-align: middle;
+    }
+
+    .resignation-table .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-accepted {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .status-pending {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .status-rejected {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .status-withdrawn {
+        background: rgba(107, 114, 128, 0.1);
+        color: #6b7280;
+        border: 1px solid rgba(107, 114, 128, 0.2);
+    }
+
+    .resignation-table .date-cell {
+        font-weight: 600;
+        color: var(--dark);
+    }
+
+    .resignation-table .action-btn {
+        padding: 8px 16px;
+        background: var(--white);
+        border: 1px solid var(--gray-300);
+        border-radius: 8px;
+        color: var(--primary);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+    }
+
+    .resignation-table .action-btn:hover {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(67, 97, 238, 0.2);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 40px;
+        background: var(--gray-100);
+        border-radius: 12px;
+        border: 2px dashed var(--gray-300);
+        margin: 20px 0;
+    }
+
+    .empty-state-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--white);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        color: var(--gray-400);
+        font-size: 36px;
+        border: 2px solid var(--gray-200);
+    }
+
+    .empty-state h3 {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 12px;
+    }
+
+    .empty-state p {
+        color: var(--gray-600);
+        margin-bottom: 24px;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+        line-height: 1.6;
+    }
+
+    /* Policy Card */
+    .policy-card {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        margin-bottom: 24px;
+    }
+
+    .policy-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .policy-header h2 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+
+    .policy-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(67, 97, 238, 0.1);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+
+    .policy-section {
+        margin-bottom: 24px;
+        padding-bottom: 24px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .policy-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .policy-section h3 {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .policy-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .policy-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 14px;
+        padding: 12px;
+        background: var(--gray-100);
+        border-radius: 8px;
+        border: 1px solid var(--gray-200);
+        transition: all 0.2s ease;
+    }
+
+    .policy-list li:hover {
+        background: var(--white);
+        border-color: var(--primary-light);
+        transform: translateX(4px);
+    }
+
+    .policy-list li i {
+        color: var(--success);
+        font-size: 14px;
+        margin-top: 2px;
+    }
+
+    .policy-list .text-danger i {
+        color: #ef4444;
+    }
+
+    .policy-list .text-warning i {
+        color: #f59e0b;
+    }
+
+    .policy-list .text-info i {
+        color: var(--primary);
+    }
+
+    .policy-list li span {
+        flex: 1;
+        font-size: 14px;
+        color: var(--gray-700);
+        line-height: 1.5;
+    }
+
+    .policy-list li strong {
+        color: var(--dark);
+        font-weight: 600;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .resignation-container {
+            padding: 16px;
+        }
+        
+        .resignation-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+        
+        .header-actions {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        .btn-action {
+            padding: 10px 16px;
+            font-size: 14px;
+        }
+        
+        .resignation-table {
+            display: block;
+            overflow-x: auto;
+        }
+        
+        .resignation-table th,
+        .resignation-table td {
+            padding: 12px 8px;
+            font-size: 13px;
+        }
+    }
+
+    /* Timeline View for Mobile */
+    @media (max-width: 640px) {
+        .table-view {
+            display: none;
+        }
+        
+        .timeline-view {
+            display: block;
+        }
+        
+        .resignation-item {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--gray-200);
+        }
+        
+        .resignation-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+        
+        .resignation-dates {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .date-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--gray-100);
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--gray-700);
+            border: 1px solid var(--gray-200);
+        }
+    }
+
+    @media (min-width: 641px) {
+        .timeline-view {
+            display: none;
+        }
+    }
+
+    /* Feedback Modal */
+    .feedback-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .feedback-modal.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 32px;
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .modal-header h3 {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+
+    .close-modal {
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: var(--gray-500);
+        cursor: pointer;
+        transition: color 0.2s ease;
+    }
+
+    .close-modal:hover {
+        color: var(--dark);
+    }
+
+    .modal-body {
+        color: var(--gray-700);
+        line-height: 1.6;
+        padding: 16px 0;
+        border-top: 1px solid var(--gray-200);
+        border-bottom: 1px solid var(--gray-200);
+        margin-bottom: 24px;
+    }
+
+    .modal-footer {
+        text-align: right;
+    }
+
+    .btn-close {
+        padding: 10px 24px;
+        background: var(--gray-100);
+        border: 1px solid var(--gray-300);
+        border-radius: 8px;
+        color: var(--gray-700);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-close:hover {
+        background: var(--gray-200);
+    }
+</style>
+
+<div class="resignation-container">
+    <!-- Header -->
+    <div class="resignation-header">
+        <div>
+            <h1>My Resignation History</h1>
+            <p class="header-subtitle">View and manage your previous resignation requests</p>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'resignation:dashboard' %}" class="btn-action btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Back to Dashboard
+            </a>
+            <!-- <a href="{% url 'resignation:submit_resignation' %}" class="btn-action btn-primary">
+                <i class="fas fa-paper-plane"></i>
+                New Resignation
+            </a> -->
+        </div>
+    </div>
+
+    <!-- Stats Summary -->
+    <div class="stats-summary">
+        <div class="stat-card">
+            <div class="stat-content">
+                <div class="stat-info">
+                    <h3>{{ resignations|length }}</h3>
+                    <p>Total Submissions</p>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
             </div>
-            <div class="col-auto">
-                <a href="{% url 'resignation:dashboard' %}" class="btn btn-outline-secondary me-2">
-                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-                </a>
-                <!-- <a href="{% url 'resignation:submit_resignation' %}" class="btn btn-primary">
-                    <i class="fas fa-paper-plane me-2"></i>New Resignation
-                </a> -->
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-content">
+                <div class="stat-info">
+                    <h3>{{ active_count|default:"0" }}</h3>
+                    <p>Active Requests</p>
+                </div>
+                <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-content">
+                <div class="stat-info">
+                    <h3>{{ withdrawn_count|default:"0" }}</h3>
+                    <p>Withdrawn</p>
+                </div>
+                <div class="stat-icon" style="background: rgba(107, 114, 128, 0.1); color: #6b7280;">
+                    <i class="fas fa-undo"></i>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="custom-card">
-        <div class="card-header">
-            <h5 class="card-title mb-0">Resignation History</h5>
-        </div>
-        <div class="card-body">
-            {% if resignations %}
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Resignation Date</th>
-                            <th>Last Working Date</th>
-                            <th>Notice Period</th>
-                            <th>Status</th>
-                            <th>Withdrawn</th>
-                            <th>Feedback</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for resignation in resignations %}
-                        <tr>
-                            <td>{{ resignation.resignation_date }}</td>
-                            <td>{{ resignation.last_working_date }}</td>
-                            <td>
-                                <span class="badge bg-info">{{ resignation.actual_notice_days }} days</span>
-                            </td>
-                            <td>
-                                <span class="badge bg-{% if resignation.status == 'accepted' %}success{% elif resignation.status == 'rejected' %}danger{% elif resignation.status == 'withdrawn' %}secondary{% else %}warning{% endif %}">
+    <!-- Main Content -->
+    <div class="resignation-content">
+        <!-- Left Column: History Table -->
+        <div>
+            <div class="history-card">
+                <div class="card-header">
+                    <h2>Resignation History</h2>
+                    <div style="font-size: 14px; color: var(--gray-600);">
+                        Showing {{ resignations|length }} request{{ resignations|length|pluralize }}
+                    </div>
+                </div>
+
+                {% if resignations %}
+                <!-- Desktop Table View -->
+                <div class="table-view">
+                    <table class="resignation-table">
+                        <thead>
+                            <tr>
+                                <th>Resignation Date</th>
+                                <th>Last Working Day</th>
+                                <th>Notice Period</th>
+                                <th>Status</th>
+                                <th>Withdrawn</th>
+                                <th>Feedback</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for resignation in resignations %}
+                            <tr>
+                                <td class="date-cell">{{ resignation.resignation_date|date:"M d, Y" }}</td>
+                                <td class="date-cell">{{ resignation.last_working_date|date:"M d, Y" }}</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="font-weight: 600; color: var(--dark);">{{ resignation.actual_notice_days }} days</span>
+                                        <small style="color: var(--gray-500);">{{ resignation.actual_notice_days|add:"-14" }} days left</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-{{ resignation.status }}">
+                                        {{ resignation.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if resignation.withdrawal_requested %}
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <i class="fas fa-check-circle" style="color: #10b981;"></i>
+                                        <span style="color: var(--gray-700);">Yes</span>
+                                    </div>
+                                    {% else %}
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <i class="fas fa-times-circle" style="color: var(--gray-400);"></i>
+                                        <span style="color: var(--gray-500);">No</span>
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if resignation.feedback %}
+                                    <button class="view-feedback" data-feedback="{{ resignation.feedback }}" 
+                                            style="background: none; border: none; color: var(--primary); cursor: pointer; font-size: 13px; font-weight: 500;">
+                                        View Feedback
+                                    </button>
+                                    {% else %}
+                                    <span style="color: var(--gray-400); font-style: italic;">No feedback</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+    {% if resignation.status == 'withdrawn' %}
+        <a href="{% url 'resignation:resignation_detail' resignation.id %}" 
+           class="action-btn">
+            <i class="fas fa-eye"></i>
+            View Details
+        </a>
+    {% else %}
+        <a href="{% url 'resignation:my_resignation' %}?resignation_id={{ resignation.id }}" 
+           class="action-btn">
+            <i class="fas fa-eye"></i>
+            View Details
+        </a>
+    {% endif %}
+</td>
+
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile Timeline View -->
+                <div class="timeline-view">
+                    {% for resignation in resignations %}
+                    <div class="resignation-item">
+                        <div class="resignation-header-row">
+                            <div>
+                                <h3 style="font-size: 16px; font-weight: 600; color: var(--dark); margin-bottom: 4px;">
+                                    {{ resignation.resignation_date|date:"M d, Y" }}
+                                </h3>
+                                <span class="status-badge status-{{ resignation.status }}">
                                     {{ resignation.get_status_display }}
                                 </span>
-                            </td>
-                            <td>
+                            </div>
+                            <a href="{% url 'resignation:resignation_detail' resignation.id %}" 
+                               class="action-btn" style="padding: 6px 12px;">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </div>
+                        
+                        <div class="resignation-dates">
+                            <div class="date-badge">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Last day: {{ resignation.last_working_date|date:"M d" }}
+                            </div>
+                            <div class="date-badge">
+                                <i class="fas fa-calendar-alt"></i>
+                                {{ resignation.actual_notice_days }} days notice
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--gray-200);">
+                            <div>
                                 {% if resignation.withdrawal_requested %}
-                                <span class="badge bg-info">Yes</span>
-                                {% else %}
-                                <span class="badge bg-secondary">No</span>
+                                <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #10b981;">
+                                    <i class="fas fa-check-circle"></i>
+                                    Withdrawn
+                                </span>
                                 {% endif %}
-                            </td>
-                            <td>
-                                {% if resignation.feedback %}
-                                <small class="text-muted">{{ resignation.feedback|truncatewords:5 }}</small>
-                                {% else %}
-                                <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <a href="{% url 'resignation:resignation_detail' resignation.id %}" 
-                                   class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                            </div>
+                            {% if resignation.feedback %}
+                            <button class="view-feedback" data-feedback="{{ resignation.feedback }}"
+                                    style="background: none; border: none; color: var(--primary); font-size: 13px; cursor: pointer;">
+                                View Feedback
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-inbox"></i>
+                    </div>
+                    <h3>No Resignation History</h3>
+                    <p>You haven't submitted any resignation requests yet. Submit your first resignation to begin the process.</p>
+                    <!-- <a href="{% url 'resignation:submit_resignation' %}" class="btn-action btn-primary" style="display: inline-flex;">
+                        <i class="fas fa-paper-plane"></i>
+                        Submit First Resignation
+                    </a> -->
+                </div>
+                {% endif %}
             </div>
-            {% else %}
-            <div class="text-center py-5">
-                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">No resignation history found</h5>
-                <p class="text-muted">You haven't submitted any resignation requests yet.</p>
-                <a href="{% url 'resignation:submit_resignation' %}" class="btn btn-primary">
-                    <i class="fas fa-paper-plane me-2"></i>Submit First Resignation
-                </a>
-            </div>
-            {% endif %}
         </div>
-    </div>
 
-    <!-- Resignation Policy Reminder -->
-    <div class="custom-card mt-4">
-        <div class="card-header">
-            <h6 class="card-title mb-0"> Resignation Policy Reminder</h6>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <h6>Submission Rules</h6>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Only one active resignation allowed</li>
-                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> 30-day cooldown after withdrawal</li>
-                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Manager approval required</li>
+        <!-- Right Column: Policy & Info -->
+        <div>
+            <div class="policy-card">
+                <div class="policy-header">
+                    <div class="policy-icon">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <h2>Resignation Policy</h2>
+                </div>
+
+                <div class="policy-section">
+                    <h3><i class="fas fa-exclamation-circle" style="color: var(--warning);"></i> Important Rules</h3>
+                    <ul class="policy-list">
+                        <li>
+                            <i class="fas fa-check-circle"></i>
+                            <span><strong>Only one active resignation</strong> request is allowed at a time</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-clock text-warning"></i>
+                            <span><strong>30-day cooldown period</strong> applies after withdrawal</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-user-check text-info"></i>
+                            <span><strong>Manager approval</strong> is required for all resignations</span>
+                        </li>
                     </ul>
                 </div>
-                <div class="col-md-6">
-                    <h6>Current Status</h6>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><i class="fas fa-info-circle text-primary me-2"></i> Total submissions: {{ resignations|length }}</li>
-                        <li class="mb-2"><i class="fas fa-clock text-warning me-2"></i> Active resignations: {{ resignations|length }}</li>
-                        <li class="mb-2"><i class="fas fa-undo text-info me-2"></i> Withdrawn: {{ resignations|length }}</li>
+
+                <div class="policy-section">
+                    <h3><i class="fas fa-chart-bar" style="color: var(--primary);"></i> Your Statistics</h3>
+                    <ul class="policy-list">
+                        <li>
+                            <i class="fas fa-file-alt text-info"></i>
+                            <span><strong>Total submissions:</strong> {{ resignations|length }} request{{ resignations|length|pluralize }}</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-clock text-warning"></i>
+                            <span><strong>Active resignations:</strong> {{ active_count|default:"0" }} pending</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-undo text-info"></i>
+                            <span><strong>Withdrawn requests:</strong> {{ withdrawn_count|default:"0" }} time{{ withdrawn_count|default:0|pluralize }}</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-check-circle text-success"></i>
+                            <span><strong>Success rate:</strong> {{ completed_count|default:"0" }}/{{ resignations|length }} completed</span>
+                        </li>
                     </ul>
+                </div>
+
+                <div class="policy-section">
+                    <h3><i class="fas fa-lightbulb" style="color: #f59e0b;"></i> Quick Tips</h3>
+                    <ul class="policy-list">
+                        <li>
+                            <i class="fas fa-info-circle text-info"></i>
+                            <span>Submit resignation at least <strong>30 days</strong> before your intended last day</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-handshake text-success"></i>
+                            <span>Schedule an <strong>exit interview</strong> with HR after approval</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-folder-open text-warning"></i>
+                            <span>Complete all <strong>handover documentation</strong> before leaving</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Help Card -->
+            <div class="policy-card" style="background: linear-gradient(135deg, rgba(67, 97, 238, 0.05), rgba(114, 9, 183, 0.05)); border-color: rgba(67, 97, 238, 0.2);">
+                <div class="policy-header">
+                    <div class="policy-icon" style="background: rgba(67, 97, 238, 0.15);">
+                        <i class="fas fa-question-circle"></i>
+                    </div>
+                    <h2>Need Help?</h2>
+                </div>
+                <div style="color: var(--gray-700); line-height: 1.6;">
+                    <p style="margin-bottom: 16px;">If you have questions about the resignation process or need assistance:</p>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255, 255, 255, 0.5); border-radius: 8px;">
+                            <i class="fas fa-envelope" style="color: var(--primary);"></i>
+                            <span>Email: <strong>hr.team@ikontel.com</strong></span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255, 255, 255, 0.5); border-radius: 8px;">
+                            <i class="fas fa-phone" style="color: var(--success);"></i>
+                            <span>Phone: <strong>+91 8867858986</strong></span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
+
+<!-- Feedback Modal -->
+<div class="feedback-modal" id="feedbackModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Feedback Details</h3>
+            <button class="close-modal" id="closeModal">&times;</button>
+        </div>
+        <div class="modal-body" id="modalFeedbackContent">
+            <!-- Feedback content will be inserted here -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn-close" id="closeModalBtn">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Feedback Modal
+        const feedbackModal = document.getElementById('feedbackModal');
+        const modalContent = document.getElementById('modalFeedbackContent');
+        const closeModal = document.getElementById('closeModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        
+        // Open modal when clicking view feedback buttons
+        document.querySelectorAll('.view-feedback').forEach(button => {
+            button.addEventListener('click', function() {
+                const feedback = this.getAttribute('data-feedback');
+                modalContent.innerHTML = `
+                    <div style="font-size: 15px; line-height: 1.6; color: var(--gray-800);">
+                        ${feedback.replace(/\n/g, '<br>')}
+                    </div>
+                `;
+                feedbackModal.classList.add('active');
+            });
+        });
+        
+        // Close modal
+        closeModal.addEventListener('click', () => {
+            feedbackModal.classList.remove('active');
+        });
+        
+        closeModalBtn.addEventListener('click', () => {
+            feedbackModal.classList.remove('active');
+        });
+        
+        // Close modal when clicking outside
+        feedbackModal.addEventListener('click', (e) => {
+            if (e.target === feedbackModal) {
+                feedbackModal.classList.remove('active');
+            }
+        });
+        
+        // Status count calculations (you might want to pass these from backend)
+        // For now, we'll calculate client-side
+        const calculateStatusCounts = () => {
+            const statusCounts = {
+                pending: 0,
+                withdrawn: 0,
+                accepted: 0,
+                rejected: 0
+            };
+            
+            document.querySelectorAll('.status-badge').forEach(badge => {
+                const status = badge.className.match(/status-(\w+)/)[1];
+                if (statusCounts[status] !== undefined) {
+                    statusCounts[status]++;
+                }
+            });
+            
+            // Update the stats if needed
+            console.log('Status counts:', statusCounts);
+        };
+        
+        calculateStatusCounts();
+        
+        // Add hover effects to table rows
+        const tableRows = document.querySelectorAll('.resignation-table tbody tr');
+        tableRows.forEach(row => {
+            row.addEventListener('mouseenter', () => {
+                row.style.transition = 'all 0.2s ease';
+            });
+        });
+        
+        // Add animation to stat cards on load
+        const statCards = document.querySelectorAll('.stat-card');
+        statCards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                card.style.transition = 'all 0.4s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+        
+        // Responsive table toggle
+        function checkViewport() {
+            const isMobile = window.innerWidth <= 640;
+            const tableView = document.querySelector('.table-view');
+            const timelineView = document.querySelector('.timeline-view');
+            
+            if (isMobile) {
+                tableView.style.display = 'none';
+                timelineView.style.display = 'block';
+            } else {
+                tableView.style.display = 'block';
+                timelineView.style.display = 'none';
+            }
+        }
+        
+        // Check on load and resize
+        checkViewport();
+        window.addEventListener('resize', checkViewport);
+    });
+</script>
+{% endblock %}a

@@ -253,11 +253,11 @@
                         <div class="resignation-details">
                             <div class="date-group">
                                 <div class="label">Resignation Date</div>
-                                <div class="value">{{ resignation.resignation_date }}</div>
+                                <div class="value">{{ resignation.resignation_date|date:"d M, Y" }}</div>
                             </div>
                             <div class="date-group">
                                 <div class="label">Last Working Day</div>
-                                <div class="value">{{ resignation.last_working_date }}</div>
+                                <div class="value">{{ resignation.last_working_date|date:"d M, Y" }}</div>
                             </div>
                             <div class="status">
                                 <span class="status-badge status-{{ resignation.status }}">

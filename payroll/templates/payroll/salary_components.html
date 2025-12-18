@@ -4,17 +4,29 @@
 {% block title %}Salary Components - HRMS{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="page-container">
+
     <!-- Page Header -->
-    <div class="page-header">
+    <div class="page-header mb-4">
         <div class="row align-items-center">
             <div class="col">
-                <h1 class="h3 mb-0">Salary Components</h1>
-                <p class="text-muted mb-0">Manage salary components and allowances</p>
+                <div class="d-flex align-items-center">
+                    <div class="icon-box icon-box-lg bg-primary bg-opacity-10 text-primary rounded-3 me-3">
+                        <i class="fas fa-money-bill-wave fa-2x"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 mb-1">Salary Components</h1>
+                        <p class="text-muted mb-0">
+                            Manage salary components, allowances and deductions
+                        </p>
+                    </div>
+                </div>
             </div>
             <div class="col-auto">
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addComponentModal">
-                    <i class="fas fa-plus me-2"></i>Add Component
+                <button class="btn btn-primary px-4"
+                        data-bs-toggle="modal"
+                        data-bs-target="#addComponentModal">
+                    <i class="fas fa-plus-circle me-2"></i>Add Component
                 </button>
             </div>
         </div>
@@ -24,63 +36,72 @@
     <div class="row">
         {% for component in components %}
         <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
-            <div class="custom-card h-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">{{ component.name }}</h5>
-                    <span class="badge {% if component.component_type == 'earning' %}bg-success{% else %}bg-danger{% endif %}">
+            <div class="card border-0 shadow-sm h-100 premium-card hover-shadow-lg">
+
+                <!-- Card Header -->
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <span class="badge {% if component.component_type == 'earning' %}
+                        bg-success bg-opacity-10 text-success
+                        {% else %}
+                        bg-danger bg-opacity-10 text-danger
+                        {% endif %} mb-2">
+                        <i class="fas fa-{% if component.component_type == 'earning' %}plus{% else %}minus{% endif %}-circle me-1"></i>
                         {{ component.get_component_type_display }}
                     </span>
+
+                    <h5 class="fw-bold mb-1">{{ component.name }}</h5>
+                    <p class="text-muted small mb-0">
+                        <i class="fas fa-calculator me-1"></i>
+                        {{ component.get_calculation_type_display }}
+                    </p>
                 </div>
-                
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-6">
-                            <small class="text-muted">Calculation Type</small>
-                            <div class="fw-bold">{{ component.get_calculation_type_display }}</div>
-                        </div>
-                        <div class="col-6">
-                            <small class="text-muted">Value</small>
-                            <div class="fw-bold">
+
+                <!-- Card Body -->
+                <div class="card-body pt-0">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="value-display">
+                            <span class="value-amount">
                                 {% if component.calculation_type == 'percentage' %}
                                     {{ component.value }}%
                                 {% else %}
                                     ₹{{ component.value }}
                                 {% endif %}
-                            </div>
+                            </span>
+                        </div>
+
+                        <div>
+                            <span class="badge-dot {% if component.is_active %}bg-success{% else %}bg-secondary{% endif %}"></span>
+                            <small class="ms-1 text-muted">
+                                {% if component.is_active %}Active{% else %}Inactive{% endif %}
+                            </small>
                         </div>
                     </div>
-                    
+
+                    <div class="detail-item">
+                        <span class="detail-label">Taxable</span>
+                        <span class="detail-value {% if component.is_taxable %}text-success{% else %}text-danger{% endif %}">
+                            {% if component.is_taxable %}Yes{% else %}No{% endif %}
+                        </span>
+                    </div>
+
                     {% if component.formula %}
-                    <div class="mb-3">
-                        <small class="text-muted">Formula</small>
-                        <div class="fw-bold text-truncate">{{ component.formula }}</div>
+                    <div class="detail-item">
+                        <span class="detail-label">Formula</span>
+                        <span class="detail-value font-monospace small">
+                            {{ component.formula }}
+                        </span>
                     </div>
                     {% endif %}
-                    
-                    <div class="row">
-                        <div class="col-6">
-                            <small class="text-muted">Taxable</small>
-                            <div class="fw-bold">
-                                {% if component.is_taxable %}
-                                <span class="text-success">Yes</span>
-                                {% else %}
-                                <span class="text-danger">No</span>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <small class="text-muted">Status</small>
-                            <div class="fw-bold">
-                                {% if component.is_active %}
-                                <span class="text-success">Active</span>
-                                {% else %}
-                                <span class="text-danger">Inactive</span>
-                                {% endif %}
-                            </div>
-                        </div>
+
+                    <div class="detail-item">
+                        <span class="detail-label">Created</span>
+                        <span class="detail-value">
+                            {{ component.created_at|date:"M d, Y" }}
+                        </span>
                     </div>
                 </div>
-                
+
+                <!-- Action Bar -->
                 <div class="card-footer bg-transparent">
                     <div class="btn-group w-100">
                         <button class="btn btn-outline-primary btn-sm" 
@@ -102,135 +123,183 @@
                         </form>
                     </div>
                 </div>
+
             </div>
         </div>
 
-        <!-- Edit Component Modal -->
+        <!-- ================= EDIT MODAL ================= -->
         <div class="modal fade" id="editComponentModal{{ component.id }}" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Edit Salary Component</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header bg-gradient-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-edit me-2"></i>Edit Salary Component
+                        </h5>
+                        <button type="button"
+                                class="btn-close btn-close-white"
+                                data-bs-dismiss="modal"></button>
                     </div>
-                    <form method="post" action="{% url 'edit_salary_component' component.id %}">
+
+                    <form method="post"
+                          action="{% url 'edit_salary_component' component.id %}">
                         {% csrf_token %}
                         <div class="modal-body">
+
                             <div class="mb-3">
-                                <label class="form-label">Component Name</label>
-                                <input type="text" class="form-control" name="name" value="{{ component.name }}" required>
+                                <label class="form-label fw-bold">Component Name</label>
+                                <input type="text"
+                                       class="form-control"
+                                       name="name"
+                                       value="{{ component.name }}"
+                                       required>
                             </div>
-                            <div class="row">
+
+                            <div class="row g-3 mb-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">Component Type</label>
-                                    <select class="form-select" name="component_type" required>
+                                    <label class="form-label fw-bold">Component Type</label>
+                                    <select class="form-select"
+                                            name="component_type">
                                         <option value="earning" {% if component.component_type == 'earning' %}selected{% endif %}>Earning</option>
                                         <option value="deduction" {% if component.component_type == 'deduction' %}selected{% endif %}>Deduction</option>
                                     </select>
                                 </div>
+
                                 <div class="col-md-6">
-                                    <label class="form-label">Calculation Type</label>
-                                    <select class="form-select" name="calculation_type" id="calcType{{ component.id }}" required>
-                                        <option value="fixed" {% if component.calculation_type == 'fixed' %}selected{% endif %}>Fixed Amount</option>
+                                    <label class="form-label fw-bold">Calculation Type</label>
+                                    <select class="form-select"
+                                            id="calcType{{ component.id }}"
+                                            name="calculation_type">
+                                        <option value="fixed" {% if component.calculation_type == 'fixed' %}selected{% endif %}>Fixed</option>
                                         <option value="percentage" {% if component.calculation_type == 'percentage' %}selected{% endif %}>Percentage</option>
-                                        <option value="formula" {% if component.calculation_type == 'formula' %}selected{% endif %}>Formula Based</option>
+                                        <option value="formula" {% if component.calculation_type == 'formula' %}selected{% endif %}>Formula</option>
                                     </select>
                                 </div>
                             </div>
+
                             <div class="mb-3">
-                                <label class="form-label">Value</label>
-                                <input type="number" class="form-control" name="value" value="{{ component.value }}" step="0.01" required>
+                                <label class="form-label fw-bold">Value</label>
+                                <input type="number"
+                                       step="0.01"
+                                       class="form-control"
+                                       name="value"
+                                       value="{{ component.value }}">
                             </div>
-                            <div class="mb-3" id="formulaField{{ component.id }}" style="display: {% if component.calculation_type == 'formula' %}block{% else %}none{% endif %};">
-                                <label class="form-label">Formula</label>
-                                <input type="text" class="form-control" name="formula" value="{{ component.formula|default:'' }}" placeholder="e.g., basic_salary * 0.4">
+
+                            <div class="mb-3"
+                                 id="formulaField{{ component.id }}"
+                                 style="display:{% if component.calculation_type == 'formula' %}block{% else %}none{% endif %};">
+                                <label class="form-label fw-bold">Formula</label>
+                                <input type="text"
+                                       class="form-control font-monospace"
+                                       name="formula"
+                                       value="{{ component.formula|default:'' }}">
                             </div>
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="is_taxable" id="taxable{{ component.id }}" {% if component.is_taxable %}checked{% endif %}>
-                                    <label class="form-check-label" for="taxable{{ component.id }}">
-                                        Is Taxable
-                                    </label>
-                                </div>
+
+                            <div class="form-check form-switch">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       name="is_taxable"
+                                       {% if component.is_taxable %}checked{% endif %}>
+                                <label class="form-check-label fw-bold">Is Taxable</label>
                             </div>
+
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Update Component</button>
+                        <div class="modal-footer border-0">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Update
+                            </button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
+
         {% empty %}
+        <!-- ================= EMPTY STATE ================= -->
         <div class="col-12">
-            <div class="custom-card text-center py-5">
-                <i class="fas fa-money-bill-wave fa-3x text-muted mb-3"></i>
-                <h4 class="text-muted">No Salary Components</h4>
-                <p class="text-muted">Get started by creating your first salary component.</p>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addComponentModal">
-                    <i class="fas fa-plus me-2"></i>Add First Component
-                </button>
+            <div class="card border-0 shadow-lg text-center py-5 empty-premium">
+                <div class="card-body">
+                    <h2 class="fw-bold mb-3">No Salary Components</h2>
+                    <p class="text-muted mb-4">
+                        Start by adding earnings or deductions to build salary structures.
+                    </p>
+                    <button class="btn btn-lg btn-primary px-5"
+                            data-bs-toggle="modal"
+                            data-bs-target="#addComponentModal">
+                        <i class="fas fa-plus-circle me-2"></i>Add First Component
+                    </button>
+                </div>
             </div>
         </div>
         {% endfor %}
     </div>
 </div>
 
-<!-- Add Component Modal -->
+<!-- ================= ADD MODAL ================= -->
 <div class="modal fade" id="addComponentModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Add Salary Component</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-gradient-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Add Salary Component
+                </h5>
+                <button type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"></button>
             </div>
+
             <form method="post" action="{% url 'add_salary_component' %}">
                 {% csrf_token %}
                 <div class="modal-body">
+
                     <div class="mb-3">
-                        <label class="form-label">Component Name</label>
-                        <input type="text" class="form-control" name="name" placeholder="e.g., House Rent Allowance" required>
+                        <label class="form-label fw-bold">Component Name</label>
+                        <input type="text"
+                               class="form-control"
+                               name="name"
+                               required>
                     </div>
-                    <div class="row">
+
+                    <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label">Component Type</label>
+                            <label class="form-label fw-bold">Component Type</label>
                             <select class="form-select" name="component_type" required>
-                                <option value="">Select Type</option>
+                                <option value="">Select</option>
                                 <option value="earning">Earning</option>
                                 <option value="deduction">Deduction</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Calculation Type</label>
-                            <select class="form-select" name="calculation_type" id="calcType" required>
-                                <option value="">Select Type</option>
-                                <option value="fixed">Fixed Amount</option>
+                            <label class="form-label fw-bold">Calculation Type</label>
+                            <select class="form-select" id="calcType" name="calculation_type" required>
+                                <option value="">Select</option>
+                                <option value="fixed">Fixed</option>
                                 <option value="percentage">Percentage</option>
-                                <option value="formula">Formula Based</option>
+                                <option value="formula">Formula</option>
                             </select>
                         </div>
                     </div>
+
                     <div class="mb-3">
-                        <label class="form-label">Value</label>
-                        <input type="number" class="form-control" name="value" value="0" step="0.01" required>
+                        <label class="form-label fw-bold">Value</label>
+                        <input type="number" step="0.01" class="form-control" name="value" value="0">
                     </div>
-                    <div class="mb-3" id="formulaField" style="display: none;">
-                        <label class="form-label">Formula</label>
-                        <input type="text" class="form-control" name="formula" placeholder="e.g., basic_salary * 0.4">
+
+                    <div class="mb-3" id="formulaField" style="display:none;">
+                        <label class="form-label fw-bold">Formula</label>
+                        <input type="text" class="form-control font-monospace" name="formula">
                     </div>
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="is_taxable" id="taxable" checked>
-                            <label class="form-check-label" for="taxable">
-                                Is Taxable
-                            </label>
-                        </div>
+
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="is_taxable" checked>
+                        <label class="form-check-label fw-bold">Is Taxable</label>
                     </div>
+
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Component</button>
+                <div class="modal-footer border-0">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-1"></i>Add Component
+                    </button>
                 </div>
             </form>
         </div>
@@ -240,19 +309,85 @@
 
 {% block extra_js %}
 <script>
-    // Show/hide formula field based on calculation type
-    document.getElementById('calcType').addEventListener('change', function() {
-        document.getElementById('formulaField').style.display = 
-            this.value === 'formula' ? 'block' : 'none';
-    });
+document.getElementById('calcType').addEventListener('change', function () {
+    document.getElementById('formulaField').style.display =
+        this.value === 'formula' ? 'block' : 'none';
+});
 
-    // For edit modals
-    document.querySelectorAll('[id^="calcType"]').forEach(select => {
-        select.addEventListener('change', function() {
-            const modalId = this.id.replace('calcType', '');
-            document.getElementById('formulaField' + modalId).style.display = 
-                this.value === 'formula' ? 'block' : 'none';
-        });
+document.querySelectorAll('[id^="calcType"]').forEach(el => {
+    el.addEventListener('change', function () {
+        const id = this.id.replace('calcType', '');
+        const field = document.getElementById('formulaField' + id);
+        if (field) {
+            field.style.display = this.value === 'formula' ? 'block' : 'none';
+        }
     });
+});
 </script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+     .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+     @media (max-width: 768px) {
+        .page-container {
+            padding: 16px;
+        }
+    }
+
+.premium-card {
+    border-radius: 18px;
+    background: linear-gradient(180deg, #ffffff, #f9fafb);
+}
+
+.value-display {
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+    padding: 1rem 1.5rem;
+    border-radius: 14px;
+}
+
+.value-amount {
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: .6rem 0;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.icon-btn {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.empty-premium {
+    background: linear-gradient(135deg, #f8fafc, #eef2ff);
+    border-radius: 22px;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+</style>
 {% endblock %}

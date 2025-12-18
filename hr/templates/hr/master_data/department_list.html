@@ -1,124 +1,1154 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}Department Management • HR System{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
+<style>
+    /* Reuse the same CSS from branches page */
+    :root {
+        --primary: #4361ee;
+        --primary-light: #4895ef;
+        --secondary: #7209b7;
+        --accent: #4cc9f0;
+        --warning: #f72585;
+        --success: #10b981;
+        --danger: #ef4444;
+        --dark: #1a1a2e;
+        --light: #f8f9fa;
+        --gray-100: #f8f9fa;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-400: #ced4da;
+        --gray-500: #adb5bd;
+        --gray-600: #6c757d;
+        --gray-700: #495057;
+        --gray-800: #343a40;
+        --gray-900: #212529;
+        --white: #ffffff;
+        --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+        --hover-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background-color: #f8fafc;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: var(--gray-800);
+    }
+
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+
+    /* Header */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .page-header h1 {
+        font-size: 30px;
+        font-weight: 700;
+        color: var(--dark);
+        letter-spacing: -0.5px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .page-header h1 i {
+        color: var(--primary);
+        background: rgba(67, 97, 238, 0.1);
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    .page-subtitle {
+        font-size: 16px;
+        color: var(--gray-600);
+        margin-top: 4px;
+        max-width: 600px;
+    }
+
+    .stats-badge {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        padding: 10px 20px;
+        border-radius: 12px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Search and Filter Card */
+    .filter-card {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+    }
+
+    .search-box {
+        position: relative;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray-500);
+        font-size: 16px;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 12px 16px 12px 44px;
+        border: 1px solid var(--gray-300);
+        border-radius: 10px;
+        font-size: 14px;
+        color: var(--dark);
+        background: var(--white);
+        transition: all 0.2s ease;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+
+    .filter-select {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid var(--gray-300);
+        border-radius: 10px;
+        font-size: 14px;
+        color: var(--dark);
+        background: var(--white);
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+
+    /* Add Button */
+    .add-btn {
+        background: var(--success);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        height: 44px;
+    }
+
+    .add-btn:hover {
+        background: #0da271;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    /* Main Container */
+    .main-container {
+        background: var(--white);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+    }
+
+    .table-header {
+        padding: 24px;
+        border-bottom: 1px solid var(--gray-200);
+        background: var(--white);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .table-header h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .count-badge {
+        background: var(--primary);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .table-container {
+        padding: 10px;
+        overflow-x: auto;
+    }
+
+    .dataTable {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 800px;
+    }
+
+    .dataTable thead {
+        background: var(--gray-100);
+    }
+
+    .dataTable th {
+        padding: 16px 20px;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--gray-700);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--gray-200);
+        white-space: nowrap;
+    }
+
+    .dataTable tbody tr {
+        border-bottom: 1px solid var(--gray-100);
+        transition: all 0.2s ease;
+    }
+
+    .dataTable tbody tr:hover {
+        background: rgba(67, 97, 238, 0.03);
+    }
+
+    .dataTable td {
+        padding: 16px 20px;
+        font-size: 14px;
+        color: var(--gray-800);
+        vertical-align: middle;
+    }
+
+    /* Department Info */
+    .dept-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .dept-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .dept-details {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .dept-name {
+        font-weight: 600;
+        color: var(--dark);
+    }
+
+    /* Status Badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .badge-active {
+        background: rgba(16, 185, 129, 0.1);
+        color: #065f46;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .badge-inactive {
+        background: rgba(100, 116, 139, 0.1);
+        color: #475569;
+        border: 1px solid rgba(100, 116, 139, 0.2);
+    }
+
+    /* Date */
+    .date-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .date-main {
+        font-weight: 600;
+        color: var(--dark);
+    }
+
+    .date-relative {
+        font-size: 12px;
+        color: var(--gray-500);
+    }
+
+    /* Actions */
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+
+    .edit-btn {
+        background: rgba(67, 97, 238, 0.1);
+        color: var(--primary);
+        border: 1px solid rgba(67, 97, 238, 0.2);
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    .edit-btn:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+    }
+
+    .delete-btn {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    .delete-btn:hover {
+        background: #ef4444;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--gray-100);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        color: var(--gray-500);
+        font-size: 32px;
+    }
+
+    .empty-state h4 {
+        font-size: 18px;
+        color: var(--dark);
+        margin-bottom: 8px;
+    }
+
+    .empty-state p {
+        color: var(--gray-600);
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    /* Alert Messages */
+    .alert-message {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 24px;
+        box-shadow: var(--card-shadow);
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .alert-message.success {
+        border-left: 4px solid var(--success);
+        background: rgba(16, 185, 129, 0.05);
+    }
+
+    .alert-message.danger {
+        border-left: 4px solid var(--danger);
+        background: rgba(239, 68, 68, 0.05);
+    }
+
+    .alert-message.warning {
+        border-left: 4px solid var(--warning);
+        background: rgba(247, 37, 133, 0.05);
+    }
+
+    .alert-message.info {
+        border-left: 4px solid var(--primary);
+        background: rgba(67, 97, 238, 0.05);
+    }
+
+    .alert-message i {
+        font-size: 20px;
+        margin-top: 2px;
+    }
+
+    .alert-message.success i {
+        color: var(--success);
+    }
+
+    .alert-message.danger i {
+        color: var(--danger);
+    }
+
+    .alert-message.warning i {
+        color: var(--warning);
+    }
+
+    .alert-message.info i {
+        color: var(--primary);
+    }
+
+    .alert-content {
+        flex: 1;
+    }
+
+    .alert-content h5 {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 4px;
+    }
+
+    .alert-content p {
+        font-size: 14px;
+        color: var(--gray-600);
+        margin: 0;
+    }
+
+    .alert-close {
+        background: none;
+        border: none;
+        color: var(--gray-500);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .alert-close:hover {
+        color: var(--dark);
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        padding: 20px;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal-container {
+        background: var(--white);
+        border-radius: 16px;
+        width: 100%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: modalSlideIn 0.3s ease;
+    }
+
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .modal-header {
+        padding: 24px;
+        border-bottom: 1px solid var(--gray-200);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .modal-header h3 {
+        font-size: 20px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .modal-close {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 20px;
+        transition: all 0.2s ease;
+    }
+
+    .modal-close:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: rotate(90deg);
+    }
+
+    .modal-body {
+        padding: 32px;
+    }
+
+    .modal-footer {
+        padding: 24px 32px;
+        border-top: 1px solid var(--gray-200);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+
+    /* Form Styles */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--gray-700);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .form-label.required::after {
+        content: '*';
+        color: #ef4444;
+        margin-left: 4px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid var(--gray-300);
+        border-radius: 10px;
+        font-size: 14px;
+        color: var(--dark);
+        background: var(--white);
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+
+    /* Switch Toggle */
+    .form-switch {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .switch-label {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--gray-700);
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 30px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+        position: absolute;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--gray-300);
+        transition: .4s;
+        border-radius: 34px;
+    }
+
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 22px;
+        width: 22px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+        background-color: var(--success);
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+        transform: translateX(30px);
+    }
+
+    .toggle-switch input:focus + .toggle-slider {
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    }
+
+    .toggle-switch input:disabled + .toggle-slider {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* Form Help Text */
+    .form-help {
+        font-size: 12px;
+        color: var(--gray-500);
+        margin-top: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* Form Validation */
+    .form-error {
+        font-size: 12px;
+        color: #ef4444;
+        margin-top: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .is-invalid {
+        border-color: #ef4444 !important;
+    }
+
+    .is-invalid:focus {
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+    }
+
+    .btn-secondary {
+        background: var(--gray-200);
+        color: var(--gray-700);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-secondary:hover {
+        background: var(--gray-300);
+        transform: translateY(-1px);
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-primary:hover {
+        background: #3a56d4;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+    }
+
+    .btn-danger {
+        background: var(--danger);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-danger:hover {
+        background: #dc2626;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    /* Delete Modal */
+    .delete-modal {
+        text-align: center;
+        padding: 40px 32px;
+    }
+
+    .delete-icon {
+        width: 60px;
+        height: 60px;
+        background: rgba(239, 68, 68, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        color: #ef4444;
+        font-size: 24px;
+    }
+
+    .delete-modal h4 {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 8px;
+    }
+
+    .delete-modal p {
+        font-size: 15px;
+        color: var(--gray-600);
+        margin-bottom: 24px;
+        max-width: 400px;
+    }
+
+    .delete-dept-name {
+        background: var(--gray-100);
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 12px 0;
+        display: inline-block;
+    }
+
+    /* Warning Alert */
+    .warning-alert {
+        background: rgba(247, 37, 133, 0.05);
+        border: 1px solid rgba(247, 37, 133, 0.2);
+        border-radius: 10px;
+        padding: 16px;
+        margin: 16px 0;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .warning-alert i {
+        color: var(--warning);
+        font-size: 18px;
+        margin-top: 2px;
+    }
+
+    .warning-alert-content {
+        flex: 1;
+    }
+
+    .warning-alert-content h6 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 4px;
+    }
+
+    .warning-alert-content p {
+        font-size: 13px;
+        color: var(--gray-600);
+        margin: 0;
+    }
+    /* Add this CSS to your existing styles */
+#deleteDepartmentModal .modal-container {
+    max-width: 400px;
+    animation: modalSlideIn 0.3s ease;
+}
+
+#deleteDepartmentModal .delete-modal {
+    text-align: center;
+    padding: 32px;
+}
+
+#deleteDepartmentModal .delete-modal h4 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 12px;
+    line-height: 1.4;
+}
+
+#deleteDepartmentModal .delete-modal p {
+    font-size: 14px;
+    color: var(--gray-600);
+    margin-bottom: 20px;
+    line-height: 1.5;
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#deleteDepartmentModal .delete-dept-name {
+    background: var(--gray-100);
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    color: var(--dark);
+    margin: 16px 0;
+    display: inline-block;
+    border: 1px solid var(--gray-200);
+    font-size: 15px;
+    max-width: 100%;
+    word-break: break-word;
+}
+
+#deleteDepartmentModal .btn {
+    min-width: 120px;
+}
+
+/* Responsive adjustments for delete modal */
+@media (max-width: 480px) {
+    #deleteDepartmentModal .modal-container {
+        margin: 0 16px;
+    }
+    
+    #deleteDepartmentModal .delete-modal {
+        padding: 24px;
+    }
+    
+    #deleteDepartmentModal form div {
+        flex-direction: column;
+    }
+    
+    #deleteDepartmentModal .btn {
+        width: 100%;
+    }
+}
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-container {
+            padding: 16px;
+        }
+       
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+       
+        .filter-grid {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+        }
+       
+        .table-header {
+            flex-direction: column;
+            gap: 16px;
+            align-items: flex-start;
+        }
+       
+        .dataTable {
+            min-width: 600px;
+        }
+       
+        .modal-body {
+            padding: 20px;
+        }
+       
+        .modal-footer {
+            flex-direction: column;
+        }
+    }
+
+    /* Loading Animation */
+    .spinner {
+        border: 3px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        border-top: 3px solid var(--primary);
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+<div class="page-container">
+    <!-- Header -->
     <div class="page-header">
-        <h1 class="mb-3"><i class="fas fa-sitemap me-2"></i>Department Management</h1>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
-                <li class="breadcrumb-item"><a href="{% url 'department_list' %}">Master Data</a></li>
-                <li class="breadcrumb-item active">Departments</li>
-            </ol>
-        </nav>
+        <div>
+            <h1>
+                <i class="fas fa-sitemap"></i>
+                Department Management
+            </h1>
+            <p class="page-subtitle">Manage and organize your company departments and teams</p>
+        </div>
+        <div class="stats-badge">
+            <i class="fas fa-building"></i>
+            {{ departments|length }} Department{{ departments|length|pluralize:"s" }}
+        </div>
     </div>
 
-    <!-- Django Messages Framework -->
-    {% if messages %}
-    <div class="mb-4">
-        {% for message in messages %}
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle me-2"></i>{{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {% endfor %}
+    <!-- Success Messages -->
+    <div id="success-messages">
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert-message success">
+                <i class="fas fa-check-circle"></i>
+                <div class="alert-content">
+                    <h5>Success</h5>
+                    <p>{{ message }}</p>
+                </div>
+                <button type="button" class="alert-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            {% endfor %}
+        {% endif %}
     </div>
-    {% endif %}
 
     <!-- Search and Filter Card -->
-    <div class="card custom-card mb-4">
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="search-box">
-                        <i class="fas fa-search search-icon"></i>
-                        <input type="text" 
-                               class="form-control" 
-                               id="search" 
-                               name="search" 
-                               placeholder="Search departments..."
-                               value="{{ search_query }}">
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <select class="form-select filter-select" id="status" name="status">
-                        <option value="">All Status</option>
-                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
-                        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <div class="d-flex justify-content-end">
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDepartmentModal">
-                            <i class="fas fa-plus me-2"></i>Add New Department
-                        </button>
-                    </div>
-                </div>
+    <div class="filter-card">
+        <div class="filter-grid" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 16px;">
+            <div class="search-box">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text"
+                       class="search-input"
+                       id="search"
+                       name="search"
+                       placeholder="Search departments..."
+                       value="{{ search_query }}">
             </div>
+            <select class="filter-select" id="status" name="status">
+                <option value="">All Status</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+            </select>
+            <button class="add-btn" onclick="openAddDepartmentModal()">
+                <i class="fas fa-plus"></i>
+                Add Department
+            </button>
         </div>
     </div>
 
-    <!-- Departments Table Card -->
-    <div class="card custom-card">
-        <div class="card-body p-0">
+    <!-- Departments Table -->
+    <div class="main-container">
+        <div class="table-header">
+            <h3>
+                <i class="fas fa-list"></i>
+                All Departments
+            </h3>
+        </div>
+       
+        <div class="table-container">
             {% if departments %}
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Name</th>
-                            <th>Status</th>
-                            <th>Created At</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for department in departments %}
-                        <tr>
-                            <td>
-                                <strong>{{ department.name }}</strong>
-                            </td>
-                            <td>
-                                <span class="badge {% if department.is_active %}bg-success{% else %}bg-secondary{% endif %}">
-                                    {{ department.is_active|yesno:"Active,Inactive" }}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="text-muted">{{ department.created_at|date:"Y-m-d" }}</span>
-                            </td>
-                            <td>
-                                <div class="btn-group">
-                                    <button type="button" 
-                                            class="btn btn-sm btn-outline-primary edit-department-btn" 
-                                            title="Edit"
-                                            data-department-id="{{ department.pk }}"
-                                            data-department-name="{{ department.name }}"
-                                            data-department-is-active="{{ department.is_active|yesno:'true,false' }}">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button type="button" 
-                                            class="btn btn-sm btn-outline-danger delete-department-btn" 
-                                            title="Delete"
-                                            data-department-id="{{ department.pk }}"
-                                            data-department-name="{{ department.name }}"
-                                            data-employee-count="{{ department.employees.count|default:0 }}">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+            <table class="dataTable" id="departmentsTable">
+                <thead>
+                    <tr>
+                        <th>Department Name</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for department in departments %}
+                    <tr>
+                        <!-- Department Details -->
+                        <td>
+                            <div class="dept-info">                                
+                                <div class="dept-details">
+                                    <div class="dept-name">
+                                        {{ department.name }}
+                                    </div>
                                 </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+                            </div>
+                        </td>
+                       
+                        <!-- Status -->
+                        <td>
+                            {% if department.is_active %}
+                                <span class="status-badge badge-active">
+                                    <i class="fas fa-check-circle"></i>
+                                    Active
+                                </span>
+                            {% else %}
+                                <span class="status-badge badge-inactive">
+                                    <i class="fas fa-times-circle"></i>
+                                    Inactive
+                                </span>
+                            {% endif %}
+                        </td>
+                       
+                        <!-- Created -->
+                        <td>
+                            <div class="date-cell">
+                                <div class="date-main">
+                                    {{ department.created_at|date:"d M, Y" }}
+                                </div>
+                                <div class="date-relative">
+                                    {{ department.created_at|timesince }} ago
+                                </div>
+                            </div>
+                        </td>
+                       
+                        <!-- Actions -->
+                        <td>
+                            <div class="action-buttons">
+                                <button class="edit-btn" onclick="openEditDepartmentModal(
+                                    '{{ department.pk }}',
+                                    '{{ department.name|escapejs }}',
+                                    '{{ department.is_active|yesno:"true,false" }}'
+                                )">
+                                    <i class="fas fa-edit"></i>
+                                    Edit
+                                </button>
+                                <button class="delete-btn" onclick="openDeleteDepartmentModal(
+                                    '{{ department.pk }}',
+                                    '{{ department.name|escapejs }}',
+                                    '{{ department.employees.count|default:0 }}'
+                                )">
+                                    <i class="fas fa-trash"></i>
+                                    Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
             {% else %}
-            <div class="text-center py-5">
-                <i class="fas fa-sitemap fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">No departments found</h5>
-                <p class="text-muted">Get started by adding your first department.</p>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDepartmentModal">
-                    <i class="fas fa-plus me-2"></i>Add New Department
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-sitemap"></i>
+                </div>
+                <h4>No Departments Found</h4>
+                <p>No departments have been created yet. Add your first department to get started.</p>
+                <button class="add-btn" style="margin-top: 16px;" onclick="openAddDepartmentModal()">
+                    <i class="fas fa-plus"></i>
+                    Add First Department
                 </button>
             </div>
             {% endif %}
@@ -127,150 +1157,177 @@
 </div>
 
 <!-- Add Department Modal -->
-<div class="modal fade" id="addDepartmentModal" tabindex="-1" aria-labelledby="addDepartmentModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-light">
-                <h5 class="modal-title" id="addDepartmentModalLabel">
-                    <i class="fas fa-plus-circle me-2"></i>Add New Department
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+<div class="modal-overlay" id="addDepartmentModal">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3>
+                <i class="fas fa-plus-circle"></i>
+                Add New Department
+            </h3>
+            <button class="modal-close" onclick="closeModal('addDepartmentModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
             <form method="post" action="{% url 'department_create' %}" id="addDepartmentForm" novalidate>
                 {% csrf_token %}
-                <div class="modal-body">
-                    <!-- Form Errors Display -->
-                    <div id="addFormErrors" class="alert alert-danger" style="display: none;"></div>
-                    
-                    <!-- Django Form Errors -->
-                    {% if form.errors and show_add_modal %}
-                    <div class="alert alert-danger">
-                        <strong>Please correct the errors below:</strong>
-                        <ul class="mb-0 mt-1">
-                        {% for field in form %}
-                            {% for error in field.errors %}
-                            <li>{{ field.label }}: {{ error }}</li>
+               
+                <!-- Form Errors -->
+                <div id="addFormErrors" class="form-error" style="display: none;"></div>
+               
+                <!-- Django Form Errors -->
+                {% if form.errors and show_add_modal %}
+                <div class="alert-message danger">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <div class="alert-content">
+                        <h5>Form Errors</h5>
+                        <p>
+                            {% for field in form %}
+                                {% for error in field.errors %}
+                                {{ field.label }}: {{ error }}{% if not forloop.last %}<br>{% endif %}
+                                {% endfor %}
                             {% endfor %}
-                        {% endfor %}
-                        {% for error in form.non_field_errors %}
-                            <li>{{ error }}</li>
-                        {% endfor %}
-                        </ul>
-                    </div>
-                    {% endif %}
-
-                    <div class="row g-3">
-                        <!-- Department Name -->
-                        <div class="col-12">
-                            <label for="id_name" class="form-label">
-                                Department Name <span class="text-danger">*</span>
-                            </label>
-                            <input type="text" 
-                                   class="form-control {% if form.name.errors and show_add_modal %}is-invalid{% endif %}" 
-                                   id="id_name" 
-                                   name="name" 
-                                   value="{% if form.name.value and show_add_modal %}{{ form.name.value }}{% endif %}"
-                                   placeholder="Enter department name"
-                                   required>
-                            {% if form.name.errors and show_add_modal %}
-                            <div class="invalid-feedback d-block">
-                                {{ form.name.errors.0 }}
-                            </div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Status -->
-                        <div class="col-12">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" 
-                                       type="checkbox" 
-                                       id="id_is_active" 
-                                       name="is_active" 
-                                       {% if not show_add_modal or form.is_active.value %}checked{% endif %}>
-                                <label class="form-check-label" for="id_is_active">
-                                    Active Department
-                                </label>
-                            </div>
-                        </div>
+                            {% for error in form.non_field_errors %}
+                                {{ error }}{% if not forloop.last %}<br>{% endif %}
+                            {% endfor %}
+                        </p>
                     </div>
                 </div>
+                {% endif %}
+
+                <!-- Department Name -->
+                <div class="form-group">
+                    <label class="form-label required">
+                        <i class="fas fa-sitemap"></i>
+                        Department Name
+                    </label>
+                    <input type="text"
+                           class="form-control {% if form.name.errors and show_add_modal %}is-invalid{% endif %}"
+                           id="id_name"
+                           name="name"
+                           value="{% if form.name.value and show_add_modal %}{{ form.name.value }}{% endif %}"
+                           placeholder="Enter department name"
+                           required>
+                    {% if form.name.errors and show_add_modal %}
+                    <div class="form-error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {% for error in form.name.errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Status -->
+                <div class="form-group">
+                    <div class="form-switch">
+                        <div class="toggle-switch">
+                            <input type="checkbox"
+                                   id="id_is_active"
+                                   name="is_active"
+                                   {% if not show_add_modal or form.is_active.value %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </div>
+                        <label class="switch-label" for="id_is_active">
+                            Active Department
+                        </label>
+                    </div>
+                </div>
+               
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>Cancel
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addDepartmentModal')">
+                        <i class="fas fa-times"></i>
+                        Cancel
                     </button>
                     <button type="submit" class="btn btn-primary" id="addDepartmentSubmitBtn">
-                        <i class="fas fa-save me-2"></i>Save Department
+                        <i class="fas fa-save"></i>
+                        Save Department
                     </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
 <!-- Edit Department Modal -->
-<div class="modal fade" id="editDepartmentModal" tabindex="-1" aria-labelledby="editDepartmentModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-light">
-                <h5 class="modal-title" id="editDepartmentModalLabel">
-                    <i class="fas fa-edit me-2"></i>Edit Department
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+<div class="modal-overlay" id="editDepartmentModal">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3>
+                <i class="fas fa-edit"></i>
+                Edit Department
+            </h3>
+            <button class="modal-close" onclick="closeModal('editDepartmentModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
             <form method="post" action="" id="editDepartmentForm" novalidate>
                 {% csrf_token %}
-                <div class="modal-body">
-                    <!-- Form Errors Display -->
-                    <div id="editFormErrors" class="alert alert-danger" style="display: none;"></div>
-                    
-                    {% if form.non_field_errors and editing_department_id %}
-                    <div class="alert alert-danger">
-                        {% for error in form.non_field_errors %}
+               
+                <!-- Form Errors -->
+                <div id="editFormErrors" class="form-error" style="display: none;"></div>
+               
+                <!-- Django Form Errors -->
+                {% if form.non_field_errors and editing_department_id %}
+                <div class="alert-message danger">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <div class="alert-content">
+                        <h5>Form Errors</h5>
+                        <p>
+                            {% for error in form.non_field_errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Department Name -->
+                <div class="form-group">
+                    <label class="form-label required">
+                        <i class="fas fa-sitemap"></i>
+                        Department Name
+                    </label>
+                    <input type="text"
+                           class="form-control {% if form.name.errors and editing_department_id %}is-invalid{% endif %}"
+                           id="edit_id_name"
+                           name="name"
+                           placeholder="Enter department name"
+                           required>
+                    {% if form.name.errors and editing_department_id %}
+                    <div class="form-error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {% for error in form.name.errors %}
                         {{ error }}
                         {% endfor %}
                     </div>
                     {% endif %}
+                </div>
 
-                    <div class="row g-3">
-                        <!-- Department Name -->
-                        <div class="col-12">
-                            <label for="edit_id_name" class="form-label">
-                                Department Name <span class="text-danger">*</span>
-                            </label>
-                            <input type="text" 
-                                   class="form-control {% if form.name.errors and editing_department_id %}is-invalid{% endif %}" 
-                                   id="edit_id_name" 
-                                   name="name" 
-                                   placeholder="Enter department name"
-                                   required>
-                            {% if form.name.errors and editing_department_id %}
-                            <div class="invalid-feedback">
-                                {% for error in form.name.errors %}
-                                {{ error }}
-                                {% endfor %}
-                            </div>
-                            {% endif %}
+                <!-- Status -->
+                <div class="form-group">
+                    <div class="form-switch">
+                        <div class="toggle-switch">
+                            <input type="checkbox"
+                                   id="edit_id_is_active"
+                                   name="is_active">
+                            <span class="toggle-slider"></span>
                         </div>
-
-                        <!-- Status -->
-                        <div class="col-12">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" 
-                                       type="checkbox" 
-                                       id="edit_id_is_active" 
-                                       name="is_active">
-                                <label class="form-check-label" for="edit_id_is_active">
-                                    Active Department
-                                </label>
-                            </div>
-                        </div>
+                        <label class="switch-label" for="edit_id_is_active">
+                            Active Department
+                        </label>
                     </div>
                 </div>
+               
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>Cancel
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('editDepartmentModal')">
+                        <i class="fas fa-times"></i>
+                        Cancel
                     </button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-2"></i>Update Department
+                        <i class="fas fa-save"></i>
+                        Update Department
                     </button>
                 </div>
             </form>
@@ -279,173 +1336,198 @@
 </div>
 
 <!-- Delete Department Modal -->
-<div class="modal fade" id="deleteDepartmentModal" tabindex="-1" aria-labelledby="deleteDepartmentModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteDepartmentModalLabel">
-                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Department
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+<div class="modal-overlay" id="deleteDepartmentModal">
+    <div class="modal-container" style="max-width: 400px;">
+        <div class="modal-header" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+            <h3>
+                <i class="fas fa-exclamation-triangle"></i>
+                Delete Department
+            </h3>
+            <button class="modal-close" onclick="closeModal('deleteDepartmentModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="delete-modal" style="padding: 32px;">
+            <div class="delete-icon">
+                <i class="fas fa-trash-alt"></i>
             </div>
-            <div class="modal-body text-center">
-                <div class="mb-4">
-                    <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
-                    <h4>Are you sure?</h4>
-                    <p class="text-muted">
-                        You are about to delete the department <strong id="delete-department-name"></strong>. 
-                        This action cannot be undone.
-                    </p>
-                    <div class="alert alert-warning" id="employee-warning" style="display: none;">
-                        <i class="fas fa-exclamation-circle me-2"></i>
-                        This department has <span id="employee-count"></span> employee(s). 
-                        Deleting it will remove the department association from these employees.
-                    </div>
+            <h4>Are you sure?</h4>
+            <p>
+                You are about to delete a department. This action cannot be undone.
+            </p>
+            <div class="delete-dept-name" id="delete-dept-name"></div>
+            <div class="warning-alert" id="employee-warning" style="display: none; margin: 20px 0;">
+                <i class="fas fa-exclamation-circle"></i>
+                <div class="warning-alert-content">
+                    <h6>Employee Warning</h6>
+                    <p>This department has <span id="employee-count"></span> employee(s). Deleting it will remove the department association from these employees.</p>
                 </div>
             </div>
-            <div class="modal-footer justify-content-center">
-                <form method="post" action="" id="deleteDepartmentForm">
-                    {% csrf_token %}
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>Cancel
+            <form method="post" action="" id="deleteDepartmentForm" style="margin-top: 24px;">
+                {% csrf_token %}
+                <div style="display: flex; justify-content: center; gap: 12px; margin-top: 24px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('deleteDepartmentModal')" style="flex: 1; min-width: 120px;">
+                        <i class="fas fa-times"></i>
+                        Cancel
                     </button>
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash me-2"></i>Delete Department
+                    <button type="submit" class="btn btn-danger" style="flex: 1; min-width: 120px;">
+                        <i class="fas fa-trash"></i>
+                        Delete Department
                     </button>
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
+<!-- Include DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+
+<!-- Include jQuery and DataTables JS -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Search functionality
-    const searchInput = document.getElementById('search');
-    const statusSelect = document.getElementById('status');
-    
-    function applyFilters() {
-        const search = searchInput.value;
-        const status = statusSelect.value;
-        
-        const params = new URLSearchParams();
-        if (search) params.append('search', search);
-        if (status) params.append('status', status);
-        
-        window.location.href = '{% url "department_list" %}' + (params.toString() ? '?' + params.toString() : '');
-    }
-    
-    // Debounce search input
-    let searchTimeout;
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(applyFilters, 500);
-    });
-    
-    statusSelect.addEventListener('change', applyFilters);
-
-    // Auto-show modals if there are form errors
-    {% if show_add_modal %}
-    var addModal = new bootstrap.Modal(document.getElementById('addDepartmentModal'));
-    addModal.show();
-    {% endif %}
-
-    {% if editing_department_id %}
-    var editModal = new bootstrap.Modal(document.getElementById('editDepartmentModal'));
-    
-    // Populate edit form with existing data and errors
-    document.getElementById('edit_id_name').value = "{{ editing_department.name }}";
-    document.getElementById('edit_id_is_active').checked = {{ editing_department.is_active|yesno:"true,false" }};
-    
-    // Set form action
-    document.getElementById('editDepartmentForm').action = "{% url 'department_edit' editing_department_id %}";
-    
-    // Update modal title
-    document.getElementById('editDepartmentModalLabel').innerHTML = 
-        '<i class="fas fa-edit me-2"></i>Edit Department: {{ editing_department.name }}';
-    
-    editModal.show();
-    {% endif %}
-
-    // Edit department modal functionality
-    const editButtons = document.querySelectorAll('.edit-department-btn');
-    const editDepartmentModal = new bootstrap.Modal(document.getElementById('editDepartmentModal'));
-    const editDepartmentForm = document.getElementById('editDepartmentForm');
-
-    editButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const departmentId = this.getAttribute('data-department-id');
-            const departmentName = this.getAttribute('data-department-name');
-            const departmentIsActive = this.getAttribute('data-department-is-active');
-            
-            // Populate form fields
-            document.getElementById('edit_id_name').value = departmentName;
-            document.getElementById('edit_id_is_active').checked = departmentIsActive === 'true';
-            
-            // Set form action for update
-            editDepartmentForm.action = "{% url 'department_edit' 0 %}".replace('0', departmentId);
-            
-            // Update modal title
-            document.getElementById('editDepartmentModalLabel').innerHTML = 
-                '<i class="fas fa-edit me-2"></i>Edit Department: ' + departmentName;
-            
-            // Clear previous errors
-            document.getElementById('editFormErrors').style.display = 'none';
-            const invalidFields = document.querySelectorAll('#editDepartmentForm .is-invalid');
-            invalidFields.forEach(field => {
-                field.classList.remove('is-invalid');
-            });
-            
-            // Show modal
-            editDepartmentModal.show();
-        });
-    });
-
-    // Delete department modal functionality
-    const deleteButtons = document.querySelectorAll('.delete-department-btn');
-    const deleteDepartmentModal = new bootstrap.Modal(document.getElementById('deleteDepartmentModal'));
-    const deleteDepartmentForm = document.getElementById('deleteDepartmentForm');
-    const deleteDepartmentName = document.getElementById('delete-department-name');
-    const employeeWarning = document.getElementById('employee-warning');
-    const employeeCount = document.getElementById('employee-count');
-
-    deleteButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const departmentId = this.getAttribute('data-department-id');
-            const departmentName = this.getAttribute('data-department-name');
-            const empCount = this.getAttribute('data-employee-count');
-            
-            // Update modal content
-            deleteDepartmentName.textContent = '"' + departmentName + '"';
-            
-            // Show/hide employee warning
-            if (empCount > 0) {
-                employeeCount.textContent = empCount;
-                employeeWarning.style.display = 'block';
-            } else {
-                employeeWarning.style.display = 'none';
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize DataTable
+        const table = $('#departmentsTable').DataTable({
+            pageLength: 25,
+            lengthMenu: [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            order: [[0, 'asc']], // Sort by department name
+            responsive: true,
+            dom: '<"top"<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>>rt<"bottom"<"row"<"col-sm-12 col-md-6"i><"col-sm-12 col-md-6"p>>><"clear">',
+            buttons: [
+                {
+                    extend: 'copy',
+                    className: 'btn btn-sm',
+                    text: '<i class="fas fa-copy"></i> Copy'
+                },
+                {
+                    extend: 'excel',
+                    className: 'btn btn-sm',
+                    text: '<i class="fas fa-file-excel"></i> Excel',
+                    title: 'Department List - {% now "d M Y" %}'
+                },
+                {
+                    extend: 'pdf',
+                    className: 'btn btn-sm',
+                    text: '<i class="fas fa-file-pdf"></i> PDF',
+                    title: 'Department List - {% now "d M Y" %}'
+                },
+                {
+                    extend: 'print',
+                    className: 'btn btn-sm',
+                    text: '<i class="fas fa-print"></i> Print'
+                }
+            ],
+            language: {
+                search: "Search departments...",
+                lengthMenu: "Show _MENU_ entries",
+                info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                infoEmpty: "Showing 0 to 0 of 0 entries",
+                infoFiltered: "(filtered from _MAX_ total entries)",
+                paginate: {
+                    first: "First",
+                    last: "Last",
+                    next: "Next",
+                    previous: "Previous"
+                }
+            },
+            initComplete: function(settings, json) {
+                // Add custom styling to DataTable elements
+                $('.dataTables_filter input').addClass('form-control-sm');
+                $('.dataTables_length select').addClass('form-control-sm');
             }
-            
-            // Set form action
-            deleteDepartmentForm.action = "{% url 'department_delete' 0 %}".replace('0', departmentId);
-            
-            // Show modal
-            deleteDepartmentModal.show();
         });
-    });
 
-    // Form validation for add department
-    const addDepartmentForm = document.getElementById('addDepartmentForm');
-    if (addDepartmentForm) {
-        addDepartmentForm.addEventListener('submit', function(e) {
-            // Basic validation
+        // Initialize toggle switches
+        function initializeToggleSwitches() {
+            document.querySelectorAll('.toggle-switch').forEach(toggle => {
+                toggle.addEventListener('click', function(e) {
+                    const checkbox = this.querySelector('input[type="checkbox"]');
+                    if (checkbox && e.target !== checkbox) {
+                        checkbox.checked = !checkbox.checked;
+                        const event = new Event('change', { bubbles: true });
+                        checkbox.dispatchEvent(event);
+                    }
+                });
+            });
+           
+            document.querySelectorAll('.toggle-slider').forEach(slider => {
+                slider.addEventListener('click', function(e) {
+                    const checkbox = this.closest('.toggle-switch').querySelector('input[type="checkbox"]');
+                    if (checkbox) {
+                        checkbox.checked = !checkbox.checked;
+                        const event = new Event('change', { bubbles: true });
+                        checkbox.dispatchEvent(event);
+                        e.stopPropagation();
+                    }
+                });
+            });
+        }
+
+        // Initialize toggles on page load
+        initializeToggleSwitches();
+
+        // Search functionality
+        const searchInput = document.getElementById('search');
+        const statusSelect = document.getElementById('status');
+       
+        function applyFilters() {
+            const search = searchInput.value;
+            const status = statusSelect.value;
+           
+            const params = new URLSearchParams();
+            if (search) params.append('search', search);
+            if (status) params.append('status', status);
+           
+            window.location.href = '{% url "department_list" %}' + (params.toString() ? '?' + params.toString() : '');
+        }
+       
+        // Debounce search input
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(applyFilters, 500);
+        });
+       
+        statusSelect.addEventListener('change', applyFilters);
+
+        // Auto-show modals if there are form errors
+        {% if show_add_modal %}
+        openAddDepartmentModal();
+        {% endif %}
+
+        {% if editing_department_id %}
+        openEditDepartmentModal(
+            '{{ editing_department_id }}',
+            '{{ editing_department.name|escapejs }}',
+            '{{ editing_department.is_active|yesno:"true,false" }}'
+        );
+        {% endif %}
+
+        // Form validation for add department
+        document.getElementById('addDepartmentForm').addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('#addDepartmentSubmitBtn');
+            const originalText = submitBtn.innerHTML;
+           
+            // Show loading state
+            submitBtn.innerHTML = '<div class="spinner"></div>';
+            submitBtn.disabled = true;
+           
+            // Validate required fields
             const nameField = document.getElementById('id_name');
             const errorsDiv = document.getElementById('addFormErrors');
-            const submitBtn = document.getElementById('addDepartmentSubmitBtn');
-            
+           
             let isValid = true;
             let errorMessages = [];
-            
+           
             if (!nameField.value.trim()) {
                 nameField.classList.add('is-invalid');
                 errorMessages.push('Department name is required.');
@@ -453,36 +1535,35 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 nameField.classList.remove('is-invalid');
             }
-            
+           
             if (!isValid) {
                 e.preventDefault();
-                errorsDiv.innerHTML = errorMessages.join('<br>');
+                errorsDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + errorMessages.join('<br>');
                 errorsDiv.style.display = 'block';
-                
-                // Scroll to errors
-                errorsDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+               
+                // Reset button state
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
                 return false;
             }
-            
-            // If valid, show loading state to prevent multiple submissions
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
-            }
         });
-    }
 
-    // Form validation for edit department
-    const editDepartmentFormElement = document.getElementById('editDepartmentForm');
-    if (editDepartmentFormElement) {
-        editDepartmentFormElement.addEventListener('submit', function(e) {
-            // Basic validation
+        // Form validation for edit department
+        document.getElementById('editDepartmentForm').addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('.btn-primary');
+            const originalText = submitBtn.innerHTML;
+           
+            // Show loading state
+            submitBtn.innerHTML = '<div class="spinner"></div>';
+            submitBtn.disabled = true;
+           
+            // Validate required fields
             const nameField = document.getElementById('edit_id_name');
             const errorsDiv = document.getElementById('editFormErrors');
-            
+           
             let isValid = true;
             let errorMessages = [];
-            
+           
             if (!nameField.value.trim()) {
                 nameField.classList.add('is-invalid');
                 errorMessages.push('Department name is required.');
@@ -490,160 +1571,152 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 nameField.classList.remove('is-invalid');
             }
-            
+           
             if (!isValid) {
                 e.preventDefault();
-                errorsDiv.innerHTML = errorMessages.join('<br>');
+                errorsDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + errorMessages.join('<br>');
                 errorsDiv.style.display = 'block';
+               
+                // Reset button state
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
                 return false;
             }
         });
-    }
 
-    // Clear form when add modal is closed
-    const addDepartmentModal = document.getElementById('addDepartmentModal');
-    if (addDepartmentModal) {
-        addDepartmentModal.addEventListener('hidden.bs.modal', function() {
-            const form = document.getElementById('addDepartmentForm');
-            if (form) {
-                form.reset();
-                // Clear validation states
-                document.getElementById('addFormErrors').style.display = 'none';
-                const invalidFields = form.querySelectorAll('.is-invalid');
-                invalidFields.forEach(field => {
-                    field.classList.remove('is-invalid');
-                });
-                
-                // Reset submit button
-                const submitBtn = document.getElementById('addDepartmentSubmitBtn');
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Department';
+        // Real-time validation for add form
+        const nameField = document.getElementById('id_name');
+        if (nameField) {
+            nameField.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                    document.getElementById('addFormErrors').style.display = 'none';
                 }
-            } 
-        });
-    }
-
-    // Clear form when edit modal is closed
-    const editDepartmentModalElement = document.getElementById('editDepartmentModal');
-    if (editDepartmentModalElement) {
-        editDepartmentModalElement.addEventListener('hidden.bs.modal', function() {
-            document.getElementById('editFormErrors').style.display = 'none';
-            const invalidFields = document.querySelectorAll('#editDepartmentForm .is-invalid');
-            invalidFields.forEach(field => {
-                field.classList.remove('is-invalid');
             });
+        }
+
+        // Real-time validation for edit form
+        const editNameField = document.getElementById('edit_id_name');
+        if (editNameField) {
+            editNameField.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                    document.getElementById('editFormErrors').style.display = 'none';
+                }
+            });
+        }
+
+        // Close alert messages
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.alert-close')) {
+                e.target.closest('.alert-message').remove();
+            }
         });
+
+        // Reinitialize toggles when modals are opened
+        document.getElementById('addDepartmentModal').addEventListener('click', function() {
+            setTimeout(initializeToggleSwitches, 100);
+        });
+       
+        document.getElementById('editDepartmentModal').addEventListener('click', function() {
+            setTimeout(initializeToggleSwitches, 100);
+        });
+    });
+
+    // Modal functions
+    function openAddDepartmentModal() {
+        document.getElementById('addDepartmentModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+       
+        setTimeout(function() {
+            const addToggle = document.getElementById('id_is_active');
+            if (addToggle) {
+                addToggle.checked = true;
+            }
+        }, 100);
     }
 
-    // Real-time validation for add form
-    const nameField = document.getElementById('id_name');
-    if (nameField) {
-        nameField.addEventListener('input', function() {
-            if (this.value.trim()) {
-                this.classList.remove('is-invalid');
-                document.getElementById('addFormErrors').style.display = 'none';
+    function openEditDepartmentModal(departmentId, name, isActive) {
+        document.getElementById('edit_id_name').value = name;
+       
+        // Set checkbox state - convert string to boolean
+        const isActiveBool = isActive === 'true';
+        document.getElementById('edit_id_is_active').checked = isActiveBool;
+       
+        // Set form action
+        document.getElementById('editDepartmentForm').action = "{% url 'department_edit' 0 %}".replace('0', departmentId);
+       
+        // Update modal title
+        document.querySelector('#editDepartmentModal .modal-header h3').innerHTML =
+            '<i class="fas fa-edit me-2"></i>Edit Department: ' + name;
+       
+        document.getElementById('editDepartmentModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function openDeleteDepartmentModal(departmentId, name, employeeCount) {
+        document.getElementById('delete-dept-name').textContent = name;
+        document.getElementById('deleteDepartmentForm').action = "{% url 'department_delete' 0 %}".replace('0', departmentId);
+       
+        // Show/hide employee warning
+        const employeeWarning = document.getElementById('employee-warning');
+        const employeeCountSpan = document.getElementById('employee-count');
+        if (employeeCount > 0) {
+            employeeCountSpan.textContent = employeeCount;
+            employeeWarning.style.display = 'flex';
+        } else {
+            employeeWarning.style.display = 'none';
+        }
+       
+        document.getElementById('deleteDepartmentModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+
+    // Close modals when clicking outside
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal(this.id);
+            }
+        });
+    });
+
+    // Close modals with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                closeModal(modal.id);
+            });
+        }
+    });
+
+    // Reset add form when modal closes
+    const addModal = document.getElementById('addDepartmentModal');
+    if (addModal) {
+        addModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                const form = document.getElementById('addDepartmentForm');
+                if (form) {
+                    form.reset();
+                    document.getElementById('addFormErrors').style.display = 'none';
+                    const invalidFields = form.querySelectorAll('.is-invalid');
+                    invalidFields.forEach(field => {
+                        field.classList.remove('is-invalid');
+                    });
+                   
+                    // Reset toggle to checked state
+                    const toggle = document.getElementById('id_is_active');
+                    if (toggle) {
+                        toggle.checked = true;
+                    }
+                }
             }
         });
     }
-
-    // Real-time validation for edit form
-    const editNameField = document.getElementById('edit_id_name');
-    if (editNameField) {
-        editNameField.addEventListener('input', function() {
-            if (this.value.trim()) {
-                this.classList.remove('is-invalid');
-                document.getElementById('editFormErrors').style.display = 'none';
-            }
-        });
-    }
-});
 </script>
-
-<style>
-.search-box {
-    position: relative;
-}
-
-.search-box input {
-    padding-left: 40px;
-}
-
-.search-icon {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #6c757d;
-}
-
-.table th {
-    border-top: none;
-    font-weight: 600;
-    color: #2c3e50;
-    background-color: #f8f9fa;
-    padding: 12px 16px;
-}
-
-.table td {
-    padding: 12px 16px;
-    vertical-align: middle;
-}
-
-.form-label {
-    font-weight: 500;
-    margin-bottom: 8px;
-}
-
-.form-control, .form-select {
-    border-radius: 6px;
-    border: 1px solid #dee2e6;
-    padding: 8px 12px;
-}
-
-.form-control:focus, .form-select:focus {
-    border-color: #3498db;
-    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
-}
-
-.form-check-input:checked {
-    background-color: #3498db;
-    border-color: #3498db;
-}
-
-.btn-group .btn {
-    border-radius: 4px;
-    margin-right: 4px;
-}
-
-.btn-group .btn:last-child {
-    margin-right: 0;
-}
-
-.is-invalid {
-    border-color: #dc3545 !important;
-}
-
-.invalid-feedback {
-    display: block;
-}
-
-.modal-header {
-    border-bottom: 1px solid #dee2e6;
-}
-
-.modal-footer {
-    border-top: 1px solid #dee2e6;
-}
-
-.alert {
-    border-radius: 8px;
-    border: none;
-}
-
-.badge {
-    font-size: 0.75em;
-    padding: 0.35em 0.65em;
-}
-</style>
 {% endblock %}

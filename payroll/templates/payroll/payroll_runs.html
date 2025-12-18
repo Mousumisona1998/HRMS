@@ -1,107 +1,1156 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Payroll Runs - HRMS{% endblock %}
+{% block title %}Payroll Runs • HRMS{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-light: #4895ef;
+        --secondary: #7209b7;
+        --accent: #4cc9f0;
+        --warning: #f72585;
+        --success: #10b981;
+        --danger: #ef4444;
+        --dark: #1a1a2e;
+        --light: #f8f9fa;
+        --gray-100: #f8f9fa;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-400: #ced4da;
+        --gray-500: #adb5bd;
+        --gray-600: #6c757d;
+        --gray-700: #495057;
+        --gray-800: #343a40;
+        --gray-900: #212529;
+        --white: #ffffff;
+        --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+        --hover-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        --gradient-primary: linear-gradient(135deg, var(--primary), var(--secondary));
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background-color: #f8fafc;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: var(--gray-800);
+        min-height: 100vh;
+    }
+
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+
+    /* Header */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .page-header h1 {
+        font-size: 30px;
+        font-weight: 700;
+        color: var(--dark);
+        letter-spacing: -0.5px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .page-header h1 i {
+        color: var(--primary);
+        background: rgba(67, 97, 238, 0.1);
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    .page-subtitle {
+        font-size: 16px;
+        color: var(--gray-600);
+        margin-top: 4px;
+        max-width: 600px;
+    }
+
+    /* Action Button */
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background: #3a56d4;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 32px;
+    }
+
+    .stat-card {
+        background: var(--white);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--hover-shadow);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+    }
+
+    .stat-card.total::before {
+        background: var(--gradient-primary);
+    }
+
+    .stat-card.draft::before {
+        background: linear-gradient(to bottom, #6b7280, #4b5563);
+    }
+
+    .stat-card.processing::before {
+        background: linear-gradient(to bottom, #f59e0b, #d97706);
+    }
+
+    .stat-card.completed::before {
+        background: linear-gradient(to bottom, #10b981, #059669);
+    }
+
+    .stat-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 4px;
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 14px;
+        color: var(--gray-600);
+        font-weight: 500;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .stat-icon.total {
+        background: rgba(67, 97, 238, 0.1);
+        color: var(--primary);
+    }
+
+    .stat-icon.draft {
+        background: rgba(107, 114, 128, 0.1);
+        color: #6b7280;
+    }
+
+    .stat-icon.processing {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+    }
+
+    .stat-icon.completed {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    /* Main Table Card */
+    .table-card {
+        background: var(--white);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+    }
+
+    .table-header {
+        padding: 24px;
+        border-bottom: 1px solid var(--gray-200);
+        background: var(--white);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .table-header h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .table-count {
+        font-size: 14px;
+        color: var(--gray-500);
+        margin-left: 8px;
+    }
+
+    /* Table Styling */
+    .table-container {
+        padding: 15px;
+        overflow-x: auto;
+    }
+
+    .dataTable {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1000px;
+    }
+
+    .dataTable thead {
+        background: var(--gray-100);
+    }
+
+    .dataTable th {
+        padding: 16px 20px;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--gray-700);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--gray-200);
+        white-space: nowrap;
+    }
+
+    .dataTable tbody tr {
+        border-bottom: 1px solid var(--gray-100);
+        transition: all 0.2s ease;
+    }
+
+    .dataTable tbody tr:hover {
+        background: rgba(67, 97, 238, 0.03);
+    }
+
+    .dataTable td {
+        padding: 16px 20px;
+        font-size: 14px;
+        color: var(--gray-800);
+        vertical-align: middle;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .badge-draft {
+        background: rgba(107, 114, 128, 0.1);
+        color: #374151;
+        border: 1px solid rgba(107, 114, 128, 0.2);
+    }
+
+    .badge-processing {
+        background: rgba(245, 158, 11, 0.1);
+        color: #92400e;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .badge-completed {
+        background: rgba(16, 185, 129, 0.1);
+        color: #065f46;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .badge-failed {
+        background: rgba(239, 68, 68, 0.1);
+        color: #991b1b;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    /* Run Name */
+    .run-name {
+        font-weight: 600;
+        color: var(--dark);
+        font-size: 15px;
+    }
+
+    /* Period Display */
+    .period-display {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .period-month {
+        font-weight: 600;
+        color: var(--dark);
+    }
+
+    .period-year {
+        font-size: 12px;
+        color: var(--gray-500);
+    }
+
+    /* Amount Display */
+    .amount-display {
+        font-weight: 700;
+        color: var(--success);
+        font-size: 15px;
+    }
+
+    .amount-label {
+        font-size: 12px;
+        color: var(--gray-500);
+        display: block;
+    }
+
+    /* Employees Count */
+    .employees-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(67, 97, 238, 0.1);
+        color: var(--primary);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    /* Processed Info */
+    .processed-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .processed-by {
+        font-weight: 500;
+        color: var(--dark);
+    }
+
+    .processed-at {
+        font-size: 12px;
+        color: var(--gray-500);
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 6px;
+    }
+
+    .btn-action {
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+        border: none;
+        white-space: nowrap;
+    }
+
+    .btn-view {
+        background: rgba(67, 97, 238, 0.1);
+        color: var(--primary);
+        border: 1px solid rgba(67, 97, 238, 0.2);
+    }
+
+    .btn-view:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    .btn-process {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .btn-process:hover {
+        background: var(--success);
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    .btn-delete {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .btn-delete:hover {
+        background: var(--danger);
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--gray-100);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        color: var(--gray-500);
+        font-size: 32px;
+    }
+
+    .empty-state h4 {
+        font-size: 18px;
+        color: var(--dark);
+        margin-bottom: 8px;
+    }
+
+    .empty-state p {
+        color: var(--gray-600);
+        max-width: 400px;
+        margin: 0 auto 24px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-container {
+            padding: 16px;
+        }
+        
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .table-header {
+            flex-direction: column;
+            gap: 16px;
+            align-items: flex-start;
+        }
+        
+        .dataTable {
+            min-width: 800px;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .btn-action {
+            justify-content: center;
+        }
+    }
+
+    /* Filter Section */
+    .filter-section {
+        background: var(--white);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        margin-bottom: 24px;
+    }
+
+    .filter-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .filter-header h4 {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .filter-form {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+    }
+
+    .form-group {
+        margin-bottom: 0;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--gray-700);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .form-control, .form-select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--gray-300);
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--dark);
+        background: var(--white);
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+
+    .btn-filter {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-filter:hover {
+        background: #3a56d4;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+    }
+
+    .btn-clear {
+        background: var(--gray-200);
+        color: var(--gray-700);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-clear:hover {
+        background: var(--gray-300);
+    }
+</style>
+
+<div class="page-container">
+    <!-- Header -->
     <div class="page-header">
-        <div class="row align-items-center">
-            <div class="col">
-                <h1 class="h3 mb-0">Payroll Runs</h1>
-                <p class="text-muted mb-0">Manage payroll processing and runs</p>
+        <div>
+            <h1>
+                <i class="fas fa-calculator"></i>
+                Payroll Runs
+            </h1>
+            <p class="page-subtitle">Manage payroll processing and runs</p>
+        </div>
+        <a href="{% url 'create_payroll_run' %}" class="btn-primary">
+            <i class="fas fa-plus"></i>
+            Create Payroll Run
+        </a>
+    </div>
+
+    <!-- Stats Summary -->
+    <div class="stats-grid">
+        <div class="stat-card total">
+            <div class="stat-value" id="totalRuns">
+                {{ payroll_runs|length }}
             </div>
-            <div class="col-auto">
-                <a href="{% url 'create_payroll_run' %}" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i>Create Payroll Run
-                </a>
+            <div class="stat-label">Total Payroll Runs</div>
+            <div class="stat-icon total">
+                <i class="fas fa-file-invoice-dollar"></i>
+            </div>
+        </div>
+
+        <div class="stat-card draft">
+            <div class="stat-value" id="draftRuns">
+                {{ draft_count }}
+            </div>
+            <div class="stat-label">Draft Runs</div>
+            <div class="stat-icon draft">
+                <i class="fas fa-edit"></i>
+            </div>
+        </div>
+
+        <div class="stat-card processing">
+            <div class="stat-value" id="processingRuns">
+                {{ processing_count }}
+            </div>
+            <div class="stat-label">Processing</div>
+            <div class="stat-icon processing">
+                <i class="fas fa-sync-alt"></i>
+            </div>
+        </div>
+
+        <div class="stat-card completed">
+            <div class="stat-value" id="completedRuns">
+                {{ completed_count }}
+            </div>
+            <div class="stat-label">Completed</div>
+            <div class="stat-icon completed">
+                <i class="fas fa-check-circle"></i>
             </div>
         </div>
     </div>
 
-    <!-- Payroll Runs List -->
-    <div class="custom-card">
-        <div class="card-header">
-            <h5 class="card-title mb-0">Payroll Runs</h5>
+    <!-- Filters -->
+    <div class="filter-section">
+        <div class="filter-header">
+            <h4>
+                <i class="fas fa-filter"></i>
+                Filter Runs
+            </h4>
         </div>
-        <div class="card-body">
-            {% if payroll_runs %}
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Run Name</th>
-                            <th>Period</th>
-                            <th>Status</th>
-                            <th>Employees</th>
-                            <th>Total Amount</th>
-                            <th>Processed By</th>
-                            <th>Processed At</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for run in payroll_runs %}
-                        <tr>
-                            <td class="fw-bold">{{ run.name }}</td>
-                            <td>{{ run.get_month_name }} {{ run.payroll_year }}</td>
-                            <td>
-                                <span class="badge 
-                                    {% if run.status == 'draft' %}bg-secondary
-                                    {% elif run.status == 'processing' %}bg-warning
-                                    {% elif run.status == 'completed' %}bg-success
-                                    {% else %}bg-danger{% endif %}">
-                                    {{ run.get_status_display }}
-                                </span>
-                            </td>
-                            <td>{{ run.total_employees }}</td>
-                            <td class="fw-bold text-success">₹{{ run.total_amount }}</td>
-                            <td>{{ run.processed_by|default:"-" }}</td>
-                            <td>
-                                {% if run.processed_at %}
-                                {{ run.processed_at|date:"d M Y H:i" }}
-                                {% else %}
-                                -
-                                {% endif %}
-                            </td>
-                            <td>
-                                <div class="btn-group">
-                                    <a href="{% url 'view_payroll_run' run.id %}" class="btn btn-outline-primary btn-sm">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    {% if run.status == 'draft' %}
-                                    <a href="{% url 'process_payroll_run' run.id %}" class="btn btn-outline-success btn-sm" 
-                                       onclick="return confirm('Process this payroll run?')">
-                                        <i class="fas fa-play"></i>
-                                    </a>
-                                    {% endif %}
-                                    {% if run.status == 'draft' %}
-                                    <form method="post" action="{% url 'delete_payroll_run' run.id %}" class="d-inline" 
-                                          onsubmit="return confirm('Delete this payroll run?')">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-outline-danger btn-sm">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <div class="filter-form">
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-search"></i>
+                    Search
+                </label>
+                <input type="text" 
+                       class="form-control" 
+                       id="searchInput" 
+                       placeholder="Search by run name, processed by...">
             </div>
+
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-tag"></i>
+                    Status
+                </label>
+                <select class="form-select" id="statusSelect">
+                    <option value="">All Status</option>
+                    <option value="draft">Draft</option>
+                    <option value="processing">Processing</option>
+                    <option value="completed">Completed</option>
+                    <option value="failed">Failed</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-calendar"></i>
+                    Month
+                </label>
+                <select class="form-select" id="monthSelect">
+                    <option value="">All Months</option>
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-calendar"></i>
+                    Year
+                </label>
+                <input type="number" 
+                       class="form-control" 
+                       id="yearInput" 
+                       placeholder="Year"
+                       min="2020"
+                       max="{% now 'Y' %}">
+            </div>
+
+            <div class="form-group" style="display: flex; gap: 10px; align-items: flex-end;">
+                <button type="button" class="btn-clear" id="clearBtn">
+                    <i class="fas fa-eraser"></i>
+                    Clear
+                </button>
+                <button type="button" class="btn-filter" id="filterBtn">
+                    <i class="fas fa-search"></i>
+                    Filter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Table -->
+    <div class="table-card">
+        <div class="table-header">
+            <h3>
+                <i class="fas fa-list"></i>
+                Payroll Runs
+                <span class="table-count" id="recordsCount">({{ payroll_runs|length }} runs)</span>
+            </h3>
+        </div>
+        
+        <div class="table-container">
+            {% if payroll_runs %}
+            <table class="dataTable" id="payrollRunsTable">
+                <thead>
+                    <tr>
+                        <th>Run Name</th>
+                        <th>Period</th>
+                        <th>Status</th>
+                        <th>Employees</th>
+                        <th>Total Amount</th>
+                        <th>Processed By</th>
+                        <th>Processed At</th>
+                        <th style="text-align: center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for run in payroll_runs %}
+                    <tr>
+                        <!-- Run Name -->
+                        <td>
+                            <div class="run-name">{{ run.name }}</div>
+                        </td>
+                        
+                        <!-- Period -->
+                        <td>
+                            <div class="period-display">
+                                <div class="period-month">{{ run.get_month_name }}</div>
+                                <div class="period-year">{{ run.payroll_year }}</div>
+                            </div>
+                        </td>
+                        
+                        <!-- Status -->
+                        <td>
+                            {% if run.status == 'draft' %}
+                            <span class="status-badge badge-draft">
+                                <i class="fas fa-edit"></i>
+                                {{ run.get_status_display }}
+                            </span>
+                            {% elif run.status == 'processing' %}
+                            <span class="status-badge badge-processing">
+                                <i class="fas fa-sync-alt fa-spin"></i>
+                                {{ run.get_status_display }}
+                            </span>
+                            {% elif run.status == 'completed' %}
+                            <span class="status-badge badge-completed">
+                                <i class="fas fa-check-circle"></i>
+                                {{ run.get_status_display }}
+                            </span>
+                            {% else %}
+                            <span class="status-badge badge-failed">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ run.get_status_display }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Employees -->
+                        <td>
+                            <span class="employees-count">
+                                <i class="fas fa-users"></i>
+                                {{ run.total_employees }}
+                            </span>
+                        </td>
+                        
+                        <!-- Total Amount -->
+                        <td>
+                            <div class="amount-display">
+                                ₹{{ run.total_amount }}
+                                <span class="amount-label">Total</span>
+                            </div>
+                        </td>
+                        
+                        <!-- Processed By -->
+                        <td>
+                            <div class="processed-info">
+                                <div class="processed-by">
+                                    {{ run.processed_by|default:"Not processed" }}
+                                </div>
+                            </div>
+                        </td>
+                        
+                        <!-- Processed At -->
+                        <td>
+                            {% if run.processed_at %}
+                            <div class="processed-info">
+                                <div class="processed-at">
+                                    {{ run.processed_at|date:"d M Y" }}
+                                </div>
+                                <div class="processed-at">
+                                    {{ run.processed_at|date:"H:i" }}
+                                </div>
+                            </div>
+                            {% else %}
+                            <span style="color: var(--gray-500); font-style: italic;">-</span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Actions -->
+                        <td style="text-align: center;">
+                            <div class="action-buttons">
+                                <a href="{% url 'view_payroll_run' run.id %}" 
+                                   class="btn-action btn-view" 
+                                   title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                    View
+                                </a>
+                                
+                                {% if run.status == 'draft' %}
+                                <a href="{% url 'process_payroll_run' run.id %}" 
+                                   class="btn-action btn-process" 
+                                   title="Process Run"
+                                   onclick="return confirmProcess('{{ run.name }}')">
+                                    <i class="fas fa-play"></i>
+                                    Process
+                                </a>
+                                {% endif %}
+                                
+                                {% if run.status == 'draft' %}
+                                <form method="post" 
+                                      action="{% url 'delete_payroll_run' run.id %}" 
+                                      class="d-inline delete-form">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            class="btn-action btn-delete" 
+                                            title="Delete Run"
+                                            onclick="return confirmDelete('{{ run.name }}')">
+                                        <i class="fas fa-trash"></i>
+                                        Delete
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
             {% else %}
-            <div class="text-center py-5">
-                <i class="fas fa-cogs fa-3x text-muted mb-3"></i>
-                <h4 class="text-muted">No Payroll Runs</h4>
-                <p class="text-muted">Get started by creating your first payroll run.</p>
-                <a href="{% url 'create_payroll_run' %}" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i>Create First Payroll Run
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <h4>No Payroll Runs Found</h4>
+                <p>Get started by creating your first payroll run to process employee salaries.</p>
+                <a href="{% url 'create_payroll_run' %}" class="btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Create First Payroll Run
                 </a>
             </div>
             {% endif %}
         </div>
     </div>
 </div>
+
+<!-- Include DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+
+<!-- Include jQuery and DataTables JS -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+
+<script>
+// Custom filtering function for DataTables
+function applyFilters() {
+    const table = $('#payrollRunsTable').DataTable();
+    
+    // Get filter values
+    const status = document.getElementById('statusSelect').value;
+    const month = document.getElementById('monthSelect').value;
+    const year = document.getElementById('yearInput').value;
+    const search = document.getElementById('searchInput').value;
+    
+    // Combined filter function
+    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+        const row = table.row(dataIndex).data();
+        if (!row) return true;
+        
+        // Status filter (column 2)
+        if (status) {
+            // Get status from the status badge in column 2
+            const statusCell = table.cell(dataIndex, 2).node();
+            if (statusCell) {
+                const statusText = statusCell.textContent.toLowerCase();
+                const statusMap = {
+                    'draft': 'draft',
+                    'processing': 'processing', 
+                    'completed': 'completed',
+                    'failed': 'failed'
+                };
+                
+                // Check if status matches
+                let rowStatus = '';
+                if (statusText.includes('draft')) rowStatus = 'draft';
+                else if (statusText.includes('processing')) rowStatus = 'processing';
+                else if (statusText.includes('completed')) rowStatus = 'completed';
+                else if (statusText.includes('failed')) rowStatus = 'failed';
+                
+                if (rowStatus !== status) {
+                    return false;
+                }
+            }
+        }
+        
+        // Month filter - extract month from period column (data[1])
+        if (month) {
+            const periodText = row[1].toLowerCase();
+            const monthNames = ['january', 'february', 'march', 'april', 'may', 'june', 
+                               'july', 'august', 'september', 'october', 'november', 'december'];
+            const monthName = monthNames[parseInt(month) - 1];
+            if (!periodText.includes(monthName)) {
+                return false;
+            }
+        }
+        
+        // Year filter - extract year from period column
+        if (year && !row[1].includes(year)) {
+            return false;
+        }
+        
+        // Search filter - search across multiple columns
+        if (search) {
+            const searchLower = search.toLowerCase();
+            const runName = row[0].toLowerCase();
+            const statusText = row[2].toLowerCase();
+            const processedBy = row[5]?.toLowerCase() || '';
+            
+            if (!runName.includes(searchLower) && 
+                !statusText.includes(searchLower) && 
+                !processedBy.includes(searchLower)) {
+                return false;
+            }
+        }
+        
+        return true;
+    });
+    
+    // Redraw the table
+    table.draw();
+    $.fn.dataTable.ext.search.pop(); // Remove the filter function
+    
+    // Update statistics
+    updateStatistics();
+}
+
+// Function to update statistics
+function updateStatistics() {
+    const table = $('#payrollRunsTable').DataTable();
+    const visibleRows = table.rows({ search: 'applied' }).data().toArray();
+    
+    if (visibleRows.length === 0) {
+        document.getElementById('totalRuns').textContent = '0';
+        document.getElementById('draftRuns').textContent = '0';
+        document.getElementById('processingRuns').textContent = '0';
+        document.getElementById('completedRuns').textContent = '0';
+        document.getElementById('recordsCount').textContent = '(0 runs)';
+        return;
+    }
+    
+    // Count statuses
+    let draftCount = 0;
+    let processingCount = 0;
+    let completedCount = 0;
+    
+    visibleRows.forEach((row, index) => {
+        const statusCell = table.cell(index, 2).node();
+        if (statusCell) {
+            const statusText = statusCell.textContent.toLowerCase();
+            if (statusText.includes('draft')) draftCount++;
+            else if (statusText.includes('processing')) processingCount++;
+            else if (statusText.includes('completed')) completedCount++;
+        }
+    });
+    
+    // Update display
+    document.getElementById('totalRuns').textContent = visibleRows.length.toLocaleString();
+    document.getElementById('draftRuns').textContent = draftCount.toLocaleString();
+    document.getElementById('processingRuns').textContent = processingCount.toLocaleString();
+    document.getElementById('completedRuns').textContent = completedCount.toLocaleString();
+    document.getElementById('recordsCount').textContent = '(' + visibleRows.length + ' runs)';
+}
+
+// Clear filters function
+function clearFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('statusSelect').value = '';
+    document.getElementById('monthSelect').value = '';
+    document.getElementById('yearInput').value = '';
+    
+    const table = $('#payrollRunsTable').DataTable();
+    table.search('').draw();
+    updateStatistics();
+}
+
+// Document ready function
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize DataTable
+    const table = $('#payrollRunsTable').DataTable({
+        dom: '<"top"<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>>rt<"bottom"<"row"<"col-sm-12 col-md-6"i><"col-sm-12 col-md-6"p>>><"clear">',
+        buttons: [
+            {
+                extend: 'copy',
+                className: 'btn btn-sm',
+                text: '<i class="fas fa-copy"></i> Copy'
+            },
+            {
+                extend: 'excel',
+                className: 'btn btn-sm',
+                text: '<i class="fas fa-file-excel"></i> Excel',
+                title: 'Payroll Runs Report'
+            },
+            {
+                extend: 'pdf',
+                className: 'btn btn-sm',
+                text: '<i class="fas fa-file-pdf"></i> PDF',
+                title: 'Payroll Runs Report'
+            },
+            {
+                extend: 'print',
+                className: 'btn btn-sm',
+                text: '<i class="fas fa-print"></i> Print'
+            }
+        ],
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        order: [[6, 'desc']], // Sort by processed date
+        responsive: true,
+        language: {
+            search: "Search:",
+            lengthMenu: "Show _MENU_ entries",
+            info: "Showing _START_ to _END_ of _TOTAL_ entries",
+            infoEmpty: "Showing 0 to 0 of 0 entries",
+            infoFiltered: "(filtered from _MAX_ total entries)",
+            zeroRecords: "No matching records found",
+            paginate: {
+                first: "First",
+                last: "Last",
+                next: "Next",
+                previous: "Previous"
+            }
+        }
+    });
+    
+    // Set current year as default
+    const currentYear = new Date().getFullYear();
+    document.getElementById('yearInput').value = currentYear;
+    
+    // Event listeners
+    document.getElementById('filterBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        applyFilters();
+    });
+    
+    document.getElementById('clearBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        clearFilters();
+    });
+    
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            applyFilters();
+        }
+    });
+    
+    // Add debounced search
+    let searchTimeout;
+    document.getElementById('searchInput').addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(applyFilters, 300);
+    });
+    
+    // Initialize statistics
+    updateStatistics();
+});
+
+// Confirmation functions (keep existing)
+window.confirmProcess = function(runName) {
+    return confirm(`Are you sure you want to process the payroll run "${runName}"?`);
+};
+
+window.confirmDelete = function(runName) {
+    return confirm(`Are you sure you want to delete the payroll run "${runName}"? This action cannot be undone.`);
+};
+</script>
 {% endblock %}

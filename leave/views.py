@@ -59,7 +59,7 @@ def leave_dashboard(request):
         pass
     
     # ✅ Role-based employee filtering for statistics
-    if user_role in ['ADMIN', 'HR', 'SUPER ADMIN','TL']:
+    if user_role in ['ADMIN', 'HR', 'SUPER ADMIN']:
         total_employees = Employee.objects.count()
     elif user_role == 'BRANCH MANAGER':
         try:
@@ -72,16 +72,24 @@ def leave_dashboard(request):
                 total_employees = 0
         except Employee.DoesNotExist:
             total_employees = 0
-    elif user_role == 'MANAGER':
-        # Existing manager logic
+    elif user_role in ['MANAGER','TL']:
+        # Get the current manager's employee record
+        current_manager = Employee.objects.get(email=user_email)
+           
+        # Filter by reporting_manager_id OR by reporting_manager name (fallback)
         total_employees = Employee.objects.filter(
-            department=request.session.get('user_department')
-        ).count()
+             Q(reporting_manager_id=current_manager.id) |
+                Q(reporting_manager__icontains=current_manager.first_name)
+            ).order_by('first_name').count()
+        # Existing manager logic
+        # total_employees = Employee.objects.filter(
+        #     department=request.session.get('user_department')
+        # ).count()
     else:
         total_employees = 0
     
     # Today Present (employees not on leave today)
-    if user_role in ['ADMIN', 'HR', 'SUPER ADMIN','TL']:
+    if user_role in ['ADMIN', 'HR', 'SUPER ADMIN']:
         employees_on_leave_today = Leave.objects.filter(
             start_date__lte=today,
             end_date__gte=today,
@@ -101,13 +109,26 @@ def leave_dashboard(request):
                 employees_on_leave_today = []
         except Employee.DoesNotExist:
             employees_on_leave_today = []
-    elif user_role == 'MANAGER':
-        employees_on_leave_today = Leave.objects.filter(
-            start_date__lte=today,
-            end_date__gte=today,
-            status='approved',
-            employee__department=request.session.get('user_department')
-        ).values_list('employee_id', flat=True)
+    elif user_role in ['MANAGER','TL']:
+        try:
+            # FIX: Get the current manager's employee record
+            current_manager = Employee.objects.get(email=user_email)
+            
+            # FIX: Get team members using the SAME filter as total_employees
+            manager_team_qs = Employee.objects.filter(
+                Q(reporting_manager_id=current_manager.id) |
+                Q(reporting_manager__icontains=current_manager.first_name)
+            )
+            
+            # Get approved leaves for these team members today
+            employees_on_leave_today = Leave.objects.filter(
+                start_date__lte=today,
+                end_date__gte=today,
+                status='approved',
+                employee__in=manager_team_qs
+            ).values_list('employee_id', flat=True)
+        except Employee.DoesNotExist:
+            employees_on_leave_today = []
     else:
         employees_on_leave_today = []
         
@@ -170,6 +191,47 @@ def leave_dashboard(request):
         if from_date_db > to_date_db:
             filter_error = "From date cannot be greater than To date"
     
+    # ✅ employees_on_leave_today should also count from from_date to to_date
+    if not filter_error:
+        # safety: if one side is missing, default it to today (shouldn't happen with your logic)
+        if not from_date_db:
+            from_date_db = today
+        if not to_date_db:
+            to_date_db = today
+
+        # base overlap condition for the selected range
+        base_filter = Q(
+            start_date__lte=to_date_db,
+            end_date__gte=from_date_db,
+            status='approved'
+        )
+
+        if user_role in ['ADMIN', 'HR', 'SUPER ADMIN']:
+            employees_on_leave_today_qs = Leave.objects.filter(base_filter)
+        elif user_role == 'BRANCH MANAGER':
+            if current_branch_manager_location:
+                employees_on_leave_today_qs = Leave.objects.filter(
+                    base_filter,
+                    employee__location__iexact=current_branch_manager_location
+                )
+            else:
+                employees_on_leave_today_qs = Leave.objects.none()
+        elif user_role in ['MANAGER','TL']:
+            employees_on_leave_today_qs = Leave.objects.filter(
+                base_filter,
+                employee__department=request.session.get('user_department')
+            )
+        else:
+            employees_on_leave_today_qs = Leave.objects.none()
+
+        employees_on_leave_today = employees_on_leave_today_qs.values_list(
+            'employee_id', flat=True
+        )
+    else:
+        employees_on_leave_today = []
+
+    today_present = total_employees - len(set(employees_on_leave_today))
+    today_present_percentage = int((today_present / total_employees) * 100) if total_employees > 0 else 0
     
      # Get current user employee object for exclusion
     current_user_emp = None
@@ -187,8 +249,15 @@ def leave_dashboard(request):
         recent_leaves = recent_leaves.exclude(employee=current_user_emp)
         
         
-    if user_role == 'MANAGER'or user_role == 'TL' and request.session.get('user_department'):
-        recent_leaves = recent_leaves.filter(employee__department=request.session.get('user_department'))
+    if user_role in ['MANAGER', 'TL']:
+      
+        current_manager = Employee.objects.get(email=user_email)
+
+        manager_team_qs = Employee.objects.filter(
+             Q(reporting_manager_id=current_manager.id) |
+                Q(reporting_manager__icontains=current_manager.first_name)
+            )
+        recent_leaves = recent_leaves.filter(employee__in=list(manager_team_qs))
     elif user_role == 'BRANCH MANAGER' and current_branch_manager_location:
         recent_leaves = recent_leaves.filter(employee__location__iexact=current_branch_manager_location)
 
@@ -238,7 +307,7 @@ def leave_dashboard(request):
     # INTEGRATED PLANNED vs SHORT-NOTICE LOGIC (FILTERED)
     # =============================================
     # Base queryset for approved leaves (role-based)
-    if user_role in ['ADMIN', 'HR', 'SUPER ADMIN','TL']:
+    if user_role in ['ADMIN', 'HR', 'SUPER ADMIN']:
         planned_unplanned_base = Leave.objects.filter(
             status='approved',
             applied_date__isnull=False
@@ -256,7 +325,7 @@ def leave_dashboard(request):
                 planned_unplanned_base = Leave.objects.none()
         except Employee.DoesNotExist:
             planned_unplanned_base = Leave.objects.none()
-    elif user_role == 'MANAGER':
+    elif user_role in ['MANAGER','TL']:
         planned_unplanned_base = Leave.objects.filter(
             status='approved',
             applied_date__isnull=False,
@@ -316,7 +385,7 @@ def leave_dashboard(request):
     # PENDING REQUESTS WITH DATE FILTERING + ROLE-BASED (FIXED)
     # -> Now mirrors the table's date/branch scope so counts align
     # =============================================
-    if user_role in ['ADMIN', 'HR', 'SUPER ADMIN','TL']:
+    if user_role in ['ADMIN', 'HR', 'SUPER ADMIN']:
         pending_base = Leave.objects.filter(
             status__in=['pending', 'new']
         ).exclude(status='withdrawn')
@@ -332,11 +401,14 @@ def leave_dashboard(request):
                 pending_base = Leave.objects.none()
         except Employee.DoesNotExist:
             pending_base = Leave.objects.none()
-    elif user_role == 'MANAGER':
+    elif user_role in ['MANAGER','TL']:
+        current_manager = Employee.objects.get(email=user_email)
         pending_base = Leave.objects.filter(
             status__in=['pending', 'new'],
-            employee__department=request.session.get('user_department')
-        ).exclude(status='withdrawn')
+            employee__in=Employee.objects.filter(
+            Q(reporting_manager_id=current_manager.id) |
+            Q(reporting_manager__icontains=current_manager.first_name)
+        )).exclude(status='withdrawn')
     else:
         pending_base = Leave.objects.none()
 
@@ -790,6 +862,32 @@ def apply_leave(request):
             # Check if requested leave type is Optional Leave
             is_optional_leave_type = 'optional' in requested_leave_type.name.lower()
             
+            # ============================================
+            # OPTIONAL LEAVE STRICT VALIDATION (SINGLE DAY ONLY)
+            # ============================================
+            if is_optional_leave_type:
+                # Optional Leave must be for ONE DAY only
+                if start_date_obj != end_date_obj:
+                    messages.error(
+                        request,
+                        "❌ Optional Leave can be applied for only ONE date. "
+                        "Please select a single optional holiday."
+                    )
+                    return redirect('apply_leave')
+
+                # Ensure selected date is actually an optional holiday
+                optional_dates = {
+                    opt['date'] for opt in days_calculation.get('optional_holidays', [])
+                }
+
+                if start_date_obj not in optional_dates:
+                    messages.error(
+                        request,
+                        "❌ The selected date is not an Optional Holiday. "
+                        "Please choose a valid optional holiday."
+                    )
+                    return redirect('apply_leave')
+
             # SPECIAL VALIDATION: If Optional Leave type is selected, check if dates contain optional holidays
             if is_optional_leave_type and not is_half_day:
                 # Get optional holidays for the date range
@@ -1139,7 +1237,7 @@ def apply_leave(request):
                             start_date=start_date_obj,
                             end_date=end_date_obj,
                             days_requested=optional_days_for_leave_type,
-                            reason=f"{reason} - Using Optional Leave type",
+                            reason=f"{reason}",
                             status='pending',
                             applied_date=timezone.now(),
                             is_half_day=False,
@@ -1395,6 +1493,57 @@ def apply_leave(request):
     return render(request, 'leave/apply_leave.html', context)
 
 
+def get_existing_leaves(request):
+    user_email = request.session.get('user_email')
+    
+    try:
+        employee = Employee.objects.get(email=user_email)
+        
+        # Get existing pending and approved leaves
+        existing_leaves = Leave.objects.filter(
+            employee=employee,
+            status__in=['pending', 'approved']
+        ).select_related('leave_type').values(
+            'id',
+            'start_date',
+            'end_date',
+            'leave_type__name',
+            'status',
+            'is_half_day',
+            'half_day_period'
+        )
+        
+        leaves_list = list(existing_leaves)
+        
+        # Format dates as ISO strings (YYYY-MM-DD)
+        for leave in leaves_list:
+            leave['leave_type_name'] = leave['leave_type__name']
+            del leave['leave_type__name']
+            
+            # Convert date objects to ISO format strings
+            leave['start_date'] = leave['start_date'].isoformat() if leave['start_date'] else None
+            leave['end_date'] = leave['end_date'].isoformat() if leave['end_date'] else None
+            
+            # Debug log
+            print(f"Existing leave: {leave['leave_type_name']} from {leave['start_date']} to {leave['end_date']} (status: {leave['status']})")
+        
+        return JsonResponse({
+            'success': True,
+            'leaves': leaves_list
+        })
+        
+    except Employee.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Employee not found'
+        })
+    except Exception as e:
+        print(f"Error in get_existing_leaves: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+        
 def get_optional_holidays_api(request):
     """API endpoint to get optional holidays for a date range"""
     start_date = request.GET.get('start_date')
@@ -1434,6 +1583,9 @@ def approve_leave(request, leave_id):
     if not request.session.get('user_authenticated'):
         return redirect('login')
     
+    updated_by = Employee.objects.get(email=request.session.get('user_email'))
+    now = timezone.now()
+    
     if request.method == 'POST':
         leave = get_object_or_404(Leave, id=leave_id)
         action = request.POST.get('action')
@@ -1454,14 +1606,15 @@ def approve_leave(request, leave_id):
                 )
                 
                 leave.status = 'approved'
-                leave.approved_date = timezone.now()
+                leave.approved_date = now
                 leave.is_unpaid = True  # Ensure flag is set
+                leave.approved_by = updated_by
                 leave.save()
                 
                 messages.success(
                     request, 
                     f'✅ Unpaid leave approved for {leave.employee.first_name} {leave.employee.last_name}. '
-                    f'Salary deduction will apply for {int(leave.days_requested)} days.'
+                    f'Salary deduction will apply for {leave.days_requested} days.'
                 )
                 
             else:
@@ -1496,7 +1649,8 @@ def approve_leave(request, leave_id):
                         return redirect(request.META.get('HTTP_REFERER', 'leave_dashboard'))
                 
                 leave.status = 'approved'
-                leave.approved_date = timezone.now()
+                leave.approved_date = now
+                leave.approved_by = updated_by
                 leave.save()
                 
                 messages.success(
@@ -1515,7 +1669,7 @@ def approve_leave(request, leave_id):
                 )
                 
                 if success:
-                    messages.info(request, f'Leave balance restored for {int(leave.days_requested)} days.')
+                    messages.info(request, f'Leave balance restored for {leave.days_requested} days.')
                 else:
                     messages.warning(
                         request, 
@@ -1523,7 +1677,8 @@ def approve_leave(request, leave_id):
                     )
             
             leave.status = 'rejected'
-            leave.approved_date = timezone.now()
+            leave.approved_date = now
+            leave.approved_by = updated_by
             leave.rejection_reason = rejection_reason
             leave.save()
             
@@ -1540,6 +1695,8 @@ def update_leave_status(request, leave_id):
         return redirect('login')
     
     leave = get_object_or_404(Leave, id=leave_id)
+    updated_by = Employee.objects.get(email=request.session.get('user_email'))
+    now = timezone.now()
     
     if request.method == 'POST':
         new_status = request.POST.get('status')
@@ -1566,7 +1723,7 @@ def update_leave_status(request, leave_id):
                 )
                     
                 if success:
-                    messages.info(request, f'Leave balance restored for {int(leave.days_requested)} days.')
+                    messages.info(request, f'Leave balance restored for {leave.days_requested} days.')
                     print(f"DEBUG: Balance restored successfully")
                 else:
                     messages.warning(request, 'Leave status changed but there was an issue restoring the balance.')
@@ -1592,7 +1749,7 @@ def update_leave_status(request, leave_id):
                     )
                         
                     if success:
-                        messages.info(request, f'Leave balance deducted for {int(leave.days_requested)} days.')
+                        messages.info(request, f'Leave balance deducted for {leave.days_requested} days.')
                     else:
                         messages.error(request, 'Error deducting leave balance. Status not changed.')
                         return redirect('edit_leave_details', leave_id=leave_id)
@@ -1604,11 +1761,13 @@ def update_leave_status(request, leave_id):
             # Update leave record
             leave.status = new_status
             leave.rejection_reason = rejection_reason
+            leave.approved_by = updated_by
+            leave.approved_date = now
             
             if new_status == 'approved':
                 leave.approved_date = timezone.now()
             elif new_status in ['rejected', 'pending', 'new']:
-                leave.approved_date = None
+                leave.approved_date = timezone.now()
             
             leave.save()
             

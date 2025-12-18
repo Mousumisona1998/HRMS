@@ -1,500 +1,1302 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Attendance Report - HR System{% endblock %}
+{% block title %}Attendance Report • HR System{% endblock %}
 
 {% block content %}
-<!-- Include DataTables CSS -->
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
-
 <style>
-    /* Mobile responsiveness */
-    @media (max-width: 768px) {
-        .datatable-controls .row {
-            flex-direction: column;
-        }
-        
-        .datatable-controls .col-md-3,
-        .datatable-controls .col-md-2 {
-            flex: 1 1 100% !important;
-            min-width: 100% !important;
-            margin-bottom: 10px;
-        }
-        
-        .datatable-controls .d-flex {
-            flex: 1 1 100% !important;
-            min-width: 100% !important;
-        }
-        
-        .header-actions {
-            flex-direction: column;
-            gap: 15px;
-            align-items: flex-start !important;
-        }
-        
-        .header-actions .btn {
-            width: 100%;
-            text-align: center;
-        }
-        
-        /* Ensure DataTable controls are visible on mobile */
-        .dataTables_wrapper .dataTables_length,
-        .dataTables_wrapper .dataTables_filter {
-            float: none;
-            text-align: left;
-            margin-bottom: 10px;
-        }
-        
-        .dataTables_wrapper .dataTables_length select,
-        .dataTables_wrapper .dataTables_filter input {
-            width: 100%;
-            margin-left: 0;
-        }
-       
+    :root {
+        --primary: #4361ee;
+        --primary-light: #4895ef;
+        --secondary: #7209b7;
+        --accent: #4cc9f0;
+        --warning: #f72585;
+        --success: #10b981;
+        --dark: #1a1a2e;
+        --light: #f8f9fa;
+        --gray-100: #f8f9fa;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-400: #ced4da;
+        --gray-500: #adb5bd;
+        --gray-600: #6c757d;
+        --gray-700: #495057;
+        --gray-800: #343a40;
+        --gray-900: #212529;
+        --white: #ffffff;
+        --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+        --hover-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
     }
 
-    @media (max-width: 575px) {
-        .table-responsive {
-           
-            -webkit-overflow-scrolling: touch;
-        }
-        
-        /* Ensure table has minimum width for horizontal scrolling */
-        #attendanceReportTable {
-            min-width: 1000px;
-        }
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
     }
 
-    /* Keep your existing styles */
-    .text-danger i {
-        color: #e74c3c;
-        font-size: 1.1rem;
-        transition: transform 0.2s ease;
+    body {
+        background-color: #f8fafc;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: var(--gray-800);
     }
 
-    .text-danger i:hover {
-        transform: scale(1.2);
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
     }
 
-    .custom-card {
-        background: #ffffff;
+    /* Header */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .page-header h1 {
+        font-size: 30px;
+        font-weight: 700;
+        color: var(--dark);
+        letter-spacing: -0.5px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .page-header h1 i {
+        color: var(--primary);
+        background: rgba(67, 97, 238, 0.1);
+        padding: 12px;
         border-radius: 12px;
-        border: 1px solid #e5e7eb;
-        overflow: hidden;
     }
 
-    .table-responsive {
+    .page-subtitle {
+        font-size: 16px;
+        color: var(--gray-600);
+        margin-top: 4px;
+        max-width: 600px;
+    }
+
+    .date-badge {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        padding: 10px 20px;
         border-radius: 12px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Upload Card */
+    .upload-card {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        margin-bottom: 24px;
+    }
+
+    .upload-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .upload-card-header h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .upload-container {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    /* Form Controls */
+    .form-select-sm {
+        border: 1px solid var(--gray-300);
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 14px;
+        color: var(--dark);
+        background: var(--white);
+        height: 42px;
+        /* min-width: 180px; */
+    }
+
+    .form-select-sm:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+
+    .form-control-sm {
+        border: 1px solid var(--gray-300);
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 14px;
+        color: var(--dark);
+        background: var(--white);
+        height: 42px;
+    }
+
+    /* Filter Container */
+    .filter-container {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+    }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .filter-group label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--gray-700);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        padding-top: 16px;
+        border-top: 1px solid var(--gray-200);
+    }
+
+
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #3a56d4;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+    }
+
+    .btn-secondary {
+        background: var(--gray-200);
+        color: var(--gray-700);
+    }
+
+    .btn-secondary:hover {
+        background: var(--gray-300);
+        transform: translateY(-1px);
+    }
+
+    .btn-success {
+        background: var(--success);
+        color: white;
+    }
+
+    .btn-success:hover {
+        background: #0da271;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-info {
+        background: var(--accent);
+        color: white;
+    }
+
+    .btn-info:hover {
+        background: #3ab8d9;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(76, 201, 240, 0.3);
+    }
+
+    /* Table Section */
+    .table-section {
+        background: var(--white);
+        border-radius: 16px;
         overflow: hidden;
-        background: #ffffff;
-        border: 1px solid #e5e7eb;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+    }
+
+    .table-header {
+        padding: 24px;
+        border-bottom: 1px solid var(--gray-200);
+        background: var(--white);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .table-header h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .total-badge {
+        background: var(--primary);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .table-container {
+        padding: 10px;
         overflow-x: auto;
     }
-     #attendanceReportTable td, 
-  #attendanceReportTable th {
-      text-align: left !important;
-  }
-  @media (max-width: 576px) {
-    .upload-box-container {
-        flex-direction: column !important;
-        align-items: stretch !important;
-        gap: 10px !important;
+
+    .dataTable {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1200px;
     }
 
-    .upload-box-container form,
-    .upload-box-container select,
-    .upload-box-container input[type="file"],
-    .upload-box-container button {
-        width: 100% !important;
+    .dataTable thead {
+        background: var(--gray-100);
     }
 
-    input[type="file"] {
-        padding: 6px;
+    .dataTable th {
+        padding: 16px 20px;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--gray-700);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--gray-200);
+        white-space: nowrap;
     }
+
+    .dataTable tbody tr {
+        border-bottom: 1px solid var(--gray-100);
+        transition: all 0.2s ease;
+    }
+
+    .dataTable tbody tr:hover {
+        background: rgba(67, 97, 238, 0.03);
+    }
+
+    .dataTable td {
+        padding: 16px 20px;
+        font-size: 14px;
+        color: var(--gray-800);
+        vertical-align: middle;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .badge-present {
+        background: rgba(16, 185, 129, 0.1);
+        color: #065f46;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .badge-absent {
+        background: rgba(239, 68, 68, 0.1);
+        color: #b91c1c;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .badge-halfday {
+        background: rgba(245, 158, 11, 0.1);
+        color: #92400e;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .badge-lop {
+        background: rgba(168, 85, 247, 0.1);
+        color: #7c3aed;
+        border: 1px solid rgba(168, 85, 247, 0.2);
+    }
+
+    .badge-sunday {
+        background: rgba(59, 130, 246, 0.1);
+        color: #1d4ed8;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    /* Time Displays */
+    .time-display {
+        font-weight: 600;
+        padding: 6px 12px;
+        border-radius: 8px;
+        display: inline-block;
+        min-width: 100px;
+        text-align: center;
+        font-size: 13px;
+    }
+
+    .time-early {
+        background: rgba(16, 185, 129, 0.1);
+        color: #065f46;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .time-late {
+        background: rgba(239, 68, 68, 0.1);
+        color: #b91c1c;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .time-default {
+        background: rgba(249, 250, 251, 0.8);
+        color: var(--gray-700);
+        border: 1px solid var(--gray-200);
+    }
+
+    .time-out {
+        background: rgba(245, 158, 11, 0.1);
+        color: #92400e;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    /* Duration Badge */
+    .duration-badge {
+        background: rgba(67, 97, 238, 0.1);
+        color: var(--primary);
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 12px;
+        border: 1px solid rgba(67, 97, 238, 0.2);
+    }
+
+    /* Location Text */
+    .location-text {
+        font-size: 12px;
+        color: var(--gray-600);
+        line-height: 1.4;
+        max-width: 200px;
+        word-wrap: break-word;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .location-text i {
+        margin-right: 4px;
+        color: var(--primary);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--gray-100);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        color: var(--gray-500);
+        font-size: 32px;
+    }
+
+    .empty-state h4 {
+        font-size: 18px;
+        color: var(--dark);
+        margin-bottom: 8px;
+    }
+
+    .empty-state p {
+        color: var(--gray-600);
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-container {
+            padding: 16px;
+        }
+        
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+        
+        .upload-container {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .form-select-sm, .form-control-sm {
+            width: 100%;
+        }
+        
+        .filter-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .filter-actions {
+            flex-direction: column;
+        }
+        
+        .filter-actions .btn {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .table-header {
+            flex-direction: column;
+            gap: 16px;
+            align-items: flex-start;
+        }
+    }
+
+    /* File Upload */
+    .file-upload {
+        position: relative;
+        display: inline-block;
+    }
+
+    .file-upload input[type="file"] {
+        position: absolute;
+        left: 0;
+        top: 0;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+
+    .file-upload-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: var(--white);
+        border: 2px dashed var(--gray-300);
+        border-radius: 10px;
+        color: var(--gray-600);
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .file-upload-label:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    /* Loading Animation */
+    .spinner {
+        border: 3px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        border-top: 3px solid var(--primary);
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* ================= MODAL FIX ================= */
+.modal-overlay {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    display: none;
+    justify-content: center;
+    align-items: center;
+
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 9999;
 }
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-container {
+    background: #ffffff;
+    width: 100%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+body.modal-open {
+    overflow: hidden;
+}
+/* ===== Attendance Modal UI (Screenshot Match) ===== */
+
+.attendance-ui {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.info-card {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.info-card .label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6b7280;
+  letter-spacing: 0.5px;
+}
+
+.info-card h3 {
+  margin-top: 6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.info-card small {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.extra-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.timeline-item .icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.timeline-item.in .icon {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.timeline-item.out .icon {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.timeline-item p {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+/* === View Details Button (match all_attendance) === */
+.view-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.view-btn:hover {
+    background: #3a56d4;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+}
+
+/* center button in table cell */
+.dataTable td:last-child {
+    text-align: center;
+}
+/* === Modal Close Button (match all_attendance) === */
+ .modal-header {
+        padding: 24px;
+        border-bottom: 1px solid var(--gray-200);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .modal-header h3 {
+        font-size: 20px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .modal-close {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 20px;
+        transition: all 0.2s ease;
+    }
+
+    .modal-close:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: rotate(90deg);
+    }
+
+    .modal-body {
+        padding: 32px;
+    }
+
 </style>
 
-<div class="justify-content-between align-items-center page-header" style="margin-bottom: 20px;display: grid !important">
-
-    <!-- LEFT SIDE: Title -->
-    <div>
-        <h2><i class="fas fa-chart-bar"></i> Attendance Report</h2>
-        <p class="text-muted">View and manage employee attendance records</p>
+<div class="page-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1>
+                <i class="fas fa-chart-bar"></i>
+                Attendance Report
+            </h1>
+            <p class="page-subtitle">View and manage employee attendance records across all branches</p>
+        </div>
+        <div class="date-badge">
+            <i class="fas fa-calendar-alt"></i>
+            {% now "d F Y" %}
+        </div>
     </div>
 
-    <!-- RIGHT SIDE: Branch Filter + Upload Excel -->
-    <div class="card shadow-sm p-3 mb-3" style="border-radius:10px; border:1px solid #e3e6ea;">
-
-    <h6 class="fw-bold mb-3" style="font-size:15px;">
-        <i class="fas fa-file-import me-1"></i> Upload Attendance
-    </h6>
-
-    <div class="d-flex align-items-center flex-wrap upload-box-container" style="gap: 15px;">
-
-        <!-- Branch / Location Filter -->
-        <form method="GET" class="d-flex align-items-center">
-            <select name="branch" class="form-select form-select-sm" 
-                    style="width:150px; border-radius:6px; height:36px;"
-                    onchange="this.form.submit()">
-                <option value="">All Branches</option>
-                {% for br in branches %}
-                    <option value="{{ br }}" {% if br == selected_branch %}selected{% endif %}>
-                        {{ br }}
-                    </option>
-                {% endfor %}
-            </select>
-        </form>
-
-        <!-- Upload Excel -->
-       <form action="{% url 'attendance:upload_admin_attendance_excel' %}" 
-      method="POST" enctype="multipart/form-data"
-      class="d-flex align-items-center" style="gap:8px;">
-
-    {% csrf_token %}
-
-    <!-- Hidden field to pass selected branch -->
-    <input type="hidden" name="current_branch" value="{{ selected_branch }}">
-
-    <input type="file" name="attendance_file" accept=".xlsx,.xls" required
-           class="form-control form-control-sm"
-           style="width:180px; height:36px; font-size:13px; border-radius:6px;">
-
-    <button type="submit"
-            class="btn btn-info btn-sm"
-            style="background:#00a8ff; border:none; padding:8px 14px; font-weight:600; border-radius:6px; color:#fff;">
-        <i class="fas fa-upload me-1"></i> Upload Excel
-    </button>
-</form>
-
-
-    </div>
-    </div>
-
-</div>
-
-
-<!-- ✅ Filter Section -->
-<div class="datatable-controls" style="margin-bottom: 20px;">
-    <form method="GET" class="mb-3">
-        <div class="row g-3 align-items-center" style="display: flex; flex-wrap: wrap; gap: 10px;">
-
-            <!-- Search -->
-            <div class="col-md-3" style="flex: 1 1 220px; min-width: 220px;">
-                <input type="text" name="search" class="form-control" placeholder="Search employee..."
-                    value="{{ search_query }}" style="height: 42px; border-radius: 6px;">
-            </div>
-
-            <!-- Department -->
-            <!-- <div class="col-md-2" style="flex: 1 1 180px; min-width: 180px;">
-                <select name="department" class="form-select" style="height: 42px; border-radius: 6px;">
-                    <option value="">All Departments</option>
-                    {% for dept in departments %}
-                    <option value="{{ dept }}" {% if dept == selected_department %}selected{% endif %}>{{ dept }}</option>
-                    {% endfor %}
-                </select>
-            </div> -->
-
-            <div class="col-md-2">
-                <select name="branch" class="form-select" style="height: 42px; border-radius: 6px;">
+    <!-- Upload Card -->
+    <div class="upload-card">
+        <div class="upload-card-header">
+            <h3>
+                <i class="fas fa-file-import"></i>
+                Upload Attendance Records
+            </h3>
+        </div>
+        <div class="upload-container">
+            <!-- Branch Filter -->
+            <form method="GET" style="display: flex; align-items: center; gap: 12px;">
+                <select name="branch" class="form-select-sm" onchange="this.form.submit()">
                     <option value="">All Branches</option>
                     {% for br in branches %}
-                        <option value="{{ br }}" {% if br == selected_branch %}selected{% endif %}>{{ br }}</option>
+                        <option value="{{ br }}" {% if br == selected_branch %}selected{% endif %}>
+                            {{ br }}
+                        </option>
                     {% endfor %}
                 </select>
-            </div>
+            </form>
 
-           <!-- Date From -->
-                <div class="col-md-2" style="flex: 1 1 150px; min-width: 150px;">
-                    <input type="date" name="date_from" class="form-control"
-                        value="{% if date_from %}{{ date_from }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}"
-                        style="height: 42px; border-radius: 6px;">
+            <!-- Excel Upload Form -->
+            <form action="{% url 'attendance:upload_admin_attendance_excel' %}" 
+                  method="POST" 
+                  enctype="multipart/form-data"
+                  style="display: flex; align-items: center; gap: 12px;">
+                {% csrf_token %}
+                <input type="hidden" name="current_branch" value="{{ selected_branch }}">
+                
+                <div class="file-upload">
+                    <input type="file" name="attendance_file" accept=".xlsx,.xls" required>
+                    <div class="file-upload-label">
+                        <i class="fas fa-file-excel"></i>
+                        Choose Excel File
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-info">
+                    <i class="fas fa-upload"></i>
+                    Upload
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Filter Container -->
+    <div class="filter-container">
+        <form method="GET">
+            <div class="filter-grid">
+                <!-- Search -->
+                <div class="filter-group">
+                    <label for="search">
+                        <i class="fas fa-search"></i>
+                        Search Employee
+                    </label>
+                    <input type="text" 
+                           name="search" 
+                           id="search"
+                           class="form-control-sm"
+                           placeholder="Search by name or ID..."
+                           value="{{ search_query }}">
+                </div>
+
+                <!-- Branch -->
+                <div class="filter-group">
+                    <label for="branch">
+                        <i class="fas fa-building"></i>
+                        Branch
+                    </label>
+                    <select name="branch" id="branch" class="form-select-sm">
+                        <option value="">All Branches</option>
+                        {% for br in branches %}
+                            <option value="{{ br }}" {% if br == selected_branch %}selected{% endif %}>
+                                {{ br }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+               <!-- Date From -->
+                <div class="filter-group">
+                    <label for="date_from">
+                        <i class="fas fa-calendar"></i>
+                        From Date
+                    </label>
+                    <input type="text" 
+                        name="date_from" 
+                        id="date_from"
+                        class="form-control-sm date-input"
+                        placeholder="dd/mm/yyyy"
+                        value="{% if date_from %}{{ date_from }}{% else %}{{ today|date:'d/m/Y' }}{% endif %}">
                 </div>
 
                 <!-- Date To -->
-                <div class="col-md-2" style="flex: 1 1 150px; min-width: 150px;">
-                    <input type="date" name="date_to" class="form-control"
-                        value="{% if date_to %}{{ date_to }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}"
-                        style="height: 42px; border-radius: 6px;">
+                <div class="filter-group">
+                    <label for="date_to">
+                        <i class="fas fa-calendar"></i>
+                        To Date
+                    </label>
+                    <input type="text" 
+                        name="date_to" 
+                        id="date_to"
+                        class="form-control-sm date-input"
+                        placeholder="dd/mm/yyyy"
+                        value="{% if date_to %}{{ date_to }}{% else %}{{ today|date:'d/m/Y' }}{% endif %}">
                 </div>
 
-            <!-- Status Filter -->
-            <div class="col-md-2" style="flex: 1 1 160px; min-width: 160px;">
-                <select name="status_filter" class="form-select" style="height: 42px; border-radius: 6px;">
-                    <option value="">All Status</option>
-                    <option value="Present" {% if status_filter == "Present" %}selected{% endif %}>Present</option>
-                    <option value="Absent" {% if status_filter == "Absent" %}selected{% endif %}>Absent</option>
-                    <option value="Half Day" {% if status_filter == "Half Day" %}selected{% endif %}>Half Day</option>
-                    <option value="On Time" {% if status_filter == "On Time" %}selected{% endif %}>On Time</option>
-                    <option value="Late" {% if status_filter == "Late" %}selected{% endif %}>Late</option>
-                </select>
+                <!-- Status Filter -->
+                <div class="filter-group">
+                    <label for="status_filter">
+                        <i class="fas fa-filter"></i>
+                        Status
+                    </label>
+                    <select name="status_filter" id="status_filter" class="form-select-sm">
+                        <option value="">All Status</option>
+                        <option value="Present" {% if status_filter == "Present" %}selected{% endif %}>Present</option>
+                        <option value="Absent" {% if status_filter == "Absent" %}selected{% endif %}>Absent</option>
+                        <option value="Half Day" {% if status_filter == "Half Day" %}selected{% endif %}>Half Day</option>
+                        <option value="On Time" {% if status_filter == "On Time" %}selected{% endif %}>On Time</option>
+                        <option value="Late" {% if status_filter == "Late" %}selected{% endif %}>Late</option>
+                    </select>
+                </div>
             </div>
 
-            <!-- Buttons -->
-            <div class="col-md-2 d-flex" style="gap: 10px; flex: 1 1 180px; min-width: 180px;">
-                <button type="submit" class="btn btn-primary w-50"
-                    style="height: 42px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-search me-1"></i> Filter
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i>
+                    Apply Filters
                 </button>
-
-                <a href="{% url 'attendance:report' %}" class="btn btn-secondary w-50"
-                    style="height: 42px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-redo me-1"></i> Reset
+                <a href="{% url 'attendance:report' %}" class="btn btn-secondary">
+                    <i class="fas fa-redo"></i>
+                    Reset Filters
                 </a>
             </div>
+        </form>
+    </div>
 
+    <!-- Table Section -->
+    <div class="table-section">
+        <div class="table-header">
+            <h3>
+                <i class="fas fa-table"></i>
+                Attendance Records
+                <span class="total-badge" id="totalRecords">
+                    Total: {{ attendances.paginator.count }}
+                </span>
+            </h3>
+            <a href="{% url 'attendance:download_admin_report' %}?search={{ search_query }}&branch={{ selected_branch }}&date_from={{ date_from }}&date_to={{ date_to }}&status_filter={{ status_filter }}"
+               class="btn btn-success">
+                <i class="fas fa-file-excel"></i>
+                Download Report
+            </a>
         </div>
-    </form>
-</div>
-
-<!-- ✅ Card Section -->
-<div class="custom-card">
-
-   <!-- ✅ Header with Excel Upload + Download -->
-<div class="d-flex justify-content-between align-items-center mb-3 header-actions" style="width:100%;">
-
-    <div>
-        <h5 class="card-title mb-0">Attendance Records</h5>
-        <span class="badge bg-primary mt-1" id="totalRecords">Total: {{ attendances.paginator.count }}</span>
-    </div>
-
-    <div class="d-flex align-items-center" style="gap:12px;">     
-
-        <!-- Download Button -->
-        <a href="{% url 'attendance:download_admin_report' %}?search={{ search_query }}&branch={{ selected_branch }}&date_from={{ date_from }}&date_to={{ date_to }}&status_filter={{ status_filter }}"
-           class="btn btn-success btn-sm"
-           style="background:#0f9d58; border:none; padding:10px 20px; font-weight:600; border-radius:6px; color:#fff; display:flex; align-items:center;">
-            <i class="fas fa-file-excel" style="margin-right:6px;"></i> Download Report (Excel)
-        </a>
-
-    </div>
-</div>
-
-
-
-  <!-- ✅ Table Section -->
-<div class="table-responsive">
-    <table class="table align-middle text-center display nowrap" id="attendanceReportTable" style="width:100%">
-        <thead style="background-color: #f8fafc; color: #374151; font-weight: 600;">
-            <tr style="font-size: 14px; text-transform: uppercase;">
-                <th style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb;">Employee ID</th>
-                <th style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb;">Employee Name</th>
-                <th style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb;">Date</th>
-                <th style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb;">Check-In</th>
-                <th style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb; max-width: 200px;">Check-In Location</th> 
-                <th style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb;">Check-Out</th>
-                <th style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb; max-width: 200px;">Check-Out Location</th>
-                <th style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb;">Status</th>
-                <th style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb;">Duration</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            {% for attendance in attendances %}
-            <tr style="font-size: 14px; transition: background-color 0.2s ease; border-bottom: 1px solid #f1f5f9;">
-                <td style="padding: 14px 12px; color: #111827; font-weight: 500; vertical-align: middle;">{{ attendance.employee_id }}</td>
-                <td style="padding: 14px 12px; vertical-align: middle;">
-                    <a href="{% url 'employee_detail' attendance.employee_pk %}" style="color: inherit; text-decoration: none; font-weight: 500;">
-                        {{ attendance.employee_name }}
-                    </a>
-                </td>
-                <td style="color: #6b7280; padding: 14px 12px; vertical-align: middle;">{{ attendance.date|date:"d M, Y" }}</td>
-
-               <!-- ✅ Check-In -->
-                    <td style="padding: 14px 12px; vertical-align: middle;">
-                        {% if attendance.check_in %}
-                        {% if attendance.is_late %}
-                        <!-- RED for late -->
-                        <span
-                            style="background-color:#fee2e2; color:#b91c1c; font-weight:600; padding:6px 12px; border-radius:8px; min-width:85px; display:inline-block;">
-                            {{ attendance.check_in }}
-                        </span>
-                        {% else %}
-                        <!-- GREEN for on-time -->
-                        <span
-                            style="background-color:#ecfdf5; color:#065f46; font-weight:600; padding:6px 12px; border-radius:8px; min-width:85px; display:inline-block;">
-                            {{ attendance.check_in }}
-                        </span>
-                        {% endif %}
-                        {% else %}
-                        <span
-                            style="background-color:#f3f4f6; color:#9ca3af; padding:6px 12px; border-radius:8px; min-width:85px; display:inline-block;">
-                            —
-                        </span>
-                        {% endif %}
-                    </td>
-
-
-
-                      <!-- ✅ Check-In Location -->
-                        <td style="color: #6b7280; font-size: 13px; padding: 14px 12px; vertical-align: middle; max-width: 200px; text-align: left; line-height: 1.4; word-break: break-word;">
-                            {% if attendance.checkin_address != "—" %}
-                                {{ attendance.checkin_address|linebreaksbr }}
+        
+        <div class="table-container">
+            {% if attendances %}
+            <table class="dataTable" id="attendanceReportTable">
+                <thead>
+                    <tr>
+                        <th>Employee ID</th>
+                        <th>Employee Name</th>
+                        <th>Date</th>
+                        <th>Check-In</th>
+                        <th>Check-In Location</th>
+                        <th>Check-Out</th>
+                        <th>Check-Out Location</th>
+                        <th>Status</th>
+                        <th>Duration</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attendance in attendances %}
+                    <tr>
+                        <!-- Employee ID -->
+                        <td>
+                            <span style="font-weight: 600; color: var(--primary);">
+                                {{ attendance.employee_id }}
+                            </span>
+                        </td>
+                        
+                        <!-- Employee Name -->
+                        <td>
+                            <a href="{% url 'employee_detail' attendance.employee_pk %}" 
+                               style="color: var(--dark); text-decoration: none; font-weight: 500;">
+                                {{ attendance.employee_name }}
+                            </a>
+                        </td>
+                        
+                        <!-- Date -->
+                        <td data-order="{{ attendance.date|date:'Y-m-d' }}">
+                            <strong>{{ attendance.date|date:"d" }}</strong>
+                            <div style="font-size: 12px; color: var(--gray-500); margin-top: 2px;">
+                                {{ attendance.date|date:"M, Y" }}
+                            </div>
+                        </td>
+                        
+                        <!-- Check-In -->
+                        <td>
+                            {% if attendance.check_in %}
+                                {% if attendance.is_late %}
+                                    <div class="time-display time-late">
+                                        {{ attendance.check_in }}
+                                    </div>
+                                {% else %}
+                                    <div class="time-display time-early">
+                                        {{ attendance.check_in }}
+                                    </div>
+                                {% endif %}
                             {% else %}
-                                <span style="color: #9ca3af;">—</span>
+                                <span class="time-display time-default">—</span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Check-In Location -->
+                        <td>
+                            {% if attendance.checkin_address != "—" %}
+                                <div class="location-text">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    {{ attendance.checkin_address|linebreaksbr|truncatechars:50 }}
+                                </div>
+                            {% else %}
+                                <span class="location-text" style="color: var(--gray-500);">—</span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Check-Out -->
+                        <td>
+                            {% if attendance.check_out %}
+                                <div class="time-display time-out">
+                                    {{ attendance.check_out }}
+                                </div>
+                            {% else %}
+                                <span class="time-display time-default">—</span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Check-Out Location -->
+                        <td>
+                            {% if attendance.checkout_address != "—" %}
+                                <div class="location-text">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    {{ attendance.checkout_address|linebreaksbr|truncatechars:50 }}
+                                </div>
+                            {% else %}
+                                <span class="location-text" style="color: var(--gray-500);">—</span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Status -->
+                        <td>
+                            {% if attendance.status == "Present" %}
+                                <span class="status-badge badge-present">
+                                    <i class="fas fa-check-circle"></i>
+                                    Present
+                                </span>
+                            {% elif attendance.status == "Sunday" %}
+                                <span class="status-badge badge-sunday">
+                                    <i class="fas fa-church"></i>
+                                    Week Off
+                                </span>
+                            {% elif attendance.status == "Absent" %}
+                                <span class="status-badge badge-absent">
+                                    <i class="fas fa-times-circle"></i>
+                                    Absent
+                                </span>
+                            {% elif attendance.status == "Half Day" %}
+                                <span class="status-badge badge-halfday">
+                                    <i class="fas fa-clock-half"></i>
+                                    Present
+                                </span>
+                            {% elif attendance.status == "LOP" %}
+                                <span class="status-badge badge-lop">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    Absent (LOP)
+                                </span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Duration -->
+                        <td>
+                            {% if attendance.duration_display != "-" %}
+                                <span class="duration-badge">
+                                    {{ attendance.duration_display }}
+                                </span>
+                            {% else %}
+                                <span class="duration-badge" style="background: var(--gray-100); color: var(--gray-500);">
+                                    —
+                                </span>
                             {% endif %}
                         </td>
 
-                <!-- ✅ Check-Out -->
-                            <td style="padding: 14px 12px; vertical-align: middle;">
-                        {% if attendance.check_out %}
-                            <span style="background-color:#fff7ed; color:#92400e; font-weight:600; padding:6px 12px; border-radius:8px; min-width:85px; display:inline-block;">
-                                {{ attendance.check_out }}
-                            </span>
-                        {% else %}
-                            <span style="background-color:#f3f4f6; color:#9ca3af; padding:6px 12px; border-radius:8px; min-width:85px; display:inline-block;">
-                                —
-                            </span>
-                        {% endif %}
-                    </td>
+                        <td>
+                            <button class="view-btn"
+                                onclick="showReportAttendanceDetails(this)"
+                                data-emp="{{ attendance.employee_name }}"
+                                data-date="{{ attendance.date|date:'d M Y' }}"
+                                data-checkin="{{ attendance.check_in|default:'—' }}"
+                                data-checkout="{{ attendance.check_out|default:'Not Yet' }}"
+                                data-status="{% if attendance.status == 'Half Day' %}Present{% else %}{{ attendance.status }}{% endif %}"
+                                data-duration="{{ attendance.duration_display|default:'—' }}"
+                                data-checkin-loc="{{ attendance.checkin_address|default:'Location not recorded' }}"
+                                data-checkout-loc="{{ attendance.checkout_address|default:'Location not recorded' }}"
+                            >
+                                <i class="fas fa-eye"></i>
+                                View Details
+                            </button>
 
+                        </td>
 
-
-                  <!-- ✅ Check-Out Location -->
-                    <td style="color: #6b7280; font-size: 13px; padding: 14px 12px; vertical-align: middle; max-width: 200px; text-align: left; line-height: 1.4; word-break: break-word;">
-                        {% if attendance.checkout_address != "—" %}
-                            {{ attendance.checkout_address|linebreaksbr }}
-                        {% else %}
-                            <span style="color: #9ca3af;">—</span>
-                        {% endif %}
-                    </td>
-
-                <!-- ✅ Status -->
-                    <td style="padding: 14px 12px; vertical-align: middle;">
-
-                        {% if attendance.status == "Present" %}
-                            <span style="background-color: #dcfce7; color: #166534; font-weight: 600; padding: 6px 12px; border-radius: 8px; display: inline-block; min-width: 90px;">
-                                Present
-                            </span>
-                            
-                        {% elif attendance.status == "Sunday" %}
-                            <span style="background-color:#dbeafe; color:#1e3a8a; font-weight:600; padding:6px 12px; border-radius:8px; min-width:90px; display:inline-block;">
-                                Week off
-                            </span>
-
-                        {% elif attendance.status == "Absent" %}
-                            <span style="background-color: #fee2e2; color: #b91c1c; font-weight: 600; padding: 6px 12px; border-radius: 8px; display: inline-block; min-width: 90px;">
-                                Absent
-                            </span>
-
-                        {% elif attendance.status == "Half Day" %}
-                            <span style="background-color: #fef9c3; color: #92400e; font-weight: 600; padding: 6px 12px; border-radius: 8px; display: inline-block; min-width: 90px;">
-                                Present
-                            </span>
-
-                        {% elif attendance.status == "LOP" %}
-                            <span style="background-color: #fee2e2; color: #7f1d1d; font-weight: 700; padding: 6px 12px; border-radius: 8px; display: inline-block; min-width: 90px;">
-                                LOP
-                            </span>
-
-                        {% endif %}
-                    </td>
-                <!-- ✅ Duration -->
-                <td style="padding: 14px 12px; vertical-align: middle;">
-                    {% if attendance.duration_display != "-" %}
-                    <span
-                        style="background-color: #eff6ff; color: #1d4ed8; font-weight: 600; padding: 6px 12px; border-radius: 8px; display: inline-block; min-width: 80px;">
-                        {{ attendance.duration_display }}
-                    </span>
-                    {% else %}
-                    <span
-                        style="background-color: #f3f4f6; color: #9ca3af; padding: 6px 12px; border-radius: 8px; display: inline-block; min-width: 80px;">—</span>
-                    {% endif %}
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="9" class="text-center" style="padding: 40px; color: #6b7280;">
-                    <i class="fas fa-inbox" style="font-size: 24px; color: #9ca3af;"></i>
-                    <p style="margin-top: 10px; font-weight: 500;">No attendance records found</p>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-inbox"></i>
+                </div>
+                <h4>No Attendance Records Found</h4>
+                <p>No attendance records match your search criteria. Try adjusting your filters.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
 
+<!-- Attendance Details Modal -->
+<div class="modal-overlay" id="attendanceModal">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3>
+                <i class="fas fa-calendar-day"></i>
+                Attendance Details
+            </h3>
+            <button class="modal-close" onclick="closeModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body" id="modalContent"></div>
+    </div>
 </div>
+
+
+<!-- Include DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
 
 <!-- Include jQuery and DataTables JS -->
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize DataTable
         const table = $('#attendanceReportTable').DataTable({
-            "pageLength": 25,
-            "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-            "order": [[2, 'desc']], // Sort by date descending (3rd column)
-            "responsive": true,
-            "dom": "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
-                   "<'row'<'col-sm-12'tr>>" +
-                   "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
-            "language": {
-                "search": "Search records:",
-                "lengthMenu": "Show _MENU_ entries",
-                "info": "Showing _START_ to _END_ of _TOTAL_ entries",
-                "infoEmpty": "Showing 0 to 0 of 0 entries",
-                "infoFiltered": "(filtered from _MAX_ total entries)",
-                "paginate": {
-                    "first": "First",
-                    "last": "Last",
-                    "next": "Next",
-                    "previous": "Previous"
+            pageLength: 25,
+            lengthMenu: [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            order: [[2, 'desc']], // Sort by date descending
+            responsive: true,
+            dom: '<"top"<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>>rt<"bottom"<"row"<"col-sm-12 col-md-6"i><"col-sm-12 col-md-6"p>>><"clear">',
+            buttons: [
+                {
+                    extend: 'copy',
+                    className: 'btn btn-sm',
+                    text: '<i class="fas fa-copy"></i> Copy'
+                },
+                {
+                    extend: 'excel',
+                    className: 'btn btn-sm',
+                    text: '<i class="fas fa-file-excel"></i> Excel',
+                    title: 'Attendance Report - {% now "d M Y" %}'
+                },
+                {
+                    extend: 'pdf',
+                    className: 'btn btn-sm',
+                    text: '<i class="fas fa-file-pdf"></i> PDF',
+                    title: 'Attendance Report - {% now "d M Y" %}'
+                },
+                {
+                    extend: 'print',
+                    className: 'btn btn-sm',
+                    text: '<i class="fas fa-print"></i> Print'
+                }
+            ],
+            language: {
+                search: "Search records:",
+                lengthMenu: "Show _MENU_ entries",
+                info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                infoEmpty: "Showing 0 to 0 of 0 entries",
+                infoFiltered: "(filtered from _MAX_ total entries)",
+                paginate: {
+                    first: "First",
+                    last: "Last",
+                    next: "Next",
+                    previous: "Previous"
                 }
             },
-            "initComplete": function(settings, json) {
-                // Add custom styling after initialization
-                $('.dataTables_filter input').addClass('form-control form-control-sm');
-                $('.dataTables_length select').addClass('form-control form-control-sm');
-                
+            initComplete: function(settings, json) {
                 // Update total records count
-                $('#totalRecords').text('Total: ' + this.api().data().length);
+                const totalRecords = this.api().data().length;
+                document.getElementById('totalRecords').textContent = 'Total: ' + totalRecords;
                 
-                // Ensure DataTable controls are properly displayed on mobile
-                if ($(window).width() < 768) {
-                    $('.dataTables_length, .dataTables_filter').css({
-                        'float': 'none',
-                        'text-align': 'left',
-                        'margin-bottom': '10px'
-                    });
-                }
+                // Add custom styling to DataTable elements
+                $('.dataTables_filter input').addClass('form-control-sm');
+                $('.dataTables_length select').addClass('form-control-sm');
             },
-            "drawCallback": function(settings) {
+            drawCallback: function(settings) {
                 // Update total records count on each draw
-                $('#totalRecords').text('Total: ' + this.api().data().length);
+                const totalRecords = this.api().data().length;
+                document.getElementById('totalRecords').textContent = 'Total: ' + totalRecords;
             }
         });
-
-        // Handle window resize
-        window.addEventListener('resize', function() {
-            if ($(window).width() < 768) {
-                $('.dataTables_length, .dataTables_filter').css({
-                    'float': 'none',
-                    'text-align': 'left',
-                    'margin-bottom': '10px'
-                });
-            } else {
-                $('.dataTables_length, .dataTables_filter').css({
-                    'float': '',
-                    'text-align': '',
-                    'margin-bottom': ''
-                });
-            }
+        // Initialize flatpickr for date inputs
+        flatpickr("#date_from", {
+            dateFormat: "d/m/Y",
+            defaultDate: "today",
+            allowInput: true
         });
 
-        // Keep your existing form functionality
-        const monthFilter = document.querySelector('input[name="month"]');
-        if (monthFilter) {
-            monthFilter.addEventListener('change', function() {
-                this.form.submit();
+        flatpickr("#date_to", {
+            dateFormat: "d/m/Y",
+            defaultDate: "today",
+            allowInput: true
+        });
+        // File upload preview
+        const fileInput = document.querySelector('input[type="file"]');
+        if (fileInput) {
+            fileInput.addEventListener('change', function(e) {
+                const fileName = e.target.files[0]?.name || 'No file chosen';
+                const label = document.querySelector('.file-upload-label');
+                if (label) {
+                    label.innerHTML = `<i class="fas fa-file-excel"></i> ${fileName}`;
+                }
             });
         }
+
+        // Handle form submissions
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                // Show loading state on submit buttons
+                const submitBtn = this.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.innerHTML = '<div class="spinner"></div>';
+                    submitBtn.disabled = true;
+                }
+            });
+        });
     });
+
+
+
+function showReportAttendanceDetails(btn) {
+    const modal = document.getElementById('attendanceModal');
+    const modalContent = document.getElementById('modalContent');
+
+   modalContent.innerHTML = `
+  <div class="attendance-ui">
+
+    <!-- Top Cards -->
+    <div class="info-grid">
+      <div class="info-card">
+        <span class="label">WORK DATE</span>
+        <h3>${btn.dataset.date}</h3>
+        <small>Working Day</small>
+      </div>
+
+      <div class="info-card">
+        <span class="label">WORK DURATION</span>
+        <h3>${btn.dataset.duration}</h3>
+        <small>Total Hours</small>
+      </div>
+
+      <div class="info-card">
+        <span class="label">ATTENDANCE STATUS</span>
+        <h3>${btn.dataset.status}</h3>
+        <small>Day Status</small>
+      </div>
+
+     
+    </div>
+
+    <!-- Extra Hours -->
+    <div class="extra-card">
+      <span class="label">EXTRA HOURS WORKED</span>
+      <h3>—</h3>
+      <small>Beyond Regular Hours</small>
+    </div>
+
+    <!-- Time Log -->
+    <h4 class="section-title">
+      <i class="fas fa-history"></i> Time Log Details
+    </h4>
+
+    <div class="timeline">
+      <div class="timeline-item in">
+        <div class="icon"><i class="fas fa-sign-in-alt"></i></div>
+        <div>
+          <strong>${btn.dataset.checkin}</strong>
+          <p>${btn.dataset.checkinLoc}</p>
+        </div>
+      </div>
+
+      <div class="timeline-item out">
+        <div class="icon"><i class="fas fa-sign-out-alt"></i></div>
+        <div>
+          <strong>${btn.dataset.checkout}</strong>
+          <p>${btn.dataset.checkoutLoc}</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+`;
+
+
+    modal.classList.add('active');
+    document.body.classList.add('modal-open'); // ✅ lock background scroll
+}
+
+function closeModal() {
+    document.getElementById('attendanceModal').classList.remove('active');
+    document.body.classList.remove('modal-open');
+}
+
 </script>
 
 {% endblock %}

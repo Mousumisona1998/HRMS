@@ -102,11 +102,12 @@ class Leave(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='new')
     applied_date = models.DateTimeField(default=timezone.now)
     approved_by = models.ForeignKey(
-        User,
+        Employee,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='approved_leaves'
+        related_name='approved_leaves',
+        help_text="Last user who updated the leave status"
     )
 
     approved_date = models.DateTimeField(null=True, blank=True)

@@ -4,13 +4,463 @@
 {% block title %}View Salary - HRMS{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="page-header">
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-light: #4895ef;
+        --secondary: #7209b7;
+        --accent: #4cc9f0;
+        --warning: #f72585;
+        --success: #10b981;
+        --dark: #1a1a2e;
+        --light: #f8f9fa;
+        --gray-100: #f8f9fa;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-400: #ced4da;
+        --gray-500: #adb5bd;
+        --gray-600: #6c757d;
+        --gray-700: #495057;
+        --gray-800: #343a40;
+        --gray-900: #212529;
+        --white: #ffffff;
+        --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background-color: #f8fafc;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: var(--gray-800);
+    }
+
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+
+    /* Page Header - FIXED: Added higher z-index */
+    .page-header {
+        /* background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); */
+        color: black;
+        padding: 10px 20px;
+        /* border-radius: 20px; */
+        margin-bottom: 32px;
+        /* box-shadow: var(--card-shadow); */
+        position: relative;
+        overflow: hidden;
+        z-index: 100; /* Added z-index */
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        /* background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%); */
+        /* animation: shimmer 3s infinite linear; */
+    }
+
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    .page-header h1 {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+    }
+
+    .breadcrumb-item {
+        color:black;
+    }
+
+    .breadcrumb-item.active {
+        color: black;
+        font-weight: 500;
+    }
+
+    .breadcrumb-item a {
+        color: rgba(11, 15, 197, 0.9);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .breadcrumb-item a:hover {
+        color: black;
+        text-decoration: underline;
+    }
+
+    
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        color: var(--white);
+        box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(67, 97, 238, 0.4);
+    }
+
+    .btn-secondary {
+        background:#d8dde7;
+        color: #000000;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+    }
+
+    .btn-secondary:hover {
+        background: rgba(73, 61, 61, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Card Styles */
+    .custom-card {
+        background: var(--white);
+        border-radius: 20px;
+        padding: 32px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        margin-bottom: 24px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .custom-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--hover-shadow);
+        border-color: var(--primary-light);
+    }
+
+    .custom-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+    }
+
+    .card-header {
+        margin: -32px -32px 32px -32px;
+        padding: 24px 32px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-bottom: 1px solid var(--gray-200);
+        border-radius: 20px 20px 0 0;
+    }
+
+    .card-title {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .card-title i {
+        color: var(--primary);
+        font-size: 20px;
+    }
+
+    /* Employee Info Card */
+    .employee-avatar {
+        width: 72px;
+        height: 72px;
+        border-radius: 16px;
+        object-fit: cover;
+        border: 3px solid var(--white);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .avatar-placeholder {
+        width: 72px;
+        height: 72px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--white);
+        font-size: 24px;
+        font-weight: 600;
+        border: 3px solid var(--white);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Status Badge */
+    .badge {
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        border: none;
+    }
+
+    .bg-success {
+        background: linear-gradient(135deg, var(--success) 0%, #0ca678 100%) !important;
+    }
+
+    .bg-secondary {
+        background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%) !important;
+    }
+
+    /* Salary Breakdown */
+    .salary-metric-card {
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.05) 0%, rgba(114, 9, 183, 0.05) 100%);
+        border: 2px solid transparent;
+        border-radius: 16px;
+        padding: 24px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .salary-metric-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(67, 97, 238, 0.1);
+    }
+
+    .salary-metric-card.text-primary {
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.1) 0%, rgba(114, 9, 183, 0.05) 100%);
+    }
+
+    .salary-metric-card.text-success {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+    }
+
+    .salary-metric-card.text-info {
+        background: linear-gradient(135deg, rgba(76, 201, 240, 0.1) 0%, rgba(76, 201, 240, 0.05) 100%);
+    }
+
+    .salary-metric-card small {
+        font-size: 13px;
+        color: var(--gray-600);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .salary-metric-card h4 {
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    /* Table Styles */
+    .table-responsive {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .table {
+        margin: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .table-sm td, .table-sm th {
+        padding: 16px 20px;
+    }
+
+    .table tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    .table tbody tr:hover {
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.05) 0%, rgba(114, 9, 183, 0.02) 100%);
+        transform: translateX(4px);
+    }
+
+    .table-light {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+
+    .text-success {
+        color: var(--success) !important;
+    }
+
+    .text-danger {
+        color: var(--warning) !important;
+    }
+
+    .text-primary {
+        color: var(--primary) !important;
+    }
+
+    .text-info {
+        color: var(--accent) !important;
+    }
+
+    /* Section Headers */
+    h6 {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid var(--gray-200);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    h6 i {
+        font-size: 18px;
+    }
+
+    /* Summary Card - FIXED: Added proper z-index and top offset */
+    .sticky-summary {
+        position: sticky;
+        top: 120px; /* Increased to account for header height */
+        z-index: 99; /* Lower than header but higher than other content */
+        transition: all 0.3s ease;
+    }
+
+    /* When scrolling past header, adjust the sticky position */
+    .sticky-summary.sticky-active {
+        top: 24px; /* When header is out of view */
+    }
+
+    .summary-item {
+        margin-bottom: 20px;
+    }
+
+    .summary-item small {
+        font-size: 13px;
+        color: var(--gray-600);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .summary-item .fw-bold {
+        font-size: 16px;
+        color: var(--dark);
+    }
+
+    hr {
+        border: none;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--gray-300), transparent);
+        margin: 24px 0;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .page-container {
+            padding: 16px;
+        }
+        
+        .page-header {
+            padding: 2px;
+            z-index: 100; /* Maintain z-index on mobile */
+        }
+        
+        .page-header h1 {
+            font-size: 24px;
+        }
+        
+        .custom-card {
+            padding: 24px;
+        }
+        
+        .card-header {
+            margin: -24px -24px 24px -24px;
+            padding: 20px 24px;
+        }
+        
+        .salary-metric-card {
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        
+        .salary-metric-card h4 {
+            font-size: 24px;
+        }
+       
+        /* Disable sticky on mobile for better UX */
+        .sticky-summary {
+            position: static;
+            top: auto;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .row {
+            margin-left: -8px;
+            margin-right: -8px;
+        }
+        
+        .col-lg-8, .col-lg-4 {
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+        
+        .btn-group {
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+        }
+        
+    }
+
+    /* Animation Classes */
+    .fade-in {
+        animation: fadeIn 0.5s ease;
+    }
+
+    .slide-up {
+        animation: slideUp 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<div class="page-container">
+    <!-- Page Header -->
+    <div class="page-header fade-in">
         <div class="row align-items-center">
             <div class="col">
-                <h1 class="h3 mb-0">Salary Details</h1>
+                <h1 class="h3 mb-2">Salary Details</h1>
                 <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
+                    <ol class="breadcrumb mb-0">
                         <li class="breadcrumb-item"><a href="{% url 'employee_salaries' %}">Employee Salaries</a></li>
                         <li class="breadcrumb-item active">Salary Details</li>
                     </ol>
@@ -30,46 +480,54 @@
     </div>
 
     <div class="row">
+        <!-- Main Content -->
         <div class="col-lg-8">
-            <!-- Employee Info -->
-            <div class="custom-card mb-4">
+            <!-- Employee Information Card -->
+            <div class="custom-card mb-4 slide-up">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Employee Information</h5>
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user-circle"></i> Employee Information
+                    </h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <div class="d-flex align-items-center mb-3">
+                            <div class="d-flex align-items-start gap-3 mb-4">
                                 {% if salary.employee.profile_picture %}
-                                <img src="{{ salary.employee.profile_picture.url }}" alt="{{ salary.employee.first_name }}" 
-                                     class="rounded-circle me-3" width="60" height="60">
+                                <img src="{{ salary.employee.profile_picture.url }}" 
+                                     alt="{{ salary.employee.first_name }}" 
+                                     class="employee-avatar">
                                 {% else %}
-                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" 
-                                     style="width: 60px; height: 60px; font-size: 18px;">
+                                <div class="avatar-placeholder">
                                     {{ salary.employee.first_name|first }}{{ salary.employee.last_name|first }}
                                 </div>
                                 {% endif %}
                                 <div>
-                                    <h5 class="mb-1">{{ salary.employee.first_name }} {{ salary.employee.last_name }}</h5>
-                                    <p class="text-muted mb-0">{{ salary.employee.designation }} • {{ salary.employee.department }}</p>
+                                    <h4 class="mb-1">{{ salary.employee.first_name }} {{ salary.employee.last_name }}</h4>
+                                    <p class="text-muted mb-1">{{ salary.employee.designation }}</p>
+                                    <p class="text-muted mb-0">{{ salary.employee.department }}</p>
                                     <small class="text-muted">ID: {{ salary.employee.employee_id }}</small>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="row">
+                            <div class="row g-3">
                                 <div class="col-6">
-                                    <small class="text-muted">Effective Date</small>
-                                    <div class="fw-bold">{{ salary.effective_date }}</div>
+                                    <div class="p-3 rounded" style="background: rgba(67, 97, 238, 0.05);">
+                                        <small class="text-muted d-block mb-1">Effective Date</small>
+                                        <div class="fw-bold">{{ salary.effective_date }}</div>
+                                    </div>
                                 </div>
                                 <div class="col-6">
-                                    <small class="text-muted">Status</small>
-                                    <div>
-                                        {% if salary.is_active %}
-                                        <span class="badge bg-success">Active</span>
-                                        {% else %}
-                                        <span class="badge bg-secondary">Inactive</span>
-                                        {% endif %}
+                                    <div class="p-3 rounded" style="background: rgba(16, 185, 129, 0.05);">
+                                        <small class="text-muted d-block mb-1">Status</small>
+                                        <div>
+                                            {% if salary.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -78,148 +536,229 @@
                 </div>
             </div>
 
-            <!-- Salary Breakdown -->
-            <div class="custom-card">
+            <!-- Salary Breakdown Card -->
+            <div class="custom-card slide-up">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Salary Breakdown</h5>
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar"></i> Salary Breakdown
+                    </h5>
                 </div>
                 <div class="card-body">
-                    <div class="row mb-4">
-                        <div class="col-md-4 text-center">
-                            <div class="border rounded p-3">
-                                <small class="text-muted">Basic Salary</small>
-                                <h4 class="text-primary mb-0">₹{{ salary.basic_salary }}</h4>
+                    <!-- Salary Metrics -->
+                    <div class="row mb-5">
+                        <div class="col-md-4 mb-3">
+                            <div class="salary-metric-card text-primary">
+                                <small>Basic Salary</small>
+                                <h4>₹{{ salary.basic_salary }}</h4>
                             </div>
                         </div>
-                        <div class="col-md-4 text-center">
-                            <div class="border rounded p-3">
-                                <small class="text-muted">Gross Salary</small>
-                                <h4 class="text-success mb-0">₹{{ salary.gross_salary }}</h4>
+                        <div class="col-md-4 mb-3">
+                            <div class="salary-metric-card text-success">
+                                <small>Gross Salary</small>
+                                <h4>₹{{ salary.gross_salary }}</h4>
                             </div>
                         </div>
-                        <div class="col-md-4 text-center">
-                            <div class="border rounded p-3">
-                                <small class="text-muted">Net Salary</small>
-                                <h4 class="text-info mb-0">₹{{ salary.net_salary }}</h4>
+                        <div class="col-md-4 mb-3">
+                            <div class="salary-metric-card text-info">
+                                <small>Net Salary</small>
+                                <h4>₹{{ salary.net_salary }}</h4>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Earnings -->
-                    <h6 class="mb-3 text-success">
-                        <i class="fas fa-arrow-up me-2"></i>Earnings
-                    </h6>
-                    <div class="table-responsive mb-4">
-                        <table class="table table-sm">
-                            <tbody>
-                                {% for component in components %}
-                                {% if component.component.component_type == 'earning' and component.amount > 0 %}
-                                <tr>
-                                    <td width="60%">
-                                        <strong>{{ component.component.name }}</strong>
-                                        {% if component.component.calculation_type == 'percentage' %}
-                                        <br><small class="text-muted">{{ component.component.value }}% of Basic</small>
-                                        {% endif %}
-                                    </td>
-                                    <td width="40%" class="text-end text-success">
-                                        + ₹{{ component.amount }}
-                                    </td>
-                                </tr>
-                                {% endif %}
-                                {% endfor %}
-                                <tr class="table-light">
-                                    <td><strong>Total Earnings</strong></td>
-                                    <td class="text-end text-success">
-                                        <strong>+ ₹{{ salary.gross_salary|add:"-salary.basic_salary" }}</strong>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <!-- Earnings Section -->
+                    <div class="mb-5">
+                        <h6 class="text-success">
+                            <i class="fas fa-arrow-up"></i> Earnings
+                        </h6>
+                        <div class="table-responsive mb-4">
+                            <table class="table table-sm">
+                                <tbody>
+                                    {% for component in components %}
+                                    {% if component.component.component_type == 'earning' and component.amount > 0 %}
+                                    <tr>
+                                        <td width="60%">
+                                            <strong>{{ component.component.name }}</strong>
+                                            {% if component.component.calculation_type == 'percentage' %}
+                                            <br><small class="text-muted">{{ component.component.value }}% of Basic</small>
+                                            {% endif %}
+                                        </td>
+                                        <td width="40%" class="text-end text-success">
+                                            <i class="fas fa-plus-circle me-2"></i>₹{{ component.amount }}
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    {% endfor %}
+                                    <tr class="table-light">
+                                        <td><strong>Total Earnings</strong></td>
+                                        <td class="text-end text-success">
+                                            <strong><i class="fas fa-plus-circle me-2"></i>₹{{ salary.gross_salary|add:"-salary.basic_salary" }}</strong>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
-                    <!-- Deductions -->
-                    <h6 class="mb-3 text-danger">
-                        <i class="fas fa-arrow-down me-2"></i>Deductions
-                    </h6>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <tbody>
-                                {% for component in components %}
-                                {% if component.component.component_type == 'deduction' and component.amount > 0 %}
-                                <tr>
-                                    <td width="60%">
-                                        <strong>{{ component.component.name }}</strong>
-                                        {% if component.component.calculation_type == 'percentage' %}
-                                        <br><small class="text-muted">{{ component.component.value }}% of Basic</small>
-                                        {% endif %}
-                                    </td>
-                                    <td width="40%" class="text-end text-danger">
-                                        - ₹{{ component.amount }}
-                                    </td>
-                                </tr>
-                                {% endif %}
-                                {% endfor %}
-                                <tr class="table-light">
-                                    <td><strong>Total Deductions</strong></td>
-                                    <td class="text-end text-danger">
-                                        <strong>- ₹{{ salary.gross_salary|add:"-salary.net_salary" }}</strong>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <!-- Deductions Section -->
+                    <div>
+                        <h6 class="text-danger">
+                            <i class="fas fa-arrow-down"></i> Deductions
+                        </h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <tbody>
+                                    {% for component in components %}
+                                    {% if component.component.component_type == 'deduction' and component.amount > 0 %}
+                                    <tr>
+                                        <td width="60%">
+                                            <strong>{{ component.component.name }}</strong>
+                                            {% if component.component.calculation_type == 'percentage' %}
+                                            <br><small class="text-muted">{{ component.component.value }}% of Basic</small>
+                                            {% endif %}
+                                        </td>
+                                        <td width="40%" class="text-end text-danger">
+                                            <i class="fas fa-minus-circle me-2"></i>₹{{ component.amount }}
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    {% endfor %}
+                                    <tr class="table-light">
+                                        <td><strong>Total Deductions</strong></td>
+                                        <td class="text-end text-danger">
+                                            <strong><i class="fas fa-minus-circle me-2"></i>₹{{ salary.gross_salary|add:"-salary.net_salary" }}</strong>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Summary Card -->
+        <!-- Summary Sidebar - UPDATED: Added sticky-summary class -->
         <div class="col-lg-4">
-            <div class="custom-card sticky-top" style="top: 100px;">
+            <div class="custom-card sticky-summary slide-up">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Salary Summary</h5>
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-file-invoice-dollar"></i> Salary Summary
+                    </h5>
                 </div>
                 <div class="card-body">
-                    <div class="mb-3">
-                        <small class="text-muted">Employee</small>
+                    <!-- Employee Details -->
+                    <div class="summary-item">
+                        <small>Employee</small>
                         <div class="fw-bold">{{ salary.employee.first_name }} {{ salary.employee.last_name }}</div>
                     </div>
-                    <div class="mb-3">
-                        <small class="text-muted">Employee ID</small>
+                    
+                    <div class="summary-item">
+                        <small>Employee ID</small>
                         <div class="fw-bold">{{ salary.employee.employee_id }}</div>
                     </div>
-                    <div class="mb-3">
-                        <small class="text-muted">Department</small>
+                    
+                    <div class="summary-item">
+                        <small>Department</small>
                         <div class="fw-bold">{{ salary.employee.department }}</div>
                     </div>
-                    <div class="mb-3">
-                        <small class="text-muted">Designation</small>
+                    
+                    <div class="summary-item">
+                        <small>Designation</small>
                         <div class="fw-bold">{{ salary.employee.designation }}</div>
                     </div>
+                    
                     <hr>
-                    <div class="mb-2">
-                        <small class="text-muted">Basic Salary</small>
-                        <div class="fw-bold">₹{{ salary.basic_salary }}</div>
+                    
+                    <!-- Salary Breakdown -->
+                    <div class="summary-item">
+                        <small>Basic Salary</small>
+                        <div class="fw-bold text-primary">₹{{ salary.basic_salary }}</div>
                     </div>
-                    <div class="mb-2">
-                        <small class="text-muted">Gross Salary</small>
+                    
+                    <div class="summary-item">
+                        <small>Gross Salary</small>
                         <div class="fw-bold text-success">₹{{ salary.gross_salary }}</div>
                     </div>
-                    <div class="mb-2">
-                        <small class="text-muted">Total Deductions</small>
+                    
+                    <div class="summary-item">
+                        <small>Total Deductions</small>
                         <div class="fw-bold text-danger">₹{{ salary.gross_salary|add:"-salary.net_salary" }}</div>
                     </div>
-                    <div class="mb-2">
-                        <small class="text-muted">Net Salary</small>
-                        <div class="fw-bold text-primary">₹{{ salary.net_salary }}</div>
+                    
+                    <div class="summary-item">
+                        <small>Net Salary</small>
+                        <div class="fw-bold text-info">₹{{ salary.net_salary }}</div>
                     </div>
+                    
                     <hr>
-                    <div class="mb-2">
-                        <small class="text-muted">Cost to Company (CTC)</small>
-                        <div class="fw-bold text-info">₹{{ salary.gross_salary }}</div>
+                    
+                    <!-- Cost to Company -->
+                    <div class="summary-item">
+                        <small>Cost to Company (CTC)</small>
+                        <div class="fw-bold" style="color: #6c63ff;">₹{{ salary.gross_salary }}</div>
+                    </div>
+                    
+                    <!-- Additional Info -->
+                    <div class="summary-item">
+                        <small>Payment Frequency</small>
+                        <div class="fw-bold">Monthly</div>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <small>Last Updated</small>
+                        <div class="fw-bold">{{ salary.updated_at|date:"d M, Y" }}</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle sticky sidebar behavior
+    const summaryCard = document.querySelector('.sticky-summary');
+    const header = document.querySelector('.page-header');
+    
+    if (summaryCard && header) {
+        // Calculate when header is out of view
+        const headerHeight = header.offsetHeight;
+        const headerOffset = header.offsetTop;
+        
+        function handleScroll() {
+            const scrollPosition = window.scrollY;
+            
+            // Check if we've scrolled past the header
+            if (scrollPosition > headerOffset + headerHeight) {
+                summaryCard.classList.add('sticky-active');
+            } else {
+                summaryCard.classList.remove('sticky-active');
+            }
+        }
+        
+        // Initial check
+        handleScroll();
+        
+        // Listen to scroll events
+        window.addEventListener('scroll', handleScroll);
+        
+        // Handle resize events
+        window.addEventListener('resize', handleScroll);
+        
+        // Disable sticky on mobile (handled by CSS media query)
+        function checkMobile() {
+            if (window.innerWidth <= 768) {
+                summaryCard.style.position = 'static';
+                summaryCard.style.top = 'auto';
+            } else {
+                summaryCard.style.position = 'sticky';
+                summaryCard.style.top = '120px';
+            }
+        }
+        
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+    }
+});
+</script>
 {% endblock %}

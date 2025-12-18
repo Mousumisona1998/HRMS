@@ -4,13 +4,616 @@
 {% block title %}Add Employee Salary - HRMS{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="page-header">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-light: #4895ef;
+        --secondary: #7209b7;
+        --accent: #4cc9f0;
+        --warning: #f72585;
+        --success: #10b981;
+        --dark: #1a1a2e;
+        --light: #f8f9fa;
+        --gray-100: #f8f9fa;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-400: #ced4da;
+        --gray-500: #adb5bd;
+        --gray-600: #6c757d;
+        --gray-700: #495057;
+        --gray-800: #343a40;
+        --gray-900: #212529;
+        --white: #ffffff;
+        --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background-color: #f8fafc;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: var(--gray-800);
+    }
+
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+
+    /* Page Header */
+    .page-header {
+        /* background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); */
+        color: black;
+        padding: 10px 20px;
+        /* border-radius: 20px; */
+        margin-bottom: 32px;
+        /* box-shadow: var(--card-shadow); */
+        position: relative;
+        overflow: hidden;
+        z-index: 100;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        /* background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%); */
+        /* animation: shimmer 3s infinite linear; */
+    }
+
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    .page-header h1 {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+    }
+
+    .breadcrumb-item {
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .breadcrumb-item.active {
+        color: black;
+        font-weight: 500;
+    }
+
+    .breadcrumb-item a {
+        color:rgb(82, 32, 209);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .breadcrumb-item a:hover {
+        color: black;
+        text-decoration: underline;
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "/";
+        color:  black;
+        padding: 0 8px;
+    }
+
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        color: var(--white);
+        box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(67, 97, 238, 0.4);
+    }
+
+    .btn-secondary {
+        background: #d8dde7;
+        color: #212529;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+    }
+
+    .btn-secondary:hover {
+        background: rgba(94, 95, 108, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Card Styles */
+    .custom-card {
+        background: var(--white);
+        border-radius: 20px;
+        padding: 32px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        margin: 0 40px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .custom-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--hover-shadow);
+        border-color: var(--primary-light);
+    }
+
+    .custom-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+    }
+
+    .card-header {
+        margin: -32px -32px 32px -32px;
+        padding: 24px 32px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-bottom: 1px solid var(--gray-200);
+        border-radius: 20px 20px 0 0;
+    }
+
+    .card-title {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .card-title i {
+        color: var(--primary);
+        font-size: 20px;
+    }
+
+    /* Form Styles */
+    .form-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .form-label.required::after {
+        content: " *";
+        color: var(--warning);
+    }
+
+    .form-label span.text-danger {
+        color: var(--warning);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid var(--gray-300);
+        border-radius: 12px;
+        font-size: 15px;
+        color: var(--gray-800);
+        background: var(--white);
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+    }
+
+    .form-control[readonly] {
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.05) 0%, rgba(114, 9, 183, 0.05) 100%);
+        border-color: var(--gray-200);
+        color: var(--gray-700);
+        cursor: not-allowed;
+    }
+
+    /* Employee Search Styles */
+    .position-relative {
+        position: relative;
+    }
+
+    .dropdown-menu {
+        background: var(--white);
+        border: 2px solid var(--gray-300);
+        border-radius: 12px;
+        box-shadow: var(--hover-shadow);
+        max-height: 300px;
+        overflow-y: auto;
+        z-index: 1000;
+    }
+
+    .dropdown-item {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--gray-200);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .dropdown-item:hover {
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.05) 0%, rgba(114, 9, 183, 0.05) 100%);
+    }
+
+    .dropdown-item:last-child {
+        border-bottom: none;
+    }
+
+    /* Selected Employee Alert */
+    .alert {
+        border-radius: 12px;
+        padding: 16px;
+        border: 2px solid transparent;
+    }
+
+    .alert-info {
+        background: linear-gradient(135deg, rgba(76, 201, 240, 0.1) 0%, rgba(76, 201, 240, 0.05) 100%);
+        border-color: rgba(76, 201, 240, 0.3);
+        color: var(--accent);
+    }
+
+    /* Table Styles */
+    .table-responsive {
+        border-radius: 16px;
+        overflow: hidden;
+        border: 2px solid var(--gray-200);
+    }
+
+    .table {
+        margin: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+    }
+
+    .table thead th {
+        background: aliceblue;
+        color: #000;
+        font-weight: 600;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: none;
+        padding: 16px 20px;
+    }
+
+    .table tbody tr {
+        transition: all 0.2s ease;
+        background: var(--white);
+    }
+
+    .table tbody tr:hover {
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.05) 0%, rgba(114, 9, 183, 0.02) 100%);
+        transform: translateX(4px);
+    }
+
+    .table tbody td {
+        padding: 20px;
+        border-bottom: 1px solid var(--gray-200);
+        vertical-align: middle;
+    }
+
+    .table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Badge Styles */
+    .badge {
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        border: none;
+    }
+
+    .badge.bg-success {
+        background: linear-gradient(135deg, var(--success) 0%, #0ca678 100%) !important;
+    }
+
+    .badge.bg-danger {
+        background: linear-gradient(135deg, var(--warning) 0%, #e63946 100%) !important;
+    }
+
+    /* Input Group Styles */
+    .input-group {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 2px solid var(--gray-300);
+        transition: all 0.2s ease;
+    }
+
+    .input-group:focus-within {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+    }
+
+    .input-group-text {
+        background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-200) 100%);
+        border: none;
+        color: var(--gray-700);
+        font-weight: 600;
+        padding: 0 16px;
+    }
+
+    .input-group .form-control {
+        border: none;
+        border-radius: 0;
+        padding: 12px 16px;
+        box-shadow: none;
+    }
+
+    .input-group .form-control[readonly] {
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.05) 0%, rgba(114, 9, 183, 0.05) 100%);
+    }
+
+    /* Summary Card Styles */
+    .summary-card {
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.05) 0%, rgba(114, 9, 183, 0.05) 100%);
+        border: 2px solid var(--gray-200);
+        border-radius: 16px;
+        padding: 24px;
+        transition: all 0.3s ease;
+    }
+
+    .summary-card:hover {
+        border-color: var(--primary);
+        box-shadow: 0 8px 25px rgba(67, 97, 238, 0.1);
+    }
+
+    .summary-card h6 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid var(--gray-300);
+    }
+
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px dashed var(--gray-300);
+    }
+
+    .summary-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .summary-item span {
+        font-size: 14px;
+        color: var(--gray-700);
+    }
+
+    .summary-item strong {
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .summary-item .text-success {
+        color: var(--success);
+    }
+
+    .summary-item .text-danger {
+        color: var(--warning);
+    }
+
+    .summary-item .text-primary {
+        color: var(--primary);
+    }
+
+    hr {
+        border: none;
+        height: 1px;
+        background: linear-gradient(90deg, var(--gray-300), var(--gray-400), var(--gray-300));
+        margin: 20px 0;
+    }
+
+    /* Section Headers */
+    h6 {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid var(--gray-200);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    h6 i {
+        font-size: 18px;
+    }
+
+    /* Animation Classes */
+    .fade-in {
+        animation: fadeIn 0.5s ease;
+    }
+
+    .slide-up {
+        animation: slideUp 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .page-container {
+            padding: 16px;
+        }
+        
+        .page-header {
+            padding: 0px;
+        }
+        
+        .page-header h1 {
+            font-size: 24px;
+        }
+        
+        .custom-card {
+            padding: 24px;
+            margin: 0;
+        }
+        
+        .card-header {
+            margin: -24px -24px 24px -24px;
+            padding: 20px 24px;
+        }
+        
+        .table-responsive {
+            font-size: 14px;
+        }
+        
+        .table thead th {
+            padding: 12px 16px;
+            font-size: 13px;
+        }
+        
+        .table tbody td {
+            padding: 16px;
+        }
+        
+        
+        .input-group {
+            flex-wrap: nowrap;
+        }
+        
+        .input-group-text {
+            padding: 0 12px;
+            font-size: 13px;
+        }
+        
+        .form-control {
+            padding: 12px;
+            font-size: 14px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .row {
+            margin-left: -8px;
+            margin-right: -8px;
+        }
+        
+        .col-lg-12, .col-md-6, .col-12 {
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+        
+        .d-flex.gap-2 {
+            flex-direction: column;
+            gap: 12px !important;
+            width: 100%;
+        }
+        
+        .table-responsive {
+            border: none;
+        }
+        
+        .table thead {
+            display: none;
+        }
+        
+        .table tbody tr {
+            display: block;
+            margin-bottom: 20px;
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .table tbody td {
+            display: block;
+            text-align: left;
+            padding: 16px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .table tbody td:before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: var(--dark);
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .table tbody tr:last-child {
+            margin-bottom: 0;
+        }
+    }
+    /* Excel Upload Styles */
+    input[type="file"].form-control {
+        padding: 10px 16px;
+    }
+
+    input[type="file"].form-control::-webkit-file-upload-button {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-right: 12px;
+        transition: all 0.3s ease;
+    }
+
+    input[type="file"].form-control::-webkit-file-upload-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+    }
+</style>
+
+<div class="page-container">
+    <!-- Page Header -->
+    <div class="page-header fade-in">
         <div class="row align-items-center">
             <div class="col">
-                <h1 class="h3 mb-0">Add Employee Salary</h1>
+                <h1 class="h3 mb-2">Add Employee Salary</h1>
                 <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
+                    <ol class="breadcrumb mb-0">
                         <li class="breadcrumb-item"><a href="{% url 'employee_salaries' %}">Employee Salaries</a></li>
                         <li class="breadcrumb-item active">Add Salary</li>
                     </ol>
@@ -25,10 +628,12 @@
     </div>
 
     <div class="row">
-        <div class="col-lg-8">
-            <div class="custom-card">
+        <div class="col-lg-12">
+            <div class="custom-card slide-up">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Salary Structure Details</h5>
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-plus-circle"></i> Salary Structure Details
+                    </h5>
                 </div>
                 <div class="card-body">
                     <form method="post" id="salaryForm">
@@ -36,65 +641,94 @@
                         
                         <!-- Basic Information -->
                         <div class="row mb-4">
-    <div class="col-md-6 position-relative">
-        <label class="form-label required">Employee</label>
-        <input type="text" class="form-control" id="employeeSelect" placeholder="Search Employee by Name or ID">
-        <div id="managerSuggestions" class="dropdown-menu w-100" style="display: none;"></div>
-        <input type="hidden" name="employee" id="empId">
-    </div>
+                            <div class="col-md-6 position-relative mb-3">
+                                <label class="form-label required">
+                                    <i class="fas fa-user me-2"></i>Employee
+                                </label>
+                                <input type="text" class="form-control" id="employeeSelect" placeholder="Search Employee by Name or ID">
+                                <div id="managerSuggestions" class="dropdown-menu w-100" style="display: none;"></div>
+                                <input type="hidden" name="employee" id="empId">
+                            </div>
 
-    <!-- Selected Employee Info -->
-    <div class="row mt-3" id="selectedManagerSection" style="display: none;">
-        <div class="col-12">
-            <div class="alert alert-info py-2">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>Selected Employee:</strong>
-                        <span id="selectedManagerName" class="ms-2"></span>
-                        <span id="selectedManagerId" class="text-muted ms-2"></span>
-                    </div>
-                    <button type="button" class="btn-close" id="clearManagerSelection"></button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <label class="form-label">Effective Date <span class="text-danger">*</span></label>
-        <input type="date" class="form-control" name="effective_date" value="{{ today_date|date:'Y-m-d' }}" required>
-    </div>
-</div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-calendar-alt me-2"></i>Effective Date <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="effectiveDate" name="effective_date" value="{{ today_date|date:'Y-m-d' }}" required>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-file-excel me-2"></i>Or Upload Excel File (Bulk Import)
+                                </label>
+                                <div class="input-group">
+                                    <input type="file" class="form-control" id="excelUpload" accept=".xlsx, .xls">
+                                    <button type="button" class="btn btn-secondary" id="downloadTemplate">
+                                        <i class="fas fa-download me-2"></i>Download sample Template
+                                    </button>
+                                </div>
+                                <small class="text-muted">Upload Excel file with columns: Employee ID, Basic Salary, Effective Date, Component amounts</small>
+                            </div>
+                        </div>
+
+                        <!-- Selected Employee Info -->
+                        <div class="row mt-2 mb-3" id="selectedManagerSection" style="display: none;">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>Selected Employee:</strong>
+                                            <span id="selectedManagerName" class="ms-2"></span>
+                                            <span id="selectedManagerId" class="text-muted ms-2"></span>
+                                        </div>
+                                        <button type="button" class="btn-close" id="clearManagerSelection"></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Basic Salary & Unpaid Balance -->
                         <div class="row mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label">Basic Salary <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" name="basic_salary" id="basicSalary" 
-                                       placeholder="Select employee to auto-fill" step="0.01" required readonly>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-money-bill-wave me-2"></i>Basic Salary <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    <input type="number" class="form-control" name="basic_salary" id="basicSalary" 
+                                           placeholder="Select employee to auto-fill" step="0.01" required readonly>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Unpaid Leave Balance</label>
-                                <input type="number" class="form-control" id="unpaidBalance" 
-                                       placeholder="Unpaid leave balance" readonly style="background-color: #f8f9fa;">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-calendar-times me-2"></i>Unpaid Leave Balance
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    <input type="number" class="form-control" id="unpaidBalance" 
+                                           placeholder="Unpaid leave balance" readonly>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Salary Components -->
                         <div class="mb-4">
-                            <h6 class="mb-3">Salary Components</h6>
+                            <h6 class="mb-3">
+                                <i class="fas fa-list-alt me-2"></i>Salary Components
+                            </h6>
                             <div class="table-responsive">
-                                <table class="table table-bordered">
-                                    <thead class="table-light">
+                                <table class="table">
+                                    <thead>
                                         <tr>
-                                            <th>Component</th>
-                                            <th>Type</th>
-                                            <th>Calculation</th>
-                                            <th>Amount</th>
+                                            <th data-label="Component">Component</th>
+                                            <th data-label="Type">Type</th>
+                                            <th data-label="Calculation">Calculation</th>
+                                            <th data-label="Amount">Amount</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {% for component in components %}
                                         <tr>
-                                            <td>
+                                            <td data-label="Component">
                                                 <strong>{{ component.name }}</strong>
                                                 {% if component.calculation_type == 'percentage' %}
                                                 <br><small class="text-muted">{{ component.value }}% of Basic</small>
@@ -102,19 +736,19 @@
                                                 <br><small class="text-muted">Formula: {{ component.formula }}</small>
                                                 {% endif %}
                                             </td>
-                                            <td>
+                                            <td data-label="Type">
                                                 <span class="badge {% if component.component_type == 'earning' %}bg-success{% else %}bg-danger{% endif %}">
                                                     {{ component.get_component_type_display }}
                                                 </span>
                                             </td>
-                                            <td>{{ component.get_calculation_type_display }}</td>
-                                            <td>
+                                            <td data-label="Calculation">{{ component.get_calculation_type_display }}</td>
+                                            <td data-label="Amount">
                                                 {% if component.calculation_type == 'percentage' or component.calculation_type == 'formula' %}
                                                 <div class="input-group input-group-sm">
                                                     <span class="input-group-text">₹</span>
                                                     <input type="number" class="form-control" 
                                                            id="component_{{ component.id }}_calc" 
-                                                           readonly style="background-color: #f8f9fa;">
+                                                           readonly>
                                                 </div>
                                                 <input type="hidden" name="component_{{ component.id }}" 
                                                        id="component_{{ component.id }}">
@@ -124,7 +758,8 @@
                                                     <input type="number" class="form-control component-input" 
                                                            name="component_{{ component.id }}" 
                                                            value="0" step="0.01" 
-                                                           data-component-type="{{ component.component_type }}">
+                                                           data-component-type="{{ component.component_type }}"
+                                                           placeholder="Enter amount">
                                                 </div>
                                                 {% endif %}
                                             </td>
@@ -138,22 +773,24 @@
                         <!-- Salary Summary -->
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="custom-card bg-light">
-                                    <h6 class="mb-3">Salary Summary</h6>
-                                    <div class="d-flex justify-content-between mb-2">
+                                <div class="summary-card">
+                                    <h6>
+                                        <i class="fas fa-chart-pie me-2"></i>Salary Summary
+                                    </h6>
+                                    <div class="summary-item">
                                         <span>Basic Salary:</span>
                                         <strong id="summaryBasic">₹0.00</strong>
                                     </div>
-                                    <div class="d-flex justify-content-between mb-2">
+                                    <div class="summary-item">
                                         <span>Total Earnings:</span>
                                         <strong class="text-success" id="summaryEarnings">₹0.00</strong>
                                     </div>
-                                    <div class="d-flex justify-content-between mb-2">
+                                    <div class="summary-item">
                                         <span>Total Deductions:</span>
                                         <strong class="text-danger" id="summaryDeductions">₹0.00</strong>
                                     </div>
                                     <hr>
-                                    <div class="d-flex justify-content-between">
+                                    <div class="summary-item">
                                         <span><strong>Net Salary:</strong></span>
                                         <strong class="text-primary" id="summaryNet">₹0.00</strong>
                                     </div>
@@ -165,7 +802,9 @@
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-2"></i>Save Salary Structure
                             </button>
-                            <a href="{% url 'employee_salaries' %}" class="btn btn-secondary">Cancel</a>
+                            <a href="{% url 'employee_salaries' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
                         </div>
                     </form>
                 </div>
@@ -173,10 +812,311 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
+    flatpickr("#effectiveDate", {
+        dateFormat: "d-m-Y",
+        defaultDate: "{{ today_date|date:'d-m-Y' }}",
+        altInput: true,
+        altFormat: "d-m-Y",
+        allowInput: false
+    });
+    // Excel Upload Functionality
+    document.getElementById('excelUpload').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                
+                if (jsonData.length > 0) {
+                    processExcelData(jsonData);
+                } else {
+                    alert('No data found in Excel file');
+                }
+            } catch (error) {
+                console.error('Error reading Excel:', error);
+                alert('Error reading Excel file. Please check the format.');
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    function processExcelData(data) {
+    if (data.length === 1) {
+        // Single employee - auto-fill the form
+        const firstRow = data[0];
+        
+        if (firstRow['Employee ID']) {
+            // Search and select employee
+            employeeSearchInput.value = firstRow['Employee ID'];
+            searchEmployees(firstRow['Employee ID']);
+        }
+        
+        if (firstRow['Basic Salary']) {
+            setTimeout(() => {
+                document.getElementById('basicSalary').value = firstRow['Basic Salary'];
+                document.getElementById('basicSalary').readOnly = false;
+            }, 500);
+        }
+        
+        if (firstRow['Effective Date']) {
+            const excelDate = new Date(firstRow['Effective Date']);
+            const day = String(excelDate.getDate()).padStart(2, '0');
+            const month = String(excelDate.getMonth() + 1).padStart(2, '0');
+            const year = excelDate.getFullYear();
+            document.getElementById('effectiveDate').value = `${day}-${month}-${year}`;
+        }
+        
+        // Fill component values
+        {% for component in components %}
+            if (firstRow['{{ component.name }}']) {
+                const componentInput = document.querySelector('[name="component_{{ component.id }}"]');
+                if (componentInput) {
+                    componentInput.value = firstRow['{{ component.name }}'];
+                }
+            }
+        {% endfor %}
+        
+        calculateSalary();
+        alert('Single employee data loaded from Excel successfully!');
+        
+    } else {
+        // Multiple employees - show bulk upload confirmation
+        showBulkUploadPreview(data);
+    }
+}
+
+function showBulkUploadPreview(data) {
+    // Disable single employee form fields
+    document.getElementById('employeeSelect').disabled = true;
+    document.getElementById('employeeSelect').style.opacity = '0.5';
+    document.getElementById('effectiveDate').disabled = true;
+    document.getElementById('basicSalary').disabled = true;
+    
+    // Hide the single employee section
+    document.getElementById('salaryForm').style.display = 'none';
+    
+    // Create bulk upload preview table
+    let previewHTML = `
+        <div class="custom-card mt-4" id="bulkUploadPreview">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-users me-2"></i> Bulk Upload Preview (${data.length} Employees)
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Bulk Upload Mode:</strong> ${data.length} employee salary records will be uploaded.
+                    Please review the data below before submitting.
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>S.No</th>
+                                <th>Employee ID</th>
+                                <th>Basic Salary</th>
+                                <th>Effective Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bulkPreviewBody">
+    `;
+    
+    data.forEach((row, index) => {
+        const status = (row['Employee ID'] && row['Basic Salary']) ? 
+            '<span class="badge bg-success">Valid</span>' : 
+            '<span class="badge bg-danger">Invalid</span>';
+        
+        previewHTML += `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${row['Employee ID'] || 'N/A'}</td>
+                <td>₹${row['Basic Salary'] || '0'}</td>
+                <td>${row['Effective Date'] || 'N/A'}</td>
+                <td>${status}</td>
+            </tr>
+        `;
+    });
+    
+    previewHTML += `
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="d-flex gap-2 mt-4">
+                    <button type="button" class="btn btn-primary" id="confirmBulkUpload">
+                        <i class="fas fa-upload me-2"></i>Confirm & Upload All
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="cancelBulkUpload">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Insert preview after the form
+    document.getElementById('salaryForm').insertAdjacentHTML('afterend', previewHTML);
+    
+    // Store data for submission
+    window.bulkUploadData = data;
+    
+    // Add event listeners
+    document.getElementById('confirmBulkUpload').addEventListener('click', () => {
+        submitBulkUpload(data);
+    });
+    
+    document.getElementById('cancelBulkUpload').addEventListener('click', () => {
+        cancelBulkUpload();
+    });
+}
+
+function submitBulkUpload(data) {
+    // Show loading
+    document.getElementById('confirmBulkUpload').disabled = true;
+    document.getElementById('confirmBulkUpload').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
+    
+    let successCount = 0;
+    let totalCount = data.length;
+    let errors = [];
+    
+    // Submit each employee one by one
+    async function uploadEmployee(empData, index) {
+        const formData = new FormData();
+        
+        // Find employee by ID first
+        try {
+            const searchResponse = await fetch('/search-employees/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: `search_term=${encodeURIComponent(empData['Employee ID'])}`
+            });
+            
+            const searchData = await searchResponse.json();
+            
+            if (searchData.employees && searchData.employees.length > 0) {
+                const employee = searchData.employees[0];
+                
+                // Prepare form data
+                formData.append('employee', employee.id);
+                formData.append('basic_salary', empData['Basic Salary'] || 0);
+                
+                // Convert date format if needed
+                let effectiveDate = empData['Effective Date'];
+                if (effectiveDate) {
+                    const parts = effectiveDate.split('-');
+                    if (parts.length === 3) {
+                        effectiveDate = `${parts[2]}-${parts[1]}-${parts[0]}`; // Convert to YYYY-MM-DD
+                    }
+                }
+                formData.append('effective_date', effectiveDate);
+                
+                // Add components
+                {% for component in components %}
+                    if (empData['{{ component.name }}']) {
+                        formData.append('component_{{ component.id }}', empData['{{ component.name }}']);
+                    } else {
+                        formData.append('component_{{ component.id }}', '0');
+                    }
+                {% endfor %}
+                
+                // Submit to your existing form endpoint
+                const response = await fetch(window.location.href, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    successCount++;
+                } else {
+                    errors.push(`${empData['Employee ID']}: Submission failed`);
+                }
+            } else {
+                errors.push(`${empData['Employee ID']}: Employee not found`);
+            }
+        } catch (error) {
+            errors.push(`${empData['Employee ID']}: ${error.message}`);
+        }
+        
+        // Update progress
+        const progress = Math.round(((index + 1) / totalCount) * 100);
+        document.getElementById('confirmBulkUpload').innerHTML = 
+            `<i class="fas fa-spinner fa-spin me-2"></i>Uploading... ${progress}%`;
+    }
+    
+    // Upload all employees sequentially
+    Promise.all(data.map((empData, index) => uploadEmployee(empData, index)))
+        .then(() => {
+            if (successCount > 0) {
+                let message = `Successfully uploaded ${successCount} out of ${totalCount} salary records!`;
+                if (errors.length > 0) {
+                    message += `\n\nFailed uploads:\n${errors.join('\n')}`;
+                }
+                alert(message);
+                window.location.href = "{% url 'employee_salaries' %}";
+            } else {
+                alert('All uploads failed:\n' + errors.join('\n'));
+                document.getElementById('confirmBulkUpload').disabled = false;
+                document.getElementById('confirmBulkUpload').innerHTML = '<i class="fas fa-upload me-2"></i>Confirm & Upload All';
+            }
+        });
+}
+function cancelBulkUpload() {
+    // Remove preview
+    document.getElementById('bulkUploadPreview').remove();
+    
+    // Re-enable form
+    document.getElementById('salaryForm').style.display = 'block';
+    document.getElementById('employeeSelect').disabled = false;
+    document.getElementById('employeeSelect').style.opacity = '1';
+    document.getElementById('effectiveDate').disabled = false;
+    document.getElementById('basicSalary').disabled = false;
+    
+    // Clear file input
+    document.getElementById('excelUpload').value = '';
+    
+    // Clear stored data
+    window.bulkUploadData = null;
+}
+
+    // Download Excel Template
+    document.getElementById('downloadTemplate').addEventListener('click', function() {
+        // Create template data
+        const templateData = [{
+            'Employee ID': 'IKT/BBSR/2262',
+            'Basic Salary': '0.00',
+            'Effective Date': '{{ today_date|date:"d-m-Y" }}'
+            {% for component in components %}
+                , '{{ component.name }}': '0'
+            {% endfor %}
+        }];
+        
+        // Create workbook and worksheet
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(templateData);
+        
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, ws, 'Salary Data');
+        
+        // Download file
+        XLSX.writeFile(wb, 'salary_import_template.xlsx');
+    });
     // Function to load employee data when selected
     async function loadEmployeeData(employeeId, basicSalary = null) {
         const basicSalaryField = document.getElementById('basicSalary');
@@ -319,13 +1259,18 @@
             }
         });
 
-        // Update summary
-        document.getElementById('summaryBasic').textContent = '₹' + basicSalary.toFixed(2);
-        document.getElementById('summaryEarnings').textContent = '₹' + totalEarnings.toFixed(2);
-        document.getElementById('summaryDeductions').textContent = '₹' + totalDeductions.toFixed(2);
+        // Format numbers with commas
+        function formatCurrency(amount) {
+            return '₹' + amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+        }
+
+        // Update summary with formatted numbers
+        document.getElementById('summaryBasic').textContent = formatCurrency(basicSalary);
+        document.getElementById('summaryEarnings').textContent = formatCurrency(totalEarnings);
+        document.getElementById('summaryDeductions').textContent = formatCurrency(totalDeductions);
         
         const netSalary = basicSalary + totalEarnings - totalDeductions;
-        document.getElementById('summaryNet').textContent = '₹' + netSalary.toFixed(2);
+        document.getElementById('summaryNet').textContent = formatCurrency(netSalary);
     }
 
     // Event listeners
@@ -333,8 +1278,6 @@
     document.querySelectorAll('.component-input').forEach(input => {
         input.addEventListener('input', calculateSalary);
     });
-
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
     // Employee selection functionality
     const employeeSearchInput = document.getElementById('employeeSelect');
@@ -386,8 +1329,16 @@
             suggestionItem.className = 'dropdown-item';
             suggestionItem.href = '#';
             suggestionItem.innerHTML = `
-                <strong>${emp.name}</strong>
-                <small class="text-muted ms-2">${emp.employee_id}</small>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>${emp.name}</strong>
+                        <br>
+                        <small class="text-muted">${emp.employee_id} • ${emp.designation}</small>
+                    </div>
+                    <div class="text-end">
+                        <small class="text-success">Current Salary: ₹${emp.current_salary || 0}</small>
+                    </div>
+                </div>
             `;
             suggestionItem.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -433,7 +1384,73 @@
         return cookieValue;
     }
 
+    // Form validation
+    document.getElementById('salaryForm').addEventListener('submit', function(e) {
+        const employeeId = document.getElementById('empId').value;
+        const basicSalary = parseFloat(document.getElementById('basicSalary').value) || 0;
+        const dateInput = document.getElementById('effectiveDate');
+        const dateValue = dateInput.value;
+        if (dateValue) {
+        const parts = dateValue.split('-');
+            if (parts.length === 3) {
+                // Convert DD-MM-YYYY to YYYY-MM-DD
+                const formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                dateInput.value = formattedDate;
+            }
+        }
+        if (!employeeId) {
+            e.preventDefault();
+            alert('Please select an employee.');
+            employeeSearchInput.focus();
+            return false;
+        }
+        
+        if (basicSalary <= 0) {
+            e.preventDefault();
+            alert('Please enter a valid basic salary amount.');
+            document.getElementById('basicSalary').focus();
+            return false;
+        }
+        
+        // Validate all component inputs
+        let isValid = true;
+        document.querySelectorAll('.component-input').forEach(input => {
+            const value = parseFloat(input.value) || 0;
+            if (value < 0) {
+                isValid = false;
+                input.style.borderColor = 'var(--warning)';
+                input.style.boxShadow = '0 0 0 4px rgba(247, 37, 133, 0.1)';
+            } else {
+                input.style.borderColor = '';
+                input.style.boxShadow = '';
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please enter valid positive amounts for all components.');
+            return false;
+        }
+    });
+
+    
+
+    // Add input validation styling
+    document.querySelectorAll('.component-input, #basicSalary').forEach(input => {
+        input.addEventListener('blur', function() {
+            const value = parseFloat(this.value) || 0;
+            if (value < 0) {
+                this.style.borderColor = 'var(--warning)';
+                this.style.boxShadow = '0 0 0 4px rgba(247, 37, 133, 0.1)';
+            } else {
+                this.style.borderColor = '';
+                this.style.boxShadow = '';
+            }
+        });
+    });
+
     // Initial calculation
     calculateSalary();
+    
 </script>
 {% endblock %}

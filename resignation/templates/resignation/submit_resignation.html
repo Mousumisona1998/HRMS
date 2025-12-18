@@ -1,144 +1,1275 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}
-  Submit Resignation - HR System
-{% endblock %}
+{% block title %}Submit Resignation • HR System{% endblock %}
 
 {% block content %}
-  <div class="container-fluid">
-    <div class="row justify-content-center">
-      <div class="col-lg-8">
-        <div class="custom-card">
-          <div class="card-header">
-            <h4 class="card-title mb-0"> Submit Resignation</h4>
-          </div>
-          <div class="card-body">
-            <div class="alert alert-info">
-              <i class="fas fa-info-circle me-2"></i>
-              <strong>Important:</strong> Please ensure all information is accurate. Your resignation will be reviewed by your manager and HR.
-            </div>
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-light: #4895ef;
+        --secondary: #7209b7;
+        --accent: #4cc9f0;
+        --warning: #f72585;
+        --success: #10b981;
+        --dark: #1a1a2e;
+        --light: #f8f9fa;
+        --gray-100: #f8f9fa;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-400: #ced4da;
+        --gray-500: #adb5bd;
+        --gray-600: #6c757d;
+        --gray-700: #495057;
+        --gray-800: #343a40;
+        --gray-900: #212529;
+        --white: #ffffff;
+        --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+        --hover-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    }
 
-            <form method="POST" id="resignationForm">
-              {% csrf_token %}
+    .submit-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+    }
 
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label for="resignation_date" class="form-label">Resignation Date *</label>
-                  <input type="date" class="form-control" id="resignation_date" name="resignation_date" min="{{ min_date }}" value="{{ min_date }}" required />
-                  <div class="form-text">The date you are submitting your resignation</div>
-                </div>
+    /* Header */
+    .submit-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+    }
 
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Last Working Date (Auto-calculated)</label>
-                  <input type="text" class="form-control" id="last_working_date_preview" value="{{ min_date }}" readonly disabled />
-                  <div class="form-text">Automatically calculated: Resignation date + {{ notice_period }} days notice period</div>
-                </div>
-              </div>
+    .submit-header h1 {
+        font-size: 30px;
+        font-weight: 700;
+        color: var(--dark);
+        letter-spacing: -0.5px;
+    }
 
-              <div class="mb-3">
-                <label for="reason" class="form-label">Reason for Resignation *</label>
-                <textarea class="form-control" id="reason" name="reason" rows="5" placeholder="Please provide detailed reason for your resignation..." required></textarea>
-              </div>
+    .header-subtitle {
+        font-size: 16px;
+        color: var(--gray-600);
+        margin-top: 8px;
+        font-weight: 400;
+    }
 
-              <!-- Resignation Policy -->
-              <!-- <div class="alert alert-warning">
-                <h6><i class="fas fa-exclamation-triangle me-2"></i>Resignation Policy</h6>
-                <ul class="mb-0">
-                  <li>
-                    Standard notice period: <strong>{{ notice_period }} days</strong>
-                  </li>
-                  <li>Only one active resignation allowed at a time</li>
-                  <li>30-day cooldown period after withdrawal</li>
-                  <li>Resignation subject to manager approval</li>
-                </ul>
-              </div> -->
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
 
-              <div class="row mt-4">
-                <div class="col-12">
-                  <div class="d-flex justify-content-between">
-                    <a href="{% url 'resignation:dashboard' %}" class="btn btn-secondary"><i class="fas fa-arrow-left me-2"></i>Back to Dashboard</a>
-                    <button type="submit" class="btn btn-primary" onclick="return confirmSubmit()"><i class="fas fa-paper-plane me-2"></i>Submit Resignation</button>
-                  </div>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
+    .btn-action {
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        border: none;
+        text-decoration: none;
+    }
 
-        <!-- Resignation Policy Details -->
-        <div class="custom-card mt-4">
-          <div class="card-header">
-            <h6 class="card-title mb-0"> Resignation Policy Details</h6>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-6">
-                <h6>Notice Period Requirements</h6>
-                <ul class="list-unstyled">
-                  <li class="mb-2">
-                    <i class="fas fa-check text-success me-2"></i> Standard notice period: {{ notice_period }} days
-                  </li>
-                  <li class="mb-2">
-                    <i class="fas fa-check text-success me-2"></i> Resignation subject to manager approval
-                  </li>
-                  <li class="mb-2">
-                    <i class="fas fa-check text-success me-2"></i> Exit interview will be scheduled
-                  </li>
-                </ul>
-              </div>
-              <div class="col-md-6">
-                <h6>Process Timeline</h6>
-                <ul class="list-unstyled">
-                  <li class="mb-2">
-                    <i class="fas fa-check text-success me-2"></i> Manager review: 2-3 business days
-                  </li>
-                  <li class="mb-2">
-                    <i class="fas fa-check text-success me-2"></i> Full and final settlement after clearance
-                  </li>
-                  <li class="mb-2">
-                    <i class="fas fa-check text-success me-2"></i> Experience letter provided upon completion
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-{% endblock %}
+    .btn-secondary {
+        background: var(--white);
+        color: var(--gray-700);
+        border: 1px solid var(--gray-300);
+    }
 
-{% block extra_js %}
-  <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const resignationDate = document.getElementById('resignation_date');
-    const lastWorkingDatePreview = document.getElementById('last_working_date_preview');
-    
-    function calculateLastWorkingDate() {
-        if (resignationDate.value) {
-            const resignDate = new Date(resignationDate.value);
-            const lastDate = new Date(resignDate);
-            lastDate.setDate(lastDate.getDate() + {{ notice_period }});
-            
-            lastWorkingDatePreview.value = lastDate.toISOString().split('T')[0];
+    .btn-secondary:hover {
+        background: var(--gray-100);
+        transform: translateY(-1px);
+        box-shadow: var(--hover-shadow);
+        border-color: var(--gray-400);
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+        border: 1px solid var(--primary);
+    }
+
+    .btn-primary:hover {
+        background: #3a56d4;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+    }
+
+    .btn-danger {
+        background: #ef4444;
+        color: white;
+        border: 1px solid #ef4444;
+    }
+
+    .btn-danger:hover {
+        background: #dc2626;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    /* Main Content Grid */
+    .submit-content {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+
+    @media (max-width: 1200px) {
+        .submit-content {
+            grid-template-columns: 1fr;
         }
     }
-    
-    resignationDate.addEventListener('change', calculateLastWorkingDate);
-    
-    // Initial calculation
-    calculateLastWorkingDate();
-});
 
-function confirmSubmit() {
-    const reason = document.getElementById('reason').value.trim();
-    if (!reason) {
-        alert('Please provide a reason for resignation.');
-        return false;
+    /* Form Card */
+    .form-card {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 32px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        position: relative;
+        overflow: hidden;
     }
-    
-    return confirm('Are you sure you want to submit your resignation? This action will be reviewed by your manager and cannot be easily withdrawn.');
-}
+
+    .form-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(to bottom, var(--primary), var(--secondary));
+    }
+
+    .form-header {
+        margin-bottom: 28px;
+    }
+
+    .form-header h2 {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .form-header-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(67, 97, 238, 0.1);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+
+    /* Info Alert */
+    .info-alert {
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.1), rgba(72, 149, 239, 0.1));
+        border: 1px solid rgba(67, 97, 238, 0.2);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 28px;
+        display: flex;
+        gap: 14px;
+    }
+
+    .alert-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+
+    .alert-content h4 {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 6px;
+    }
+
+    .alert-content p {
+        font-size: 14px;
+        color: var(--gray-700);
+        line-height: 1.5;
+        margin: 0;
+    }
+
+    /* Form Elements */
+    .form-group {
+        margin-bottom: 24px;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 8px;
+    }
+
+    .form-label .required {
+        color: #ef4444;
+        margin-left: 4px;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid var(--gray-300);
+        border-radius: 10px;
+        font-size: 15px;
+        color: var(--dark);
+        background: var(--white);
+        transition: all 0.2s ease;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+
+    .form-input:disabled {
+        background: var(--gray-100);
+        border-color: var(--gray-200);
+        color: var(--gray-500);
+        cursor: not-allowed;
+    }
+
+    .form-text {
+        font-size: 13px;
+        color: var(--gray-600);
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .form-text i {
+        color: var(--primary);
+    }
+
+    /* Date Preview */
+    .date-preview {
+        background: var(--gray-100);
+        border: 2px solid var(--gray-200);
+        border-radius: 10px;
+        padding: 14px 16px;
+        font-size: 15px;
+        color: var(--dark);
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .date-preview span {
+        color: var(--primary);
+        font-weight: 600;
+        font-size: 16px;
+    }
+
+    /* Textarea */
+    .form-textarea {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid var(--gray-300);
+        border-radius: 10px;
+        font-size: 15px;
+        color: var(--dark);
+        background: var(--white);
+        transition: all 0.2s ease;
+        font-family: 'Inter', sans-serif;
+        resize: vertical;
+        min-height: 120px;
+        line-height: 1.5;
+    }
+
+    .form-textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+
+    .char-count {
+        font-size: 12px;
+        color: var(--gray-500);
+        text-align: right;
+        margin-top: 6px;
+    }
+
+    /* Form Grid */
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Form Actions */
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 32px;
+        padding-top: 24px;
+        border-top: 1px solid var(--gray-200);
+    }
+
+    /* Side Panel Cards */
+    .side-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    /* Policy Card */
+    .policy-card {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .policy-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(to bottom, var(--warning), #f59e0b);
+    }
+
+    .policy-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .policy-header h2 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+
+    .policy-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(247, 37, 133, 0.1);
+        color: var(--warning);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+
+    /* Timeline Card */
+    .timeline-card {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+    }
+
+    .timeline-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .timeline-header h2 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+
+    .timeline-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+
+    /* Timeline */
+    .timeline {
+        position: relative;
+        padding-left: 24px;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 7px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--gray-300);
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 24px;
+    }
+
+    .timeline-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -24px;
+        top: 6px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--primary);
+        border: 2px solid var(--white);
+        box-shadow: 0 0 0 2px var(--primary);
+    }
+
+    .timeline-item.current::before {
+        background: var(--success);
+        box-shadow: 0 0 0 2px var(--success);
+    }
+
+    .timeline-item.future::before {
+        background: var(--gray-300);
+        box-shadow: 0 0 0 2px var(--gray-300);
+    }
+
+    .timeline-content h4 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 4px;
+    }
+
+    .timeline-content p {
+        font-size: 13px;
+        color: var(--gray-600);
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    /* Policy List */
+    .policy-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .policy-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 16px;
+        padding: 14px;
+        background: var(--gray-100);
+        border-radius: 10px;
+        border: 1px solid var(--gray-200);
+        transition: all 0.2s ease;
+    }
+
+    .policy-list li:hover {
+        background: var(--white);
+        border-color: var(--primary-light);
+        transform: translateX(4px);
+    }
+
+    .policy-list li i {
+        color: var(--success);
+        font-size: 14px;
+        margin-top: 2px;
+        flex-shrink: 0;
+    }
+
+    .policy-list .text-warning i {
+        color: #f59e0b;
+    }
+
+    .policy-list li span {
+        flex: 1;
+        font-size: 14px;
+        color: var(--gray-700);
+        line-height: 1.5;
+    }
+
+    .policy-list li strong {
+        color: var(--dark);
+        font-weight: 600;
+    }
+
+    /* Stats Card */
+    .stats-card {
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.05), rgba(114, 9, 183, 0.05));
+        border: 1px solid rgba(67, 97, 238, 0.2);
+        border-radius: 16px;
+        padding: 28px;
+        margin-bottom: 24px;
+    }
+
+    .stats-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .stats-header h2 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+
+    .stats-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(67, 97, 238, 0.15);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 16px;
+        background: rgba(255, 255, 255, 0.6);
+        border-radius: 10px;
+        border: 1px solid rgba(67, 97, 238, 0.1);
+    }
+
+    .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--primary);
+        display: block;
+        line-height: 1;
+        margin-bottom: 6px;
+    }
+
+    .stat-label {
+        font-size: 13px;
+        color: var(--gray-600);
+    }
+
+    /* Warning Card */
+    .warning-card {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(245, 158, 11, 0.05));
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        border-radius: 16px;
+        padding: 28px;
+        margin-bottom: 24px;
+    }
+
+    .warning-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .warning-header h2 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #7f1d1d;
+        margin: 0;
+    }
+
+    .warning-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+
+    .warning-content {
+        color: #7f1d1d;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    /* Confirmation Modal */
+    .confirmation-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .confirmation-modal.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 32px;
+        max-width: 500px;
+        width: 100%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: modalSlide 0.3s ease;
+    }
+
+    @keyframes modalSlide {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .modal-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .modal-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+    }
+
+    .modal-header h3 {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+
+    .modal-body {
+        color: var(--gray-700);
+        line-height: 1.6;
+        margin-bottom: 24px;
+        padding: 20px;
+        background: var(--gray-100);
+        border-radius: 10px;
+        border: 1px solid var(--gray-200);
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+
+    .modal-btn {
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+    }
+
+    .modal-btn-cancel {
+        background: var(--gray-100);
+        color: var(--gray-700);
+        border: 1px solid var(--gray-300);
+    }
+
+    .modal-btn-cancel:hover {
+        background: var(--gray-200);
+    }
+
+    .modal-btn-confirm {
+        background: var(--primary);
+        color: white;
+        border: 1px solid var(--primary);
+    }
+
+    .modal-btn-confirm:hover {
+        background: #3a56d4;
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .submit-container {
+            padding: 16px;
+        }
+        
+        .submit-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+        
+        .header-actions {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+            gap: 12px;
+            align-items: stretch;
+        }
+        
+        .form-actions .btn-action {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Loading State */
+    .loading {
+        opacity: 0.7;
+        pointer-events: none;
+    }
+
+    .spinner {
+        border: 3px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        border-top: 3px solid var(--primary);
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+<div class="submit-container">
+    <!-- Header -->
+    <div class="submit-header">
+        <div>
+            <h1>Submit Resignation</h1>
+            <p class="header-subtitle">Submit your resignation request for review and approval</p>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'resignation:dashboard' %}" class="btn-action btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Back to Dashboard
+            </a>
+            <a href="{% url 'resignation:resignation_history' %}" class="btn-action" style="background: var(--gray-100); color: var(--gray-700); border: 1px solid var(--gray-300);">
+                <i class="fas fa-history"></i>
+                View History
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="submit-content">
+        <!-- Left Column: Form -->
+        <div>
+            <!-- Stats Card -->
+            <div class="stats-card">
+                <div class="stats-header">
+                    <div class="stats-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h2>Your Resignation Status</h2>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-value">{{ total_submissions|default:"0" }}</span>
+                        <span class="stat-label">Total Submissions</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{{ active_requests|default:"0" }}</span>
+                        <span class="stat-label">Active Requests</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{{ notice_period }}</span>
+                        <span class="stat-label">Notice Period (Days)</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{{ success_rate|default:"0" }}%</span>
+                        <span class="stat-label">Approval Rate</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warning Card -->
+            <div class="warning-card">
+                <div class="warning-header">
+                    <div class="warning-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h2>Important Notice</h2>
+                </div>
+                <div class="warning-content">
+                    <p>Once submitted, your resignation request will be reviewed by your manager and HR. You may only have one active resignation request at a time. A 30-day cooldown period applies after withdrawing a resignation.</p>
+                </div>
+            </div>
+
+            <!-- Form Card -->
+            <div class="form-card">
+                <div class="form-header">
+                    <div class="form-header-icon">
+                        <i class="fas fa-file-signature"></i>
+                    </div>
+                    <h2>Resignation Details</h2>
+                </div>
+
+                <div class="info-alert">
+                    <div class="alert-icon">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="alert-content">
+                        <h4>Before You Submit</h4>
+                        <p>Please ensure all information is accurate. Your resignation will be reviewed by your manager and HR department. Once submitted, changes may require formal withdrawal and resubmission.</p>
+                    </div>
+                </div>
+
+                <form method="POST" id="resignationForm">
+                    {% csrf_token %}
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">
+                                Resignation Date
+                                <span class="required">*</span>
+                            </label>
+                            <input type="date" 
+                                   class="form-input" 
+                                   id="resignation_date" 
+                                   name="resignation_date" 
+                                   min="{{ min_date }}" 
+                                   value="{{ min_date }}" 
+                                   required />
+                            <div class="form-text">
+                                <i class="fas fa-calendar-alt"></i>
+                                The date you are formally submitting your resignation
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Last Working Date</label>
+                            <div class="date-preview" id="last_working_date_preview">
+                                {{ min_date }}
+                                <span id="days_count">{{ notice_period }} days</span>
+                            </div>
+                            <div class="form-text">
+                                <i class="fas fa-calculator"></i>
+                                Auto-calculated: Resignation date + {{ notice_period }} days notice period
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Reason for Resignation
+                            <span class="required">*</span>
+                        </label>
+                        <textarea class="form-textarea" 
+                                  id="reason" 
+                                  name="reason" 
+                                  placeholder="Please provide a detailed reason for your resignation. Include any constructive feedback that might help the organization improve..."
+                                  rows="6"
+                                  maxlength="1000"
+                                  required></textarea>
+                        <div class="char-count">
+                            <span id="char_count">0</span> / 1000 characters
+                        </div>
+                        <div class="form-text">
+                            <i class="fas fa-comment-alt"></i>
+                            Be specific and professional. This information will be reviewed by management.
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Additional Comments (Optional)</label>
+                        <textarea class="form-textarea" 
+                                  id="comments" 
+                                  name="comments" 
+                                  placeholder="Any additional comments, suggestions, or information you'd like to provide..."
+                                  rows="4"
+                                  maxlength="500"></textarea>
+                        <div class="char-count">
+                            <span id="comments_count">0</span> / 500 characters
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="{% url 'resignation:dashboard' %}" class="btn-action btn-secondary">
+                            <i class="fas fa-times"></i>
+                            Cancel
+                        </a>
+                        <button type="button" id="submitBtn" class="btn-action btn-primary">
+                            <i class="fas fa-paper-plane"></i>
+                            Submit Resignation
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Column: Side Panel -->
+        <div class="side-panel">
+            <!-- Policy Card -->
+            <div class="policy-card">
+                <div class="policy-header">
+                    <div class="policy-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <h2>Resignation Policy</h2>
+                </div>
+
+                <ul class="policy-list">
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span><strong>Standard notice period:</strong> {{ notice_period }} working days</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-user-check"></i>
+                        <span><strong>Manager approval</strong> required for all resignations</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-clock text-warning"></i>
+                        <span><strong>30-day cooldown</strong> after withdrawal before resubmission</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-handshake"></i>
+                        <span><strong>Exit interview</strong> scheduled upon approval</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-file-contract"></i>
+                        <span><strong>Full & final settlement</strong> after clearance completion</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-award"></i>
+                        <span><strong>Experience letter</strong> provided upon completion</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Timeline Card -->
+            <div class="timeline-card">
+                <div class="timeline-header">
+                    <div class="timeline-icon">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                    <h2>Process Timeline</h2>
+                </div>
+
+                <div class="timeline">
+                    <div class="timeline-item current">
+                        <div class="timeline-content">
+                            <h4>Submission & Review</h4>
+                            <p>Your resignation is submitted and pending manager review (2-3 business days)</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item future">
+                        <div class="timeline-content">
+                            <h4>Manager Approval</h4>
+                            <p>Your manager reviews and approves the resignation request</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item future">
+                        <div class="timeline-content">
+                            <h4>HR Processing</h4>
+                            <p>HR department processes the resignation and initiates exit formalities</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item future">
+                        <div class="timeline-content">
+                            <h4>Exit Interview</h4>
+                            <p>Schedule and conduct exit interview with HR department</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item future">
+                        <div class="timeline-content">
+                            <h4>Final Settlement</h4>
+                            <p>Complete clearance and receive final settlement</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help Card -->
+            <div class="policy-card" style="background: linear-gradient(135deg, rgba(67, 97, 238, 0.05), rgba(114, 9, 183, 0.05)); border-color: rgba(67, 97, 238, 0.2);">
+                <div class="policy-header">
+                    <div class="policy-icon" style="background: rgba(67, 97, 238, 0.15);">
+                        <i class="fas fa-life-ring"></i>
+                    </div>
+                    <h2>Need Assistance?</h2>
+                </div>
+                <div style="color: var(--gray-700); line-height: 1.6;">
+                    <p style="margin-bottom: 16px;">If you need help or have questions about the resignation process:</p>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255, 255, 255, 0.5); border-radius: 8px;">
+                            <i class="fas fa-user-tie" style="color: var(--primary);"></i>
+                            <span>Contact your <strong>Manager</strong> first</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255, 255, 255, 0.5); border-radius: 8px;">
+                            <i class="fas fa-users" style="color: var(--success);"></i>
+                            <span>HR Department: <strong>hr@company.com</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="confirmation-modal" id="confirmationModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-icon">
+                <i class="fas fa-exclamation"></i>
+            </div>
+            <h3>Confirm Resignation Submission</h3>
+        </div>
+        <div class="modal-body">
+            <p>You are about to submit your resignation. Please review the following:</p>
+            <ul style="margin-top: 12px; padding-left: 20px;">
+                <li>Your resignation will be reviewed by your manager</li>
+                <li>Only one active resignation request is allowed</li>
+                <li>30-day cooldown applies after withdrawal</li>
+                <li>This action cannot be easily reversed</li>
+            </ul>
+            <p style="margin-top: 16px; font-weight: 600; color: var(--dark);">
+                Resignation Date: <span id="modal_resignation_date">{{ min_date }}</span><br>
+                Last Working Date: <span id="modal_last_working_date">{{ min_date }}</span>
+            </p>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="modal-btn modal-btn-cancel" id="cancelBtn">
+                Cancel
+            </button>
+            <button type="button" class="modal-btn modal-btn-confirm" id="confirmBtn">
+                <i class="fas fa-paper-plane me-2"></i>
+                Confirm Submission
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Elements
+        const resignationDate = document.getElementById('resignation_date');
+        const lastWorkingDatePreview = document.getElementById('last_working_date_preview');
+        const daysCount = document.getElementById('days_count');
+        const reasonTextarea = document.getElementById('reason');
+        const commentsTextarea = document.getElementById('comments');
+        const charCount = document.getElementById('char_count');
+        const commentsCount = document.getElementById('comments_count');
+        const submitBtn = document.getElementById('submitBtn');
+        const confirmationModal = document.getElementById('confirmationModal');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const confirmBtn = document.getElementById('confirmBtn');
+        const modalResignationDate = document.getElementById('modal_resignation_date');
+        const modalLastWorkingDate = document.getElementById('modal_last_working_date');
+        
+        // Calculate last working date
+        function calculateLastWorkingDate() {
+            if (resignationDate.value) {
+                const resignDate = new Date(resignationDate.value);
+                const lastDate = new Date(resignDate);
+                lastDate.setDate(lastDate.getDate() + {{ notice_period }});
+                
+                // Format date for display
+                const formattedDate = lastDate.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+                
+                lastWorkingDatePreview.innerHTML = `${formattedDate} <span>${ {{ notice_period }} } days</span>`;
+                
+                // Update modal dates
+                const modalResignationFormatted = resignDate.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+                modalResignationDate.textContent = modalResignationFormatted;
+                modalLastWorkingDate.textContent = formattedDate;
+            }
+        }
+        
+        // Character counter
+        function updateCharCount() {
+            charCount.textContent = reasonTextarea.value.length;
+            commentsCount.textContent = commentsTextarea.value.length;
+        }
+        
+        // Date calculation on change
+        resignationDate.addEventListener('change', calculateLastWorkingDate);
+        
+        // Character count on input
+        reasonTextarea.addEventListener('input', updateCharCount);
+        commentsTextarea.addEventListener('input', updateCharCount);
+        
+        // Submit button click
+        submitBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Validate form
+            if (!resignationDate.value) {
+                alert('Please select a resignation date.');
+                resignationDate.focus();
+                return;
+            }
+            
+            if (!reasonTextarea.value.trim()) {
+                alert('Please provide a reason for resignation.');
+                reasonTextarea.focus();
+                return;
+            }
+            
+            // Show confirmation modal
+            confirmationModal.classList.add('active');
+        });
+        
+        // Cancel button in modal
+        cancelBtn.addEventListener('click', function() {
+            confirmationModal.classList.remove('active');
+        });
+        
+        // Confirm button in modal
+        confirmBtn.addEventListener('click', function() {
+            // Show loading state
+            submitBtn.innerHTML = '<div class="spinner"></div> Submitting...';
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+            
+            // Submit the form
+            document.getElementById('resignationForm').submit();
+        });
+        
+        // Close modal when clicking outside
+        confirmationModal.addEventListener('click', function(e) {
+            if (e.target === confirmationModal) {
+                confirmationModal.classList.remove('active');
+            }
+        });
+        
+        // Initialize calculations and counts
+        calculateLastWorkingDate();
+        updateCharCount();
+        
+        // Add animation to cards on load
+        const cards = document.querySelectorAll('.form-card, .policy-card, .timeline-card, .stats-card, .warning-card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                card.style.transition = 'all 0.4s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+        
+        // Add hover effect to form inputs
+        const formInputs = document.querySelectorAll('.form-input, .form-textarea');
+        formInputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'translateY(-2px)';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'translateY(0)';
+            });
+        });
+        
+        // Set minimum date to today
+        const today = new Date().toISOString().split('T')[0];
+        if (!resignationDate.value) {
+            resignationDate.value = today;
+            calculateLastWorkingDate();
+        }
+        
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl + Enter to submit
+            if (e.ctrlKey && e.key === 'Enter') {
+                if (!confirmationModal.classList.contains('active')) {
+                    submitBtn.click();
+                }
+            }
+            
+            // Escape to close modal
+            if (e.key === 'Escape' && confirmationModal.classList.contains('active')) {
+                confirmationModal.classList.remove('active');
+            }
+        });
+    });
 </script>
 {% endblock %}

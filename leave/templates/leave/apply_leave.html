@@ -3,369 +3,788 @@
 
 {% block content %}
 <style>
-  .page-header {
-    /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
-    color: black;
-    padding: 1rem;
-    border-radius: 15px;
-    margin-bottom: 2rem;
-    /* box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3); */
-  }
+    :root {
+        --primary: #4361ee;
+        --primary-light: #4895ef;
+        --secondary: #7209b7;
+        --accent: #4cc9f0;
+        --warning: #f72585;
+        --success: #10b981;
+        --dark: #1a1a2e;
+        --light: #f8f9fa;
+        --gray-100: #f8f9fa;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-400: #ced4da;
+        --gray-500: #adb5bd;
+        --gray-600: #6c757d;
+        --gray-700: #495057;
+        --gray-800: #343a40;
+        --gray-900: #212529;
+        --white: #ffffff;
+        --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
 
-  .page-header h1 {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-  }
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
-  .custom-card {
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
+    body {
+        background-color: #f8fafc;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: var(--gray-800);
+    }
 
-  .custom-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
-  }
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 24px;
+    }
 
-  .card-header {
-    /* background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); */
-    color: white;
-    padding: 1rem 1.5rem;
-    border-radius: 10px;
-    margin: -1.5rem -1.5rem 1.5rem -1.5rem;
-  }
+    /* Header Styles */
+    .page-header {
+        /* background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); */
+        color: black;
+        padding: 0px 0px;
+        /* border-radius: 20px; */
+        margin-bottom: 32px;
+        /* box-shadow: var(--card-shadow); */
+        position: relative;
+        overflow: hidden;
+    }
 
-  .card-title {
-    margin: 0;
-    font-weight: 600;
-    font-size: 1.1rem;
-  }
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        /* background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%); */
+        /* animation: shimmer 3s infinite linear; */
+    }
 
-  .form-label {
-    font-weight: 600;
-    color: #2d3748;
-    margin-bottom: 0.5rem;
-  }
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
 
-  .form-control, .form-select {
-    border: 2px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 0.75rem;
-    transition: all 0.3s ease;
-  }
+    .page-header h1 {
+        font-size: 36px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        position: relative;
+        z-index: 1;
+    }
 
-  .form-control:focus, .form-select:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  }
+    .page-header p {
+        font-size: 16px;
+        opacity: 0.9;
+        font-weight: 400;
+        position: relative;
+        z-index: 1;
+    }
 
-  .btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    padding: 0.75rem 2rem;
-    border-radius: 10px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-  }
+    .icon-wrapper {
+        background: #74d1ff;
+        width: 47px;
+        height: 50px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(10px);
+    }
 
-  .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-  }
+    .icon-wrapper i {
+        font-size: 24px;
+        color: var(--white);
+    }
 
-  .btn-secondary {
-    background: #718096;
-    border: none;
-    padding: 0.75rem 2rem;
-    border-radius: 10px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-  }
+    /* Card Styles */
+    .custom-card {
+        background: var(--white);
+        border-radius: 20px;
+        padding: 32px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        margin-bottom: 24px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
 
-  .btn-secondary:hover {
-    background: #4a5568;
-    transform: translateY(-2px);
-  }
+    .custom-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--hover-shadow);
+        border-color: var(--primary-light);
+    }
 
-  .balance-item {
-    background: linear-gradient(135deg, #ffecd2 0%, #fdfaf9 100%);
-    border: none !important;
-    border-radius: 12px;
-    transition: transform 0.3s ease;
-  }
+    .custom-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+    }
 
-  .balance-item:hover {
-    transform: scale(1.02);
-  }
+    .card-header {
+        margin: -32px -32px 32px -32px;
+        padding: 24px 32px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-bottom: 1px solid var(--gray-200);
+        border-radius: 20px 20px 0 0;
+    }
 
-  .badge {
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-size: 0.9rem;
-  }
+    .card-title {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
 
-  #balance-display {
-    /* background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); */
-    background: cornsilk;
-    border: none;
-    font-weight: 600;
-  }
+    .card-title i {
+        color: var(--primary);
+        font-size: 20px;
+    }
 
-  #days-display {
-    /* background: linear-gradient(135deg, #fdeb71 0%, #f8d800 100%); */
-    border: none;
-    font-weight: 600;
-    color: #2d3748;
-  }
+    /* Form Styles */
+    .form-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
 
-  .half-day-section {
-    background: linear-gradient(135deg, #8e9bd9 0%, #8ec5fc 100%);
-    padding: 1.5rem;
-    border-radius: 12px;
-    margin-bottom: 1.5rem;
-  }
+    .form-label i {
+        color: var(--primary);
+        font-size: 16px;
+    }
 
-  .half-day-toggle {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
-  }
+    .form-control, .form-select {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid var(--gray-300);
+        border-radius: 12px;
+        font-size: 15px;
+        color: var(--gray-800);
+        background: var(--white);
+        transition: all 0.2s ease;
+    }
 
-  .toggle-switch {
-    position: relative;
-    width: 60px;
-    height: 30px;
-  }
+    .form-control:focus, .form-select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+    }
 
-  .toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
+    /* Half Day Section */
+    .half-day-section {
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.05) 0%, rgba(114, 9, 183, 0.05) 100%);
+        border: 2px dashed var(--gray-300);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        transition: all 0.3s ease;
+    }
 
-  .toggle-slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: 0.4s;
-    border-radius: 30px;
-  }
+    .half-day-section:hover {
+        border-color: var(--primary);
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.08) 0%, rgba(114, 9, 183, 0.08) 100%);
+    }
 
-  .toggle-slider:before {
-    position: absolute;
-    content: "";
-    height: 22px;
-    width: 22px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    transition: 0.4s;
-    border-radius: 50%;
-  }
+    .half-day-toggle {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
 
-  input:checked + .toggle-slider {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  }
+    .toggle-switch {
+        position: relative;
+        width: 64px;
+        height: 32px;
+    }
 
-  input:checked + .toggle-slider:before {
-    transform: translateX(30px);
-  }
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
 
-  .half-options {
-    display: none;
-    margin-top: 1rem;
-  }
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--gray-300);
+        transition: .4s;
+        border-radius: 34px;
+    }
 
-  .half-options.active {
-    display: block;
-    animation: fadeIn 0.3s ease;
-  }
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 24px;
+        width: 24px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
 
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+    input:checked + .toggle-slider {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+    }
 
-  .half-option-btn {
-    flex: 1;
-    padding: 1rem;
-    border: 3px solid #e2e8f0;
-    border-radius: 10px;
-    background: white;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-align: center;
-    font-weight: 600;
-  }
+    input:checked + .toggle-slider:before {
+        transform: translateX(32px);
+    }
 
-  .half-option-btn:hover {
-    border-color: #667eea;
-    transform: scale(1.05);
-  }
+    .half-options {
+        display: none;
+        margin-top: 16px;
+    }
 
-  .half-option-btn.selected {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-color: #667eea;
-  }
+    .half-options.active {
+        display: block;
+        animation: slideDown 0.3s ease;
+    }
 
-  .half-option-btn input[type="radio"] {
-    display: none;
-  }
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
 
-  .tips-list li {
-    padding: 0.75rem;
-    background: #f7fafc;
-    border-radius: 8px;
-    margin-bottom: 0.5rem;
-    transition: all 0.3s ease;
-  }
+    .half-option-btn {
+        flex: 1;
+        padding: 20px;
+        border: 2px solid var(--gray-300);
+        border-radius: 12px;
+        background: var(--white);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
 
-  .tips-list li:hover {
-    background: #edf2f7;
-    transform: translateX(5px);
-  }
+    .half-option-btn:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.1);
+    }
 
-  .icon-wrapper {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 35px;
-    height: 35px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    margin-right: 0.5rem;
-  }
+    .half-option-btn.selected {
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.1) 0%, rgba(114, 9, 183, 0.1) 100%);
+        border-color: var(--primary);
+        color: var(--primary);
+    }
 
-  /* NEW: Probation Alert Styles */
-  .probation-alert {
-    /* background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); */
-    color: #dc3545;
-    padding: 1rem;
-    border-radius: 10px;
-    margin-bottom: 1.5rem;
-    border-left: 5px solid #c23616;
-  }
+    .half-option-btn i {
+        font-size: 24px;
+        margin-bottom: 8px;
+        color: inherit;
+    }
 
-  .probation-alert i {
-    font-size: 1.2rem;
-    margin-right: 0.5rem;
-  }
+    .half-option-btn div {
+        font-weight: 600;
+        font-size: 16px;
+        margin-bottom: 4px;
+    }
 
-  .rule-info {
-    background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
-    color: white;
-    padding: 1rem;
-    border-radius: 10px;
-    margin-bottom: 1rem;
-  }
+    .half-option-btn small {
+        font-size: 12px;
+        opacity: 0.7;
+    }
 
-  .rule-item {
-    background: #f8f9fa;
-    border-left: 4px solid #667eea;
-    padding: 0.75rem;
-    margin-bottom: 0.5rem;
-    border-radius: 0 8px 8px 0;
-  }
+    /* Alerts */
+    .probation-alert {
+        background: linear-gradient(135deg, rgba(247, 37, 133, 0.1) 0%, rgba(247, 37, 133, 0.05) 100%);
+        border: 2px solid rgba(247, 37, 133, 0.3);
+        border-radius: 16px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+        color: var(--warning);
+        position: relative;
+        overflow: hidden;
+    }
 
-  .leave-type-info {
-    font-size: 0.85rem;
-    color: #6c757d;
-    margin-top: 0.25rem;
-  }
-    /* NEW: Advance Notice Warning Styles */
-  .advance-notice-warning {
-    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-    border: 2px solid #ffc107;
-    color: #856404;
-    padding: 1rem;
-    border-radius: 10px;
-    margin-bottom: 1rem;
-    display: none;
-  }
+    .probation-alert::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 4px;
+        background: var(--warning);
+    }
 
-  .advance-notice-warning.show {
-    display: block;
-    animation: slideIn 0.3s ease;
-  }
+    .advance-notice-warning {
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 235, 59, 0.05) 100%);
+        border: 2px solid rgba(255, 193, 7, 0.3);
+        border-radius: 16px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+        color: #856404;
+        display: none;
+        position: relative;
+        overflow: hidden;
+    }
 
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+    .advance-notice-warning::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 4px;
+        background: #ffc107;
+    }
 
-  .warning-icon {
-    color: #ffc107;
-    font-size: 1.2rem;
-    margin-right: 0.5rem;
-  }
-  /* Add this to your existing CSS section */
-.optional-holidays-section {
-    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-    border: 1px solid #c3e6cb;
-    border-radius: 10px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    display: none;
-}
+    .advance-notice-warning.show {
+        display: block;
+        animation: slideIn 0.3s ease;
+    }
 
-.optional-holidays-section.show {
-    display: block;
-    animation: fadeIn 0.3s ease;
-}
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
 
-.optional-holiday-item {
-    background: white;
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    padding: 1rem;
-    margin-bottom: 0.75rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
+    .warning-icon {
+        color: #ffc107;
+        font-size: 24px;
+    }
 
-.optional-holiday-item:hover {
-    border-color: #28a745;
-    transform: translateX(5px);
-}
+    /* Optional Holidays Section */
+    .optional-holidays-section {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+        border: 2px solid rgba(16, 185, 129, 0.3);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        display: none;
+        position: relative;
+        overflow: hidden;
+    }
 
-.optional-holiday-item.selected {
-    background: #d4edda;
-    border-color: #28a745;
-}
+    .optional-holidays-section::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 4px;
+        background: var(--success);
+    }
 
-.holiday-info-badge {
-    background: #28a745;
-    color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    margin-left: 1rem;
-}
+    .optional-holidays-section.show {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
 
-.optional-notice {
-    background: #fff3cd;
-    border: 1px solid #ffeaa7;
-    border-radius: 8px;
-    padding: 1rem;
-    margin-top: 1rem;
-    font-size: 0.9rem;
-    color: #856404;
-}
+    .optional-holiday-item {
+        background: var(--white);
+        border: 2px solid var(--gray-300);
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .optional-holiday-item:hover {
+        border-color: var(--success);
+        transform: translateX(8px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
+    }
+
+    .optional-holiday-item.selected {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+        border-color: var(--success);
+    }
+
+    .holiday-info-badge {
+        background: var(--success);
+        color: var(--white);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        margin-left: 8px;
+    }
+
+    .optional-notice {
+        background: rgba(255, 193, 7, 0.1);
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 20px;
+        font-size: 14px;
+        color: #856404;
+    }
+
+    /* Leave Balance */
+    .balance-item {
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.05) 0%, rgba(114, 9, 183, 0.05) 100%);
+        border: 2px solid transparent;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 16px;
+        transition: all 0.3s ease;
+    }
+
+    .balance-item:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.1);
+    }
+
+    .badge {
+        background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    /* Special Display Elements */
+    #balance-display {
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.1) 0%, rgba(114, 9, 183, 0.1) 100%);
+        border: 2px solid var(--gray-200);
+        font-weight: 600;
+        color: var(--primary);
+        min-height: 52px;
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+    }
+
+    #days-display {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+        border: 2px solid var(--gray-200);
+        font-weight: 600;
+        color: var(--success);
+        min-height: 52px;
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+    }
+
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        color: var(--white);
+        box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(67, 97, 238, 0.4);
+    }
+
+    .btn-secondary {
+        background: var(--gray-200);
+        color: var(--gray-800);
+        border: 2px solid var(--gray-300);
+    }
+
+    .btn-secondary:hover {
+        background: var(--gray-300);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Tips List */
+    .tips-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .tips-list li {
+        padding: 16px;
+        background: var(--gray-100);
+        border-radius: 12px;
+        margin-bottom: 12px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        font-size: 14px;
+        color: var(--gray-700);
+        border-left: 4px solid transparent;
+    }
+
+    .tips-list li:hover {
+        background: var(--white);
+        border-left-color: var(--primary);
+        transform: translateX(8px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .tips-list li i {
+        color: var(--success);
+        font-size: 16px;
+        margin-top: 2px;
+    }
+
+    /* Validation Messages */
+    #validation_messages {
+        margin-bottom: 24px;
+    }
+
+    .alert {
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 12px;
+        border: 2px solid transparent;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        animation: slideIn 0.3s ease;
+    }
+
+    .alert i {
+        font-size: 18px;
+        margin-top: 2px;
+    }
+
+    .alert-danger {
+        background: linear-gradient(135deg, rgba(247, 37, 133, 0.1) 0%, rgba(247, 37, 133, 0.05) 100%);
+        border-color: rgba(247, 37, 133, 0.3);
+        color: var(--warning);
+    }
+
+    .alert-warning {
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 235, 59, 0.05) 100%);
+        border-color: rgba(255, 193, 7, 0.3);
+        color: #856404;
+    }
+
+    .alert-info {
+        background: linear-gradient(135deg, rgba(76, 201, 240, 0.1) 0%, rgba(76, 201, 240, 0.05) 100%);
+        border-color: rgba(76, 201, 240, 0.3);
+        color: var(--accent);
+    }
+
+    .alert-success {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+        border-color: rgba(16, 185, 129, 0.3);
+        color: var(--success);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .page-container {
+            padding: 16px;
+        }
+        
+        .page-header {
+            padding: 0px;
+        }
+        
+        .page-header h1 {
+            font-size: 28px;
+        }
+        
+        .custom-card {
+            padding: 24px;
+        }
+        
+        .card-header {
+            margin: -24px -24px 24px -24px;
+            padding: 20px 24px;
+        }
+        
+        .half-option-btn {
+            padding: 16px;
+        }
+        
+    }
+
+    @media (max-width: 576px) {
+        .row {
+            margin-left: -8px;
+            margin-right: -8px;
+        }
+        
+        .col-md-8, .col-md-4, .col-md-6 {
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+        
+        .page-header h1 {
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .icon-wrapper {
+            width: 48px;
+            height: 48px;
+        }
+    }
+
+    /* Loading States */
+    .loading {
+        opacity: 0.7;
+        pointer-events: none;
+    }
+
+    .spinner {
+        border: 3px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        border-top: 3px solid var(--primary);
+        width: 24px;
+        height: 24px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* File Upload Styling */
+    .file-upload {
+        position: relative;
+        overflow: hidden;
+        border: 2px dashed var(--gray-300);
+        border-radius: 12px;
+        padding: 16px;
+        background: var(--gray-100);
+        transition: all 0.3s ease;
+    }
+
+    .file-upload:hover {
+        border-color: var(--primary);
+        background: rgba(67, 97, 238, 0.05);
+    }
+
+    /* Leave Type Info */
+    .leave-type-info {
+        font-size: 13px;
+        color: var(--gray-600);
+        margin-top: 4px;
+        padding: 8px 12px;
+        background: var(--gray-100);
+        border-radius: 8px;
+        border-left: 3px solid var(--primary);
+    }
+
+    /* Radio and Checkbox Custom Styles */
+    input[type="radio"], 
+    input[type="checkbox"] {
+        accent-color: var(--primary);
+    }
+
+    /* Placeholder Styling */
+    ::placeholder {
+        color: var(--gray-500);
+        opacity: 1;
+    }
+
+    :-ms-input-placeholder {
+        color: var(--gray-500);
+    }
+
+    ::-ms-input-placeholder {
+        color: var(--gray-500);
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--gray-100);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--gray-400);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--gray-500);
+    }
+
+    /* Focus Outline */
+    *:focus {
+        outline: 2px solid var(--primary-light);
+        outline-offset: 2px;
+    }
+
+    *:focus:not(.focus-visible) {
+        outline: none;
+    }
+
+    /* Animation Classes */
+    .fade-in {
+        animation: fadeIn 0.5s ease;
+    }
+
+    .slide-up {
+        animation: slideUp 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Utility Classes */
+    .text-gradient {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
 </style>
+
 <div id="validation_messages"></div>
 
-<div class="container-fluid">
-  <div class="page-header">
+<div class="page-container">
+  <div class="page-header fade-in">
     <h1>
       <span class="icon-wrapper">
         <i class="fas fa-calendar-plus"></i>
@@ -377,14 +796,14 @@
 
   <!-- NEW: Probation Alert -->
   {% if is_on_probation %}
-  <div class="probation-alert">
+  <div class="probation-alert slide-up">
     <div class="d-flex align-items-center">
-      <i class="fas fa-exclamation-triangle"></i>
-      <div>
+      <i class="fas fa-exclamation-triangle fa-lg"></i>
+      <div class="ms-3">
         <h5 class="mb-1">You are currently on probation</h5>
         <p class="mb-0">{{ probation_message }}</p>
         {% if employee.probation_end_date %}
-        <small>Probation ends on: {{ employee.probation_end_date|date:"d M, Y" }}</small>
+        <small class="d-block mt-1">Probation ends on: {{ employee.probation_end_date|date:"d M, Y" }}</small>
         {% endif %}
       </div>
     </div>
@@ -395,7 +814,7 @@
   <div class="advance-notice-warning" id="advance_notice_warning">
     <div class="d-flex align-items-center">
       <i class="fas fa-exclamation-triangle warning-icon"></i>
-      <div>
+      <div class="ms-3">
         <h5 class="mb-1" id="warning_title">Advance Notice Required</h5>
         <p class="mb-0" id="warning_message"></p>
       </div>
@@ -404,7 +823,7 @@
 
   <div class="row">
     <div class="col-md-8">
-      <div class="custom-card">
+      <div class="custom-card slide-up">
         <div class="card-header">
           <h5 class="card-title">
             <i class="fas fa-file-alt"></i> Leave Application Form
@@ -414,7 +833,7 @@
         <form method="POST" enctype="multipart/form-data">
           {% csrf_token %}
           <div class="row">
-            <div class="col-md-6 mb-3">
+            <div class="col-md-6 mb-4">
               <label for="leave_type" class="form-label">
                 <i class="fas fa-list-alt"></i> Leave Type *
               </label>
@@ -437,9 +856,9 @@
                 </option>
                 {% endfor %}
               </select>
-              <div class="leave-type-info" id="leave_type_info"></div>
+              <!-- <div class="leave-type-info" id="leave_type_info"></div> -->
             </div>
-            <div class="col-md-6 mb-3">
+            <div class="col-md-6 mb-4">
               <label class="form-label">
                 <i class="fas fa-wallet"></i> Available Balance
               </label>
@@ -456,13 +875,13 @@
                 <input type="checkbox" id="half_day_toggle">
                 <span class="toggle-slider"></span>
               </label>
-              <label for="half_day_toggle" style="cursor: pointer; font-weight: 600; color: #2d3748;">
+              <label for="half_day_toggle" style="cursor: pointer; font-weight: 600; color: var(--dark);">
                 <i class="fas fa-clock"></i> Half Day Leave
               </label>
             </div>
             
             <div class="half-options" id="half_options">
-              <label class="form-label mb-2">
+              <label class="form-label mb-3">
                 <i class="fas fa-sun"></i> Select Half
               </label>
               <div class="d-flex gap-3">
@@ -483,7 +902,7 @@
           </div>
 
           <div class="row">
-            <div class="col-md-6 mb-3">
+            <div class="col-md-6 mb-4">
               <label for="start_date" class="form-label">
                 <i class="fas fa-calendar-day"></i> Start Date *
               </label>
@@ -497,7 +916,7 @@
                 required
               />
             </div>
-            <div class="col-md-6 mb-3">
+            <div class="col-md-6 mb-4">
               <label for="end_date" class="form-label">
                 <i class="fas fa-calendar-check"></i> End Date *
               </label>
@@ -512,12 +931,12 @@
               />
             </div>
           </div>
+          
           <!-- NEW: Optional Holidays Selection -->
           <div class="optional-holidays-section" id="optional_holidays_section">
-            <div class="d-flex align-items-center mb-3">
-              <!-- <i class="fas fa-star text-warning fa-2x me-2"></i> -->
+            <div class="d-flex align-items-center mb-4">
               <div>
-                <h5 class="mb-0">Optional Holidays Available</h5>
+                <h5 class="mb-1">Optional Holidays Available</h5>
                 <p class="mb-0 text-muted">Select which optional holidays you want to use for this leave</p>
               </div>
             </div>
@@ -525,22 +944,21 @@
             <div id="optional_holidays_list"></div>
             
             <div class="optional-notice">
-              <i class="fas fa-info-circle"></i>
+              <i class="fas fa-info-circle me-2"></i>
               <strong>Note:</strong> Selected optional holidays will be deducted from your Optional Leave balance. 
               The remaining days will be deducted from your selected leave type.
             </div>
           </div>
 
-
           <div class="row">
-            <div class="col-md-6 mb-3">
+            <div class="col-md-6 mb-4">
               <label class="form-label">
                 <i class="fas fa-calendar-alt"></i> Total Working Days
               </label>
               <div id="days-display" class="form-control">0 days</div>
-              <small class="text-muted">Excludes weekends and holidays</small>
+              <small class="text-muted d-block mt-1">Excludes weekends and holidays</small>
             </div>
-            <div class="col-md-6 mb-3">
+            <div class="col-md-6 mb-4">
               <label for="attachment" class="form-label">
                 <i class="fas fa-paperclip"></i> Attachment (Optional)
               </label>
@@ -551,13 +969,13 @@
                 name="attachment"
                 accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
               />
-              <small class="text-muted">
+              <small class="text-muted d-block mt-1">
                 Max 5MB. Required for sick leave with medical certificate
               </small>
             </div>
           </div>
 
-          <div class="mb-3">
+          <div class="mb-4">
             <label for="reason" class="form-label">
               <i class="fas fa-comment-dots"></i> Reason for Leave *
             </label>
@@ -575,16 +993,16 @@
           <input type="hidden" name="total_days" id="total_days" value="0">
           <input type="hidden" name="is_half_day" id="is_half_day" value="false">
 
-          <div class="d-flex gap-2">
+          <div class="d-flex gap-3">
             <button type="submit" class="btn btn-primary" id="submit_btn">
-              <i class="fas fa-paper-plane"></i> Submit Application
+              <i class="fas fa-paper-plane me-2"></i> Submit Application
             </button>
             <button
               type="button"
               class="btn btn-secondary"
               onclick="history.back()"
             >
-              <i class="fas fa-arrow-left"></i> Cancel
+              <i class="fas fa-arrow-left me-2"></i> Cancel
             </button>
           </div>
         </form>
@@ -592,7 +1010,7 @@
     </div>
 
     <div class="col-md-4">
-      <div class="custom-card">
+      <div class="custom-card slide-up">
         <div class="card-header">
           <h5 class="card-title">
             <i class="fas fa-chart-pie"></i> Leave Balance
@@ -600,15 +1018,15 @@
         </div>
         <div class="leave-balance-list">
           {% for balance in leave_balances %}
-          <div class="balance-item mb-3 p-3">
-            <div class="d-flex justify-content-between align-items-center">
+          <div class="balance-item">
+            <div class="d-flex justify-content-between align-items-center mb-2">
               <span class="fw-bold">{{ balance.leave_type.name }}</span>
-              <span class="badge bg-primary">{{ balance.leaves_remaining }} days</span>
+              <span class="badge">{{ balance.leaves_remaining }} days</span>
             </div>
-            <small class="text-muted">
+            <small class="text-muted d-block">
               Total: {{ balance.total_leaves|floatformat:1 }} days | Taken: {{ balance.leaves_taken|floatformat:1 }} days
               {% if balance.leave_type.name == 'Optional' %}
-              <br><strong>Max usable: 2 days</strong>
+              <br><strong class="text-success">Max usable: 2 days</strong>
               {% endif %}
               {% if balance.leave_type.name == 'Earned' %}
               <br>Monthly: 1.5 days
@@ -624,24 +1042,24 @@
         </div>
       </div>
 
-      <div class="custom-card">
+      <div class="custom-card slide-up">
         <div class="card-header">
           <h5 class="card-title">
             <i class="fas fa-lightbulb"></i> Quick Tips
           </h5>
         </div>
-        <ul class="list-unstyled tips-list">
+        <ul class="tips-list">
           <li>
-            <i class="fas fa-check text-success"></i> Apply at least 3 days in advance
+            <i class="fas fa-check"></i> Apply at least 3 days in advance
           </li>
           <li>
-            <i class="fas fa-check text-success"></i> Check your leave balance before applying
+            <i class="fas fa-check"></i> Check your leave balance before applying
           </li>
           <li>
-            <i class="fas fa-check text-success"></i> Attach medical certificate for sick leave
+            <i class="fas fa-check"></i> Attach medical certificate for sick leave
           </li>
           <li>
-            <i class="fas fa-check text-success"></i> Contact your manager for urgent leaves
+            <i class="fas fa-check"></i> Contact your manager for urgent leaves
           </li>
           {% if is_on_probation %}
           <li>
@@ -686,15 +1104,16 @@ document.addEventListener('DOMContentLoaded', function() {
         {% endfor %}
     };
 
-    // 🆕 Get mandatoryHolidays from backend
+    // Get mandatoryHolidays from backend
     const mandatoryHolidays = new Set({{ holiday_dates|safe }}.map(date => date));
     
     let currentOptionalHolidays = [];
     let selectedOptionalHolidays = [];
     let currentOptionalHolidayDates = new Set();
     let isOptionalLeaveTypeSelected = false;
+    let existingLeaves = []; // Store existing leaves for overlap checking
 
-    // 🆕 Create validation message container
+    // Create validation message container
     const validationContainer = document.createElement('div');
     validationContainer.id = 'validation_messages';
     validationContainer.style.marginBottom = '1rem';
@@ -765,12 +1184,127 @@ document.addEventListener('DOMContentLoaded', function() {
         return date ? dateToString(date) : null;
     }
 
-    // 🆕 Check if two date ranges overlap
-    function datesOverlap(start1, end1, start2, end2) {
-        return start1 <= end2 && end1 >= start2;
+    // Check if two date ranges overlap (including single days)
+function datesOverlap(start1, end1, start2, end2) {
+    // Convert to timestamps for easier comparison
+    const s1 = start1.getTime();
+    const e1 = end1.getTime();
+    const s2 = start2.getTime();
+    const e2 = end2.getTime();
+    
+    // Two date ranges overlap if:
+    // 1. Start1 is between Start2 and End2 (inclusive), OR
+    // 2. End1 is between Start2 and End2 (inclusive), OR
+    // 3. Start2 is between Start1 and End1 (inclusive), OR
+    // 4. End2 is between Start1 and End1 (inclusive)
+    return (s1 >= s2 && s1 <= e2) ||   // start1 within range2
+           (e1 >= s2 && e1 <= e2) ||   // end1 within range2
+           (s2 >= s1 && s2 <= e1) ||   // start2 within range1
+           (e2 >= s1 && e2 <= e1);     // end2 within range1
+}
+    // Fetch existing leaves from backend
+async function fetchExistingLeaves() {
+    try {
+        const response = await fetch('/leave/api/get-existing-leaves/');
+        const data = await response.json();
+        
+        if (data.success && data.leaves) {
+            existingLeaves = data.leaves.map(leave => {
+                console.log('Parsing leave:', leave);
+                
+                // Parse ISO date strings
+                let startDate, endDate;
+                
+                try {
+                    // Handle ISO format: YYYY-MM-DD
+                    if (leave.start_date) {
+                        const startParts = leave.start_date.split('-');
+                        startDate = new Date(
+                            parseInt(startParts[0]),
+                            parseInt(startParts[1]) - 1,
+                            parseInt(startParts[2])
+                        );
+                    }
+                    
+                    if (leave.end_date) {
+                        const endParts = leave.end_date.split('-');
+                        endDate = new Date(
+                            parseInt(endParts[0]),
+                            parseInt(endParts[1]) - 1,
+                            parseInt(endParts[2])
+                        );
+                    }
+                } catch (e) {
+                    console.error('Error parsing leave dates:', e, leave);
+                    return null;
+                }
+                
+                // Validate dates
+                if (!startDate || !endDate || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                    console.error('Invalid dates in leave:', leave);
+                    return null;
+                }
+                
+                return {
+                    ...leave,
+                    start_date: startDate,
+                    end_date: endDate
+                };
+            }).filter(leave => leave !== null); // Remove invalid entries
+            
+            console.log('Existing leaves loaded:', existingLeaves.map(l => ({
+                id: l.id,
+                start_date: dateToString(l.start_date),
+                end_date: dateToString(l.end_date),
+                type: l.leave_type_name,
+                status: l.status,
+                is_half_day: l.is_half_day
+            })));
+        }
+    } catch (error) {
+        console.error('Error fetching existing leaves:', error);
     }
+}
 
-    // 🆕 Calculate working days excluding Sundays and mandatoryHolidays
+    // Check for overlapping leaves (including half-day considerations)
+function checkForOverlappingLeaves(startDate, endDate, isHalfDay = false, halfPeriod = null) {
+    if (!existingLeaves.length) {
+        return { hasOverlap: false, overlappingLeaves: [] };
+    }
+    
+    const overlappingLeaves = existingLeaves.filter(leave => {
+        // Check if the leave status is pending or approved
+        const isActiveLeave = leave.status === 'pending' || leave.status === 'approved';
+        
+        if (!isActiveLeave) return false;
+        
+        // Handle half-day overlap logic
+        if (isHalfDay && leave.is_half_day) {
+            // If both are half-day on the same date
+            if (startDate.getTime() === leave.start_date.getTime() && 
+                endDate.getTime() === leave.end_date.getTime()) {
+                // Same day, check if periods overlap (both first half or both second half)
+                return halfPeriod === leave.half_day_period;
+            }
+        } else if (isHalfDay && !leave.is_half_day) {
+            // Current is half-day, existing is full day - overlap exists
+            return datesOverlap(startDate, endDate, leave.start_date, leave.end_date);
+        } else if (!isHalfDay && leave.is_half_day) {
+            // Current is full day, existing is half-day - overlap exists
+            return datesOverlap(startDate, endDate, leave.start_date, leave.end_date);
+        }
+        
+        // Standard date range overlap check (works for single day too)
+        return datesOverlap(startDate, endDate, leave.start_date, leave.end_date);
+    });
+    
+    return {
+        hasOverlap: overlappingLeaves.length > 0,
+        overlappingLeaves: overlappingLeaves
+    };
+}
+
+    // Calculate working days excluding Sundays and mandatoryHolidays
     function calculateWorkingDays(startDate, endDate) {
         let workingDays = 0;
         let holidayCount = 0;
@@ -796,7 +1330,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return { workingDays, holidayCount };
     }
 
-    // 🆕 Check if dates contain optional holidays
+    // Check if dates contain optional holidays
     function checkDatesForOptionalHolidays(startDate, endDate) {
         if (!currentOptionalHolidayDates.size) return false;
         
@@ -811,8 +1345,8 @@ document.addEventListener('DOMContentLoaded', function() {
         return false;
     }
 
-    // 🆕 Comprehensive validation function
-    function validateAllFields() {
+    // Comprehensive validation function
+    async function validateAllFields() {
         const startDateStr = startDateInput.value;
         const endDateStr = endDateInput.value;
         const leaveTypeId = leaveTypeSelect.value;
@@ -852,7 +1386,32 @@ document.addEventListener('DOMContentLoaded', function() {
             hasErrors = true;
         }
 
-        // 3️⃣ Calculate working days
+       // 3️⃣ Check for overlapping leaves
+if (!hasErrors) {
+    const isHalfDay = halfDayToggle.checked;
+    const halfPeriod = firstHalfRadio.checked ? 'first_half' : (secondHalfRadio.checked ? 'second_half' : null);
+    
+    const overlapResult = checkForOverlappingLeaves(startDate, endDate, isHalfDay, halfPeriod);
+    if (overlapResult.hasOverlap) {
+        overlapResult.overlappingLeaves.forEach(leave => {
+            const startFormatted = leave.start_date.toLocaleDateString('en-GB');
+            const endFormatted = leave.end_date.toLocaleDateString('en-GB');
+            const statusDisplay = leave.status === 'pending' ? 'Applied' : 'Approved';
+            
+            let leaveDesc = `${leave.leave_type_name} leave`;
+            if (leave.is_half_day) {
+                leaveDesc += ` (Half-day - ${leave.half_day_period === 'first_half' ? 'First Half' : 'Second Half'})`;
+            }
+            
+            showError(`❌ Leave date conflict detected! Existing ${leaveDesc} from ${startFormatted} to ${endFormatted} (${statusDisplay})`);
+        });
+        
+        hasErrors = true;
+        submitBtn.disabled = true;
+    }
+}
+
+        // 4️⃣ Calculate working days
         let workingDaysResult;
         if (isHalfDay) {
             workingDaysResult = { workingDays: 0.5, holidayCount: 0 };
@@ -863,26 +1422,78 @@ document.addEventListener('DOMContentLoaded', function() {
         const workingDays = workingDaysResult.workingDays;
         const holidayCount = workingDaysResult.holidayCount;
 
-        // 4️⃣ Check if there are any working days
+        // 5️⃣ Check if there are any working days
         if (workingDays <= 0 && !isHalfDay) {
             showError(' No working days in selected range (all days are holidays/Sundays)');
             hasErrors = true;
         }
 
-        // 5️⃣ SPECIAL VALIDATION: If Optional Leave type is selected, check if dates contain optional holidays
-        if (isOptionalLeaveTypeSelected && !isHalfDay) {
-            const hasOptionalHolidays = checkDatesForOptionalHolidays(startDate, endDate);
-            
-            if (!hasOptionalHolidays) {
-                showError(' ❌ Cannot use Optional Leave type for selected dates. The selected date range does not contain any optional holidays. Please select a different leave type or choose dates that include optional holidays.');
-                hasErrors = true;
-                submitBtn.disabled = true;
-            } else {
-                showInfo(' ✅ Selected dates contain optional holidays. This will be processed as Optional Leave.');
-            }
-        }
+     // 6️⃣ Handle optional holidays display logic
+const selectedOption = leaveTypeSelect.options[leaveTypeSelect.selectedIndex];
+const leaveTypeName = selectedOption ? selectedOption.dataset.name || '' : '';
+const isOptionalLeaveType = leaveTypeName.toLowerCase().includes('optional');
+isOptionalLeaveTypeSelected = isOptionalLeaveType;
 
-        // 6️⃣ Check advance notice (7 days for 3+ days, 15 days for 7+ days)
+// Check if dates contain optional holidays
+const hasOptionalHolidays = checkDatesForOptionalHolidays(startDate, endDate);
+const isSingleDay = startDate.getTime() === endDate.getTime();
+
+if (isOptionalLeaveType && !isHalfDay) {
+
+    // 🚫 STRICT RULE: Optional Leave = ONE DATE ONLY
+    if (!isSingleDay) {
+        showError('❌ Optional Leave can be applied for only ONE date.');
+        submitBtn.disabled = true;
+
+        optionalHolidaysSection.classList.remove('show');
+        selectedOptionalHolidays = [];
+
+        return; // ⛔ STOP everything here
+    }
+
+    // ✅ SINGLE DAY OPTIONAL LEAVE
+    optionalHolidaysSection.classList.remove('show');
+    selectedOptionalHolidays = [];
+
+    if (!hasOptionalHolidays) {
+        showError('❌ Cannot use Optional Leave for selected date. Date must be an optional holiday.');
+        submitBtn.disabled = true;
+        hasErrors = true;
+    } else {
+        showInfo('✅ Selected date is an optional holiday. This will be processed as Optional Leave.');
+    }
+
+} else if (!isOptionalLeaveType && !isHalfDay && hasOptionalHolidays) {
+
+    // 🟢 OTHER LEAVE TYPES (Earned, Casual, etc.)
+    let optionalCount = 0;
+    let currentDate = new Date(startDate);
+
+    while (currentDate <= endDate) {
+        const dateStr = dateToString(currentDate);
+        if (currentOptionalHolidayDates.has(dateStr)) {
+            optionalCount++;
+        }
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    if (optionalCount > 0) {
+        displayOptionalHolidays();
+        optionalHolidaysSection.classList.add('show');
+        showInfo(`ℹ️ ${optionalCount} optional holiday(s) available. You can choose to use Optional Leave for these days.`);
+    } else {
+        optionalHolidaysSection.classList.remove('show');
+        selectedOptionalHolidays = [];
+    }
+
+} else {
+    // Hide optional holidays section
+    optionalHolidaysSection.classList.remove('show');
+    selectedOptionalHolidays = [];
+}
+
+
+        // 7️⃣ Check advance notice (7 days for 3+ days, 15 days for 7+ days)
         if (!isHalfDay && !hasErrors) {
             const daysUntilStart = Math.floor((startDate - today) / (1000 * 60 * 60 * 24));
             
@@ -912,7 +1523,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 🆕 Helper functions to show messages
+    // Helper functions to show messages
     function showError(message) {
         validationContainer.innerHTML += `
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -989,6 +1600,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentOptionalHolidays = data.optional_holidays;
                 currentOptionalHolidayDates = new Set(currentOptionalHolidays.map(h => h.date));
                 const workingDays = data.working_days;
+                 // Check if it's single day or multiple days
+                const isSingleDay = startDate.getTime() === endDate.getTime();
 
                 // Show optional holidays section if:
                 // 1. There are optional holidays in the range
@@ -997,7 +1610,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const isOptionalLeaveType = leaveTypeName.toLowerCase().includes('optional');
                 isOptionalLeaveTypeSelected = isOptionalLeaveType;
 
-                if (currentOptionalHolidays.length > 0 && !isOptionalLeaveType) {
+                if (currentOptionalHolidays.length > 0 && !isOptionalLeaveType|| !isSingleDay) {
                     displayOptionalHolidays();
                     optionalHolidaysSection.classList.add('show');
                 } else {
@@ -1083,21 +1696,43 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateDaysDisplayWithOptional() {
-        const totalDaysInput = document.getElementById('total_days');
-        const currentWorkingDays = parseFloat(totalDaysInput.value) || 0;
-        const optionalCount = selectedOptionalHolidays.length;
-        const adjustedDays = currentWorkingDays - optionalCount;
+    const totalDaysInput = document.getElementById('total_days');
+    const currentWorkingDays = parseFloat(totalDaysInput.value) || 0;
+    const optionalCount = selectedOptionalHolidays.length;
 
-        daysDisplay.innerHTML = `<span class="fw-bold">${adjustedDays} days</span>`;
-        
-        if (optionalCount > 0) {
-            daysDisplay.innerHTML += `
-                <br><small class="text-success">✓ Using ${optionalCount} optional holiday(s)</small>
-                <br><small class="text-muted">${adjustedDays} from ${leaveTypeSelect.options[leaveTypeSelect.selectedIndex]?.text || 'selected leave'}, 
-                ${optionalCount} from Optional Leave</small>
-            `;
-        }
+    const selectedLeaveText =
+        leaveTypeSelect.options[leaveTypeSelect.selectedIndex]?.text || '';
+
+    const isOptionalLeave =
+        selectedLeaveText.toLowerCase().includes('optional');
+
+    daysDisplay.innerHTML = '';
+
+    // 🔹 CASE 1: Optional Leave selected
+    if (isOptionalLeave) {
+        daysDisplay.innerHTML = `
+            <span class="fw-bold">${optionalCount} days</span>
+            <br><small class="text-success">✓ Optional Leave</small>
+        `;
+        return;
     }
+
+    // 🔹 CASE 2: Other leave types
+    const adjustedDays = Math.max(currentWorkingDays - optionalCount, 0);
+
+    daysDisplay.innerHTML = `<span class="fw-bold">${adjustedDays} days</span>`;
+
+    if (optionalCount > 0) {
+        daysDisplay.innerHTML += `
+            <br><small class="text-success">✓ Using ${optionalCount} optional holiday(s)</small>
+            <br><small class="text-muted">
+                ${adjustedDays} from ${selectedLeaveText},
+                ${optionalCount} from Optional Leave
+            </small>
+        `;
+    }
+}
+
 
     // Update balance display
     leaveTypeSelect.addEventListener('change', function() {
@@ -1110,10 +1745,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const balance = leaveBalances[selectedType];
             let infoHtml = '';
             
-            if (balance.is_optional) {
-                const remainingUsable = Math.max(0, 2 - balance.taken);
-                infoHtml = `<span class="text-info">Max usable: ${remainingUsable} days remaining</span>`;
-            }
+            // if (balance.is_optional) {
+            //     const remainingUsable = Math.max(0, 2 - balance.taken);
+            //     infoHtml = `<span class="text-info">Max usable: ${remainingUsable} days remaining</span>`;
+            // }
             
             if (!balance.can_use_same_month) {
                 infoHtml += `<br><span class="text-warning">Cannot use in same month as accrual</span>`;
@@ -1202,7 +1837,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Form submission validation
-    document.querySelector('form').addEventListener('submit', function(e) {
+    document.querySelector('form').addEventListener('submit', async function(e) {
         const totalDays = document.getElementById('total_days').value;
         const startDateStr = startDateInput.value;
         const endDateStr = endDateInput.value;
@@ -1226,20 +1861,80 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Validate Optional Leave type selection
-        if (isOptionalLeaveType && startDateStr && endDateStr) {
-            const startDate = parseDate(startDateStr);
-            const endDate = parseDate(endDateStr);
+if (isOptionalLeaveType && startDateStr && endDateStr) {
+    const startDate = parseDate(startDateStr);
+    const endDate = parseDate(endDateStr);
+    
+    if (startDate && endDate) {
+        const isSingleDay = startDate.getTime() === endDate.getTime();
+        const hasOptionalHolidays = checkDatesForOptionalHolidays(startDate, endDate);
+        
+        if (isSingleDay) {
+            // Single day must be optional holiday
+            if (!hasOptionalHolidays) {
+                e.preventDefault();
+                alert('❌ Half-day leave can not be applied under Optional leave type');
+                return false;
+            }
+        } else {
+            // Multiple days must contain at least one optional holiday
+            if (!hasOptionalHolidays) {
+                e.preventDefault();
+                alert('❌ Cannot use Optional Leave for selected dates. The date range does not contain any optional holidays.');
+                return false;
+            }
             
-            if (startDate && endDate) {
-                const hasOptionalHolidays = checkDatesForOptionalHolidays(startDate, endDate);
-                
-                if (!hasOptionalHolidays) {
-                    e.preventDefault();
-                    alert('❌ Cannot use Optional Leave type for selected dates. The selected date range does not contain any optional holidays. Please select a different leave type or choose dates that include optional holidays.');
-                    return false;
+            // For multiple days, auto-select all optional holidays
+            // Ensure optional holidays are selected
+            if (selectedOptionalHolidays.length === 0) {
+                // Auto-select all optional holidays
+                let optionalDates = [];
+                let currentDate = new Date(startDate);
+                while (currentDate <= endDate) {
+                    const dateStr = dateToString(currentDate);
+                    if (currentOptionalHolidayDates.has(dateStr)) {
+                        optionalDates.push(dateStr);
+                    }
+                    currentDate.setDate(currentDate.getDate() + 1);
                 }
+                selectedOptionalHolidays = optionalDates;
             }
         }
+    }
+}
+        
+        // Final overlap check on submission
+if (startDateStr && endDateStr) {
+    const startDate = parseDate(startDateStr);
+    const endDate = parseDate(endDateStr);
+    const isHalfDay = halfDayToggle.checked;
+    const halfPeriod = firstHalfRadio.checked ? 'first_half' : (secondHalfRadio.checked ? 'second_half' : null);
+    
+    if (startDate && endDate) {
+        const overlapResult = checkForOverlappingLeaves(startDate, endDate, isHalfDay, halfPeriod);
+        if (overlapResult.hasOverlap) {
+            e.preventDefault();
+            
+            let alertMessage = `❌ Leave date conflict detected:\n\n`;
+            overlapResult.overlappingLeaves.forEach(leave => {
+                const startFormatted = leave.start_date.toLocaleDateString('en-GB');
+                const endFormatted = leave.end_date.toLocaleDateString('en-GB');
+                const statusDisplay = leave.status === 'pending' ? 'Applied' : 'Approved';
+                
+                let leaveDesc = `${leave.leave_type_name} leave`;
+                if (leave.is_half_day) {
+                    leaveDesc += ` (Half-day - ${leave.half_day_period === 'first_half' ? 'First Half' : 'Second Half'})`;
+                }
+                
+                alertMessage += `• ${leaveDesc}: ${startFormatted} to ${endFormatted} (${statusDisplay})\n`;
+            });
+            alertMessage += `\nPlease select different dates.`;
+            
+            alert(alertMessage);
+            return false;
+        }
+    }
+}
         
         // Check if there are any validation errors
         const errorAlerts = validationContainer.querySelectorAll('.alert-danger');
@@ -1249,6 +1944,9 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         }
     });
+
+    // Fetch existing leaves when page loads
+    fetchExistingLeaves();
 });
 </script>
 {% endblock %}

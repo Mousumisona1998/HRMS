@@ -191,7 +191,7 @@
         <div class="content">
             <p>This is to certify that <strong>{{ resignation.employee.first_name }} {{ resignation.employee.last_name }}</strong> (Employee ID: <strong>{{ resignation.employee.employee_id }}</strong>), who was employed as <strong>{{ resignation.employee.designation }}</strong> in the <strong>{{ resignation.employee.department }}</strong> department, has resigned from the services of our organization effective from <strong>{{ resignation.last_working_date }}</strong>.</p>
             
-            <p>We confirm that the employee has been relieved from all duties and responsibilities. All company properties, including ID card, laptop, access cards, and any other assets issued to the employee have been returned and accounted for.</p>
+            <p>We confirm that the employee has been relieved from all duties and responsibilities. All company properties, including ID card, laptop, access cards and any other assets issued to the employee have been returned and accounted for.</p>
             
             <p>The full and final settlement amounting to <strong>₹{{ no_due_cert.final_settlement_amount }}</strong> has been processed and transferred through <strong>{{ no_due_cert.get_settlement_mode_display }}</strong> on <strong>{{ no_due_cert.settlement_date|date:"F d, Y" }}</strong>. This amount includes all dues pertaining to:</p>
             

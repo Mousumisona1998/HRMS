@@ -1,445 +1,1634 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% load static %}
 
+{% block title %}Employee Notices • HR System{% endblock %}
+
 {% block content %}
-<!-- Include DataTables CSS -->
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-<link rel="stylesheet" type="text/css"
-  href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
-
 <style>
-  .text-danger i {
-    color: #e74c3c;
-    font-size: 1.1rem;
-    transition: transform 0.2s ease;
-  }
-
-  .text-danger i:hover {
-    transform: scale(1.2);
-  }
-
-  /* Mobile responsiveness */
-  @media (max-width: 768px) {
-    .header-actions {
-      flex-direction: column;
-      gap: 15px;
-      align-items: flex-start !important;
+    :root {
+        --primary: #4361ee;
+        --primary-light: #4895ef;
+        --secondary: #7209b7;
+        --accent: #4cc9f0;
+        --warning: #f72585;
+        --success: #10b981;
+        --danger: #ef4444;
+        --dark: #1a1a2e;
+        --light: #f8f9fa;
+        --gray-100: #f8f9fa;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-400: #ced4da;
+        --gray-500: #adb5bd;
+        --gray-600: #6c757d;
+        --gray-700: #495057;
+        --gray-800: #343a40;
+        --gray-900: #212529;
+        --white: #ffffff;
+        --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+        --hover-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
     }
 
-    .header-actions .btn {
-      width: 100%;
-      text-align: center;
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
     }
 
-    /* Ensure DataTable controls are visible on mobile */
-    .dataTables_wrapper .dataTables_length,
-    .dataTables_wrapper .dataTables_filter {
-      float: none;
-      text-align: left;
-      margin-bottom: 10px;
+    body {
+        background-color: #f8fafc;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: var(--gray-800);
     }
 
-    .dataTables_wrapper .dataTables_length select,
-    .dataTables_wrapper .dataTables_filter input {
-      width: 100%;
-      margin-left: 0;
-    }
-    
-
-    /* Make table responsive */
-    .table-responsive {
-      border: 1px solid #dee2e6;
-      border-radius: 0.375rem;
-    }
-  }
-
-  @media (max-width: 575px) {
-    .table-responsive {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
     }
 
-    /* Ensure table has minimum width for horizontal scrolling */
-    #warningsTable {
-      min-width: 700px;
+    /* Header */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--gray-200);
     }
 
-    /* Adjust modal for mobile */
-    .modal-dialog {
-      margin: 0.5rem;
+    .page-header h1 {
+        font-size: 30px;
+        font-weight: 700;
+        color: var(--dark);
+        letter-spacing: -0.5px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
     }
-  }
 
-  /* Custom card styling */
-  .custom-card {
-    background: #ffffff;
+    .page-header h1 i {
+        color: var(--primary);
+        background: rgba(67, 97, 238, 0.1);
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    .page-subtitle {
+        font-size: 16px;
+        color: var(--gray-600);
+        margin-top: 4px;
+        max-width: 600px;
+    }
+
+    /* Stats Summary */
+    .stats-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 32px;
+    }
+
+    .summary-card {
+        background: var(--white);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom
+    }
+
+    .summary-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--hover-shadow);
+    }
+
+    .summary-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+    }
+
+    .summary-card.warning::before {
+        background: linear-gradient(to bottom, #ef4444, #dc2626);
+    }
+
+    .summary-card.appreciation::before {
+        background: linear-gradient(to bottom, #10b981, #059669);
+    }
+
+    .summary-card.notice::before {
+        background: linear-gradient(to bottom, #4361ee, #3a56d4);
+    }
+
+    .summary-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 16px;
+        font-size: 24px;
+    }
+
+    .summary-icon.warning {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    .summary-icon.appreciation {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    .summary-icon.notice {
+        background: rgba(67, 97, 238, 0.1);
+        color: var(--primary);
+    }
+
+    .summary-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 4px;
+        line-height: 1;
+        display: grid;
+        gap: 10px;
+    }
+
+    .summary-label {
+        font-size: 14px;
+        color: var(--gray-600);
+        font-weight: 500;
+    }
+
+    /* Main Container */
+    .main-container {
+        background: var(--white);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+    }
+
+    .table-header {
+        padding: 24px;
+        border-bottom: 1px solid var(--gray-200);
+        background: var(--white);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .table-header h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .add-btn {
+        background: var(--success);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+
+    .add-btn:hover {
+        background: #0da271;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .table-container {
+        padding: 10px;
+        overflow-x: auto;
+    }
+
+    .dataTable {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1000px;
+    }
+
+    .dataTable thead {
+        background: var(--gray-100);
+    }
+
+    .dataTable th {
+        padding: 16px 20px;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--gray-700);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--gray-200);
+        white-space: nowrap;
+    }
+
+    .dataTable tbody tr {
+        border-bottom: 1px solid var(--gray-100);
+        transition: all 0.2s ease;
+    }
+
+    .dataTable tbody tr:hover {
+        background: rgba(67, 97, 238, 0.03);
+    }
+
+    .dataTable td {
+        padding: 16px 20px;
+        font-size: 14px;
+        color: var(--gray-800);
+        vertical-align: middle;
+    }
+
+    /* Employee Info */
+    .employee-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .employee-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .employee-details {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .employee-name {
+        font-weight: 600;
+        color: var(--dark);
+    }
+
+    .employee-id {
+        font-size: 12px;
+        color: var(--gray-500);
+    }
+
+    /* Status Badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .badge-warning {
+        background: rgba(239, 68, 68, 0.1);
+        color: #b91c1c;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .badge-appreciation {
+        background: rgba(16, 185, 129, 0.1);
+        color: #065f46;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .badge-notice {
+        background: rgba(67, 97, 238, 0.1);
+        color: #1d4ed8;
+        border: 1px solid rgba(67, 97, 238, 0.2);
+    }
+
+    .type-badge {
+        background: var(--gray-100);
+        color: var(--gray-700);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        border: 1px solid var(--gray-200);
+    }
+
+    /* Subject */
+    .subject-text {
+        font-weight: 500;
+        color: var(--dark);
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Date */
+    .date-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .date-main {
+        font-weight: 600;
+        color: var(--dark);
+    }
+
+    .date-relative {
+        font-size: 12px;
+        color: var(--gray-500);
+    }
+
+    /* Actions */
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+
+    .delete-btn {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    .delete-btn:hover {
+        background: #ef4444;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--gray-100);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        color: var(--gray-500);
+        font-size: 32px;
+    }
+
+    .empty-state h4 {
+        font-size: 18px;
+        color: var(--dark);
+        margin-bottom: 8px;
+    }
+
+    .empty-state p {
+        color: var(--gray-600);
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        padding: 20px;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal-container {
+        background: var(--white);
+        border-radius: 16px;
+        width: 100%;
+        max-width: 700px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: modalSlideIn 0.3s ease;
+    }
+
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .modal-header {
+        padding: 24px;
+        border-bottom: 1px solid var(--gray-200);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .modal-header h3 {
+        font-size: 20px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .modal-close {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 20px;
+        transition: all 0.2s ease;
+    }
+
+    .modal-close:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: rotate(90deg);
+    }
+
+    .modal-body {
+        padding: 32px;
+    }
+
+    /* Form Styles */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--gray-700);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .form-label.required::after {
+        content: '*';
+        color: #ef4444;
+        margin-left: 4px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid var(--gray-300);
+        border-radius: 10px;
+        font-size: 14px;
+        color: var(--dark);
+        background: var(--white);
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+
+    .form-select {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid var(--gray-300);
+        border-radius: 10px;
+        font-size: 14px;
+        color: var(--dark);
+        background: var(--white);
+        transition: all 0.2s ease;
+    }
+
+    .form-select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+
+    .form-textarea {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid var(--gray-300);
+        border-radius: 10px;
+        font-size: 14px;
+        color: var(--dark);
+        background: var(--white);
+        transition: all 0.2s ease;
+        min-height: 120px;
+        resize: vertical;
+        font-family: inherit;
+    }
+
+    .form-textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+
+    /* Employee Search */
+    .employee-search-container {
+        position: relative;
+    }
+
+    .employee-search-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: 10px;
+        margin-top: 4px;
+        max-height: 200px;
+        overflow-y: auto;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        z-index: 100;
+        display: none;
+    }
+
+    .employee-search-item {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--gray-100);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .employee-search-item:hover {
+        background: rgba(67, 97, 238, 0.05);
+    }
+
+    .employee-search-item:last-child {
+        border-bottom: none;
+    }
+
+    .employee-search-name {
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 2px;
+    }
+
+    .employee-search-id {
+        font-size: 12px;
+        color: var(--gray-500);
+    }
+
+    .selected-employee {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        border-radius: 10px;
+        padding: 16px;
+        margin-top: 16px;
+        display: none;
+    }
+
+    .selected-employee-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .selected-employee-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--success);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .selected-employee-clear {
+        background: none;
+        border: none;
+        color: var(--gray-500);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .selected-employee-clear:hover {
+        color: #ef4444;
+        background: rgba(239, 68, 68, 0.1);
+    }
+
+    .selected-employee-info {
+        font-size: 14px;
+        color: var(--dark);
+    }
+
+    /* Form Actions */
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 32px;
+        padding-top: 20px;
+        border-top: 1px solid var(--gray-200);
+    }
+
+    .btn-cancel {
+        background: var(--gray-200);
+        color: var(--gray-700);
+    }
+
+    .btn-cancel:hover {
+        background: var(--gray-300);
+        transform: translateY(-1px);
+    }
+
+    .btn-submit {
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn-submit:hover {
+        background: #3a56d4;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-container {
+            padding: 16px;
+        }
+        
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+        
+        .stats-summary {
+            grid-template-columns: 1fr;
+        }
+        
+        .table-header {
+            flex-direction: column;
+            gap: 16px;
+            align-items: flex-start;
+        }
+        
+        .dataTable {
+            min-width: 800px;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        .modal-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0;
+        border-radius: 0;
+    }
+
+    .warning-details {
+        grid-template-columns: 1fr !important;
+    }
+
+    .warning-card {
+        width: 100% !important;
+    }
+
+    .warning-value {
+        font-size: 16px !important;
+    }
+    }
+
+    /* Loading Animation */
+    .spinner {
+        border: 3px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        border-top: 3px solid var(--primary);
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .view-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.view-btn:hover {
+    background: #334ad4;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
+}
+
+/* Warning Modal Cards */
+.warning-details {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+}
+
+.warning-card {
+    background: var(--gray-100);
+    padding: 20px;
     border-radius: 12px;
-    border: 1px solid #e5e7eb;
-    overflow: hidden;
-  }
+    border: 1px solid var(--gray-200);
+}
+
+.warning-card.full-width {
+    grid-column: span 2;
+}
+
+.warning-card h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-600);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.warning-content {
+    display: block !important;
+}
+
+.warning-value {
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.warning-label {
+    font-size: 13px;
+    color: var(--gray-500);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+
+.warning-value {
+    font-size: 18px;
+    font-weight: 500;
+    text-align: left !important;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+.date-badge {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gray-600);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: var(--card-shadow);
+    white-space: nowrap;
+}
+
 </style>
 
-<div class="container py-4">
-
-  <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4 header-actions">
-    <div>
-      <h3 class="fw-bold mb-1">Warnings & Appreciations</h3>
-      <p class="text-muted mb-0">Manage employee notices and recognitions</p>
+<div class="page-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1>
+                <i class="fas fa-exclamation-circle"></i>
+                Employee Notices
+            </h1>
+            <p class="page-subtitle">Manage warnings, appreciations and other employee notices</p>
+        </div>
+        <div class="date-badge">
+            <i class="fas fa-calendar-alt"></i>
+            {% now "d F Y" %}
+        </div>
     </div>
-    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addWarningModal">
-      <i class="fas fa-plus me-2"></i>Add Employee Notice
-    </button>
-  </div>
 
-  <!-- Table -->
-  <div class="custom-card shadow-sm">
-    <div class="table-responsive">
-      <table class="table align-middle mb-0 display nowrap" id="warningsTable" style="width:100%">
-        <thead class="table-light">
-          <tr>
-            <th>Employee</th>
-            <th>Message Type</th>
-            <th>Type</th>
-            <th>Subject</th>
-            <th>Date</th>
-            <th style="display:none;">SortDate</th>
-            <th>Issued By</th>
-            <th class="text-center">Actions</th>
-          </tr>
-        </thead>
+   <!-- Stats Summary -->
+    <div class="stats-summary">
 
-        <tbody>
-          {% for warn in warnings %}
-          <tr>
-
-            <td>
-              <div class="d-flex align-items-center">
-
-                <div class="flex-grow-1 ms-3">
-                  <span class="fw-medium">{{ warn.get_employee_name }}</span>
-                </div>
-              </div>
-            </td>
-           <td>
-                {% if warn.message_category == "Warning" %}
-                    <span class="badge bg-danger">Warning</span>
-
-                {% elif warn.message_category == "Appreciation" or warn.message_category == "Appreciations" %}
-                    <span class="badge bg-success">{{ warn.message_category }}</span>
-
-                {% else %}
-                    <span class="badge bg-primary">{{ warn.message_category }}</span>
-                {% endif %}
-            </td>
-
-
-
-            <!-- Type Column -->
-            <td>
-                {% if warn.sub_type %}
-                    {{ warn.sub_type }}
-                {% else %}
-                    —
-                {% endif %}
-            </td>
-
-            <td>
-              <div class="text-truncate" style="max-width: 200px;" title="{{ warn.subject }}">
-                {{ warn.subject }}
-              </div>
-            </td>
-            <td>
-              <span class="text-muted">{{ warn.warning_date|date:"d-m-y" }}</span>
-            </td>
-            <td style="display:none;">{{ warn.warning_date|date:"Y-m-d" }}</td>
-            <td>
-              <span class="fw-medium">{{ warn.issued_by }}</span>
-            </td>
-            <td class="text-center">
-              <div class="btn-group">
-                <a href="{% url 'delete_warning' warn.id %}" class="btn btn-sm btn-outline-danger"
-                  title="Delete Warning" onclick="return confirm('Are you sure you want to delete this warning?');">
-                  <i class="fas fa-trash"></i>
-                </a>
-              </div>
-            </td>
-          </tr>
-          {% empty %}
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<!-- ✅ Add Warning Modal -->
-<div class="modal fade" id="addWarningModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <form method="POST" autocomplete="off" id="warningForm">
-        {% csrf_token %}
-        <div class="modal-header">
-          <h5 class="modal-title">Add Employee Notice</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        
+       <div class="summary-card warning">
+            <div class="summary-value">
+                {{ warning_count }}
+                <div class="summary-label">Warnings</div>
+            </div>
+            <div class="summary-icon warning">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
         </div>
 
-        <div class="modal-body">
-          <div class="row g-3">
-            <div class="mb-3 position-relative">
-              <label class="form-label required">Employee *</label>
-              <input type="text" class="form-control" id="employeeSearch" placeholder="Search Employee by Name or ID">
-              <div id="employeeSuggestions" class="dropdown-menu w-100"
-                style="display: none; max-height: 200px; overflow-y: auto;"></div>
-              <input type="hidden" name="employee_code" id="employeeId">
+        
+        <div class="summary-card appreciation">
+            <div class="summary-value">
+                {{ appreciation_count }}
+                <div class="summary-label">Appreciations</div>
             </div>
-
-            <!-- Selected Employee Info -->
-            <div class="row mt-3" id="selectedEmployeeSection" style="display: none;">
-              <div class="col-12">
-                <div class="alert alert-info py-2">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                      <strong>Selected Employee:</strong>
-                      <span id="selectedEmployeeName" class="ms-2"></span>
-                      <span id="selectedEmployeeId" class="text-muted ms-2"></span>
-                    </div>
-                    <button type="button" class="btn-close" id="clearEmployeeSelection"></button>
-                  </div>
-                </div>
-              </div>
+            <div class="summary-icon appreciation">
+                <i class="fas fa-award"></i>
             </div>
-            <!-- Message Category (Dynamic) -->
-            <div class="col-md-6">
-              <label class="form-label required">Message Type *</label>
-              <select id="id_message_category" name="message_category" class="form-select">
-                <option value="">Select Category</option>
-                {% for cat in message_categories %}
-                <option value="{{ cat.id }}">{{ cat.name }}</option>
-                {% endfor %}
-              </select>
+        </div>
+
+        
+        <div class="summary-card notice">
+            <div class="summary-value">
+                {{ notice_count }}
+                <div class="summary-label">General Notices</div>
             </div>
-
-
-            <!-- Sub Type (Dynamic – Warning or Appreciation auto loaded) -->
-            <div class="col-md-6">
-              <label class="form-label required">Type *</label>
-              <select id="id_sub_type" name="sub_type" class="form-select">
-                <option value="">Select Type</option>
-              </select>
+            <div class="summary-icon notice">
+                <i class="fas fa-bell"></i>
             </div>
+        </div>
 
-
-            <!-- Subject -->
-            <div class="col-md-12">
-              <label class="form-label">Subject *</label>
-              {{ form.subject }}
+        
+        <div class="summary-card">
+            <div class="summary-value">
+                {{ total_count }}
+                <div class="summary-label">Total Notices</div>
             </div>
-
-            <!-- Description -->
-            <div class="col-md-12">
-              <label class="form-label">Description *</label>
-              {{ form.description }}
+            <div class="summary-icon" style="background: rgba(168, 85, 247, 0.1); color: #8b5cf6;">
+                <i class="fas fa-file-alt"></i>
             </div>
+        </div>
 
-            <!-- Date -->
-            <div class="col-md-6">
-              <label class="form-label">Notice Date *</label>
-              {{ form.warning_date }}
-            </div>
+        
 
-            <!-- Issued By -->
-            <div class="col-md-6">
-              <label class="form-label">Notice By (Auto)</label>
-              <input type="text" class="form-control" value="{{ request.session.user_name }}" readonly>
-            </div>
-
-            <div class="modal-footer">
-              <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-              <button type="submit" class="btn btn-primary">Submit</button>
-            </div>
-      </form>
     </div>
-  </div>
+    <!-- Main Container -->
+    <div class="main-container">
+        <div class="table-header">
+            <h3>
+                <i class="fas fa-list"></i>
+                All Employee Notices
+                <span style="font-size: 14px; color: var(--gray-500); margin-left: 8px;">
+                    ({{ warnings.count }} records)
+                </span>
+            </h3>
+            <button class="add-btn" onclick="openAddNoticeModal()">
+                <i class="fas fa-plus"></i>
+                Add New Notice
+            </button>
+        </div>
+        
+        <div class="table-container">
+            {% if warnings %}
+            <table class="dataTable" id="warningsTable">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Notice Type</th>
+                        <th>Category</th>
+                        <th>Subject</th>
+                        <th style="display:none;">Description</th> 
+                        <th>Date</th>
+                        <th>Issued By</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for warn in warnings %}
+                    <tr data-warning-id="{{ warn.id }}">
+                        <!-- Employee -->
+                        <td>
+                            <div class="employee-info">
+                                <div class="employee-details">
+                                    <div class="employee-name">
+                                        {{ warn.get_employee_name }}
+                                    </div>
+                                    <div class="employee-id">
+                                        ID: {{ warn.employee_code }}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        
+                        <!-- Notice Type -->
+                        <td>
+                            {% if warn.message_category == "Warning" %}
+                                <span class="status-badge badge-warning">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    Warning
+                                </span>
+                            {% elif warn.message_category == "Appreciation" or warn.message_category == "Appreciations" %}
+                                <span class="status-badge badge-appreciation">
+                                    <i class="fas fa-award"></i>
+                                    {{ warn.message_category }}
+                                </span>
+                            {% else %}
+                                <span class="status-badge badge-notice">
+                                    <i class="fas fa-bell"></i>
+                                    {{ warn.message_category }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Category -->
+                        <td>
+                            <span class="type-badge">
+                               {% if warn.sub_type %}
+                                  {{ warn.sub_type }}
+                               {% else %}
+                                   —
+                               {% endif %}
+                            </span>
+                        </td>
+                        
+                        <!-- Subject -->
+                        <td>
+                            <div class="subject-text" title="{{ warn.subject }}">
+                                {{ warn.subject }}
+                            </div>
+                        </td>
+
+                        <td class="description-text" style="display:none;">
+                            {{ warn.description|default_if_none:"" }}
+                        </td>
+                        
+                        <!-- Date -->
+                        <td>
+                            <div class="date-cell">
+                                <div class="date-main">
+                                    {{ warn.warning_date|date:"d M, Y" }}
+                                </div>
+                                <div class="date-relative">
+                                    {{ warn.warning_date|timesince }} ago
+                                </div>
+                            </div>
+                        </td>
+                        
+                        <!-- Issued By -->
+                        <td>
+                            <span style="font-weight: 500; color: var(--dark);">
+                                {{ warn.issued_by }}
+                            </span>
+                        </td>
+                        
+                        <!-- Actions -->
+                        <td>
+                            <div class="action-buttons">
+                                 <button class="view-btn" onclick="showWarningDetails('{{ warn.id }}')">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                                <button class="delete-btn" onclick="confirmDelete('{{ warn.id }}')">
+                                    <i class="fas fa-trash"></i>
+                                    Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-inbox"></i>
+                </div>
+                <h4>No Notices Found</h4>
+                <p>No warnings or appreciations have been recorded yet. Add your first employee notice using the button above.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
+
+<!-- Warning Details Modal -->
+<div class="modal-overlay" id="warningDetailsModal">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3>
+                <i class="fas fa-bell"></i> Notice Details
+            </h3>
+            <button class="modal-close" onclick="closeWarningModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="modal-body" id="warningDetailsContent">
+            <!-- Dynamic content loads here -->
+        </div>
+    </div>
+</div>
+
+
+<!-- Add Notice Modal -->
+<div class="modal-overlay" id="addNoticeModal">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3>
+                <i class="fas fa-plus-circle"></i>
+                Add Employee Notice
+            </h3>
+            <button class="modal-close" onclick="closeModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form method="POST" autocomplete="off" id="noticeForm">
+                {% csrf_token %}
+                
+                <!-- Employee Search -->
+                <div class="form-group">
+                    <label class="form-label required">
+                        <i class="fas fa-user"></i>
+                        Employee
+                    </label>
+                    <div class="employee-search-container">
+                        <input type="text" 
+                               class="form-control" 
+                               id="employeeSearch" 
+                               placeholder="Search employee by name or ID..."
+                               autocomplete="off">
+                        <div class="employee-search-dropdown" id="employeeSuggestions"></div>
+                        <input type="hidden" name="employee_code" id="employeeId">
+                    </div>
+                    
+                    <!-- Selected Employee Display -->
+                    <div class="selected-employee" id="selectedEmployeeSection">
+                        <div class="selected-employee-header">
+                            <div class="selected-employee-label">
+                                <i class="fas fa-check-circle"></i>
+                                Selected Employee
+                            </div>
+                            <button type="button" class="selected-employee-clear" id="clearEmployeeSelection">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="selected-employee-info">
+                            <strong id="selectedEmployeeName"></strong>
+                            <span style="color: var(--gray-500); margin-left: 8px;">(ID: <span id="selectedEmployeeId"></span>)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Message Category and Sub Type -->
+                <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div>
+                        <label class="form-label required">
+                            <i class="fas fa-tag"></i>
+                            Notice Type
+                        </label>
+                        <select id="id_message_category" name="message_category" class="form-select" required>
+                            <option value="">Select Type</option>
+                            {% for cat in message_categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="form-label required">
+                            <i class="fas fa-filter"></i>
+                            Category
+                        </label>
+                        <select id="id_sub_type" name="sub_type" class="form-select" required>
+                            <option value="">Select Category</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Subject -->
+                <div class="form-group">
+                    <label class="form-label required">
+                        <i class="fas fa-heading"></i>
+                        Subject
+                    </label>
+                    <input type="text" 
+                           name="subject" 
+                           class="form-control" 
+                           placeholder="Enter notice subject..."
+                           required
+                           maxlength="200">
+                </div>
+                
+                <!-- Description -->
+                <div class="form-group">
+                    <label class="form-label required">
+                        <i class="fas fa-align-left"></i>
+                        Description
+                    </label>
+                    <textarea name="description" 
+                              class="form-textarea" 
+                              placeholder="Enter detailed description..."
+                              required></textarea>
+                </div>
+                
+                <!-- Date and Issued By -->
+                <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div>
+                        <label class="form-label required">
+                            <i class="fas fa-calendar"></i>
+                            Notice Date
+                        </label>
+                        <input type="text" 
+                                name="warning_date" 
+                                id="warningDate" 
+                                class="form-control" 
+                                placeholder="dd/mm/yyyy"
+                                required>
+                    </div>
+                    
+                    <div>
+                        <label class="form-label">
+                            <i class="fas fa-user-tie"></i>
+                            Issued By (Auto)
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               value="{{ request.session.user_name }}" 
+                               readonly
+                               style="background: var(--gray-100);">
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-cancel" onclick="closeModal()">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-submit" id="submitBtn">
+                        <i class="fas fa-paper-plane"></i>
+                        Submit Notice
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Include DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
 <!-- Include jQuery and DataTables JS -->
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<!-- Bootstrap JS (required for modal hide/show events) -->
-<!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script> -->
-<script type="text/javascript" charset="utf8"
-  src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script type="text/javascript" charset="utf8"
-  src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-<script type="text/javascript" charset="utf8"
-  src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-<script type="text/javascript" charset="utf8"
-  src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-
-    /* ======================= DATATABLE ====================== */
-    const table = $('#warningsTable').DataTable({
-        pageLength: 25,
-        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-        order: [[5, 'desc']],   // Sort by hidden SortDate column
-        responsive: true,
-        dom: "<'row'<'col-md-6'l><'col-md-6'f>>" +
-             "<'row'<'col-12'tr>>" +
-             "<'row'<'col-md-5'i><'col-md-7'p>>",
-        language: {
-          emptyTable:
-            `<div class="py-3 text-center">
-                <i class="fas fa-inbox fa-2x text-muted mb-3"></i>
-                <p class="mb-0">No warnings or appreciations found</p>
-                <small class="text-muted">Add your first employee notice using the button above</small>
-            </div>`,
-            search: "Search records:",
-            lengthMenu: "Show _MENU_ entries",
-            info: "Showing _START_ to _END_ of _TOTAL_ entries",
-            infoEmpty: "Showing 0 to 0 of 0 entries",
-            paginate: { first: "First", last: "Last", next: "Next", previous: "Previous" }
-        },
-        initComplete: () => {
-            $('.dataTables_filter input').addClass('form-control form-control-sm');
-            $('.dataTables_length select').addClass('form-control form-control-sm');
-            if ($(window).width() < 768) {
-                $('.dataTables_length, .dataTables_filter').css({
-                    float: 'none', textAlign: 'left', marginBottom: '10px'
-                });
-            }
-        }
-    });
-
-    window.addEventListener('resize', () => {
-        const css = $(window).width() < 768
-            ? { float: 'none', textAlign: 'left', marginBottom: '10px' }
-            : { float: '', textAlign: '', marginBottom: '' };
-        $('.dataTables_length, .dataTables_filter').css(css);
-    });
-
-    /* ======================= EMPLOYEE SEARCH ====================== */
-    const empSearch = document.getElementById('employeeSearch'),
-          empSug = document.getElementById('employeeSuggestions'),
-          empSec = document.getElementById('selectedEmployeeSection'),
-          empName = document.getElementById('selectedEmployeeName'),
-          empUID = document.getElementById('selectedEmployeeId'),
-          empIdField = document.getElementById('employeeId'),
-          clearBtn = document.getElementById('clearEmployeeSelection');
-
-    let delay;
-    empSearch.addEventListener('input', () => {
-        const v = empSearch.value.trim();
-        if (delay) clearTimeout(delay);
-        if (v.length < 2) return (empSug.style.display = 'none');
-        delay = setTimeout(() => search(v), 300);
-    });
-
-    function getCookie(name) {
-        return document.cookie.split(';')
-            .map(c => c.trim())
-            .find(c => c.startsWith(name + '='))?.split('=')[1];
-    }
-
-    function search(term) {
-        fetch('/search-employees/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': getCookie('csrftoken')
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize DataTable
+        const table = $('#warningsTable').DataTable({
+            pageLength: 25,
+            lengthMenu: [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            order: [[5, 'desc']], // Sort by date descending
+            responsive: true,
+            dom: '<"top"<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>>rt<"bottom"<"row"<"col-sm-12 col-md-6"i><"col-sm-12 col-md-6"p>>><"clear">',
+            buttons: [
+                {
+                    extend: 'copy',
+                    className: 'btn btn-sm',
+                    text: '<i class="fas fa-copy"></i> Copy'
+                },
+                {
+                    extend: 'excel',
+                    className: 'btn btn-sm',
+                    text: '<i class="fas fa-file-excel"></i> Excel',
+                    title: 'Employee Notices - {% now "d M Y" %}'
+                },
+                {
+                    extend: 'pdf',
+                    className: 'btn btn-sm',
+                    text: '<i class="fas fa-file-pdf"></i> PDF',
+                    title: 'Employee Notices - {% now "d M Y" %}'
+                },
+                {
+                    extend: 'print',
+                    className: 'btn btn-sm',
+                    text: '<i class="fas fa-print"></i> Print'
+                }
+            ],
+            language: {
+                search: "Search records:",
+                lengthMenu: "Show _MENU_ entries",
+                info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                infoEmpty: "Showing 0 to 0 of 0 entries",
+                infoFiltered: "(filtered from _MAX_ total entries)",
+                paginate: {
+                    first: "First",
+                    last: "Last",
+                    next: "Next",
+                    previous: "Previous"
+                }
             },
-            body: `search_term=${encodeURIComponent(term)}`
-        })
-        .then(r => r.json())
-        .then(d => d.employees?.length ? show(d.employees) : (empSug.style.display = 'none'))
-        .catch(() => empSug.style.display = 'none');
-    }
-
-    function show(list) {
-        empSug.innerHTML = '';
-        list.forEach(e => {
-            const a = document.createElement('a');
-            a.className = 'dropdown-item';
-            a.href = '#';
-            a.innerHTML = `<strong>${e.name}</strong> (${e.employee_id})`;
-            a.onclick = ev => { ev.preventDefault(); select(e); };
-            empSug.appendChild(a);
+            initComplete: function(settings, json) {
+                // Add custom styling to DataTable elements
+                $('.dataTables_filter input').addClass('form-control-sm');
+                $('.dataTables_length select').addClass('form-control-sm');
+            }
         });
-        empSug.style.display = 'block';
-    }
+        // Initialize flatpickr with dd/mm/yyyy format
+        flatpickr("#warningDate", {
+            dateFormat: "d/m/Y",
+            defaultDate: "today",
+            allowInput: true
+        });
 
-    function select(e) {
-        empSearch.value = `${e.name} (${e.employee_id})`;
-        empIdField.value = e.employee_id;
-        empName.textContent = e.name;
-        empUID.textContent = `(${e.employee_id})`;
-        empSec.style.display = 'block';
-        empSug.style.display = 'none';
-    }
+        // Set today's date as default for warning date
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const year = today.getFullYear();
+        const formattedDate = `${day}/${month}/${year}`;
+        document.getElementById('warningDate').value = formattedDate;
 
-    clearBtn.onclick = () => {
-        empIdField.value = '';
-        empSearch.value = '';
-        empSec.style.display = 'none';
-    };
+        // Employee search functionality
+        const employeeSearch = document.getElementById('employeeSearch');
+        const employeeSuggestions = document.getElementById('employeeSuggestions');
+        const selectedEmployeeSection = document.getElementById('selectedEmployeeSection');
+        const selectedEmployeeName = document.getElementById('selectedEmployeeName');
+        const selectedEmployeeId = document.getElementById('selectedEmployeeId');
+        const employeeIdField = document.getElementById('employeeId');
+        const clearEmployeeBtn = document.getElementById('clearEmployeeSelection');
 
-    /* ======================= MODAL RESET (CLEAN FIXED VERSION) ====================== */
-    const modal = document.getElementById('addWarningModal');
-    modal.addEventListener('show.bs.modal', () => {
-        modal.querySelector("form").reset();
-        empSearch.value = '';
-        empIdField.value = '';
-        empSug.innerHTML = '';
-        empSug.style.display = 'none';
-        empSec.style.display = 'none';
-        empName.textContent = '';
-        empUID.textContent = '';
-        document.getElementById("id_warning_date").value = '';
-        $('#id_sub_type').html('<option value="">Select Type</option>');
+        let searchTimeout;
+
+        employeeSearch.addEventListener('input', function() {
+            const searchTerm = this.value.trim();
+            
+            clearTimeout(searchTimeout);
+            if (searchTerm.length < 2) {
+                employeeSuggestions.style.display = 'none';
+                return;
+            }
+            
+            searchTimeout = setTimeout(() => searchEmployees(searchTerm), 300);
+        });
+
+        function searchEmployees(term) {
+            fetch('/search-employees/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: `search_term=${encodeURIComponent(term)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.employees && data.employees.length > 0) {
+                    displayEmployeeSuggestions(data.employees);
+                } else {
+                    employeeSuggestions.innerHTML = '<div class="employee-search-item">No employees found</div>';
+                    employeeSuggestions.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error searching employees:', error);
+                employeeSuggestions.style.display = 'none';
+            });
+        }
+
+        function displayEmployeeSuggestions(employees) {
+            employeeSuggestions.innerHTML = '';
+            
+            employees.forEach(employee => {
+                const item = document.createElement('div');
+                item.className = 'employee-search-item';
+                item.innerHTML = `
+                    <div class="employee-search-name">${employee.name}</div>
+                    <div class="employee-search-id">ID: ${employee.employee_id}</div>
+                `;
+                
+                item.addEventListener('click', () => {
+                    selectEmployee(employee);
+                });
+                
+                employeeSuggestions.appendChild(item);
+            });
+            
+            employeeSuggestions.style.display = 'block';
+        }
+
+        function selectEmployee(employee) {
+            employeeSearch.value = `${employee.name} (${employee.employee_id})`;
+            employeeIdField.value = employee.employee_id;
+            selectedEmployeeName.textContent = employee.name;
+            selectedEmployeeId.textContent = employee.employee_id;
+            selectedEmployeeSection.style.display = 'block';
+            employeeSuggestions.style.display = 'none';
+        }
+
+        clearEmployeeBtn.addEventListener('click', function() {
+            employeeSearch.value = '';
+            employeeIdField.value = '';
+            selectedEmployeeSection.style.display = 'none';
+            selectedEmployeeName.textContent = '';
+            selectedEmployeeId.textContent = '';
+        });
+
+        // Close suggestions when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.employee-search-container')) {
+                employeeSuggestions.style.display = 'none';
+            }
+        });
+
+        // Load sub-types based on message category
+        document.getElementById('id_message_category').addEventListener('change', function() {
+            const categoryId = this.value;
+            const subTypeSelect = document.getElementById('id_sub_type');
+            
+            if (!categoryId) {
+                subTypeSelect.innerHTML = '<option value="">Select Category</option>';
+                return;
+            }
+            
+            subTypeSelect.innerHTML = '<option value="">Loading...</option>';
+            
+            fetch(`/ajax/load-subtypes/?category_id=${categoryId}`)
+                .then(response => response.json())
+                .then(data => {
+                    let options = '<option value="">Select Category</option>';
+                    data.forEach(item => {
+                        options += `<option value="${item.id}">${item.name}</option>`;
+                    });
+                    subTypeSelect.innerHTML = options;
+                })
+                .catch(error => {
+                    console.error('Error loading sub-types:', error);
+                    subTypeSelect.innerHTML = '<option value="">Error loading categories</option>';
+                });
+        });
+
+        // Form submission
+        document.getElementById('noticeForm').addEventListener('submit', function(e) {
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.innerHTML;
+            
+            // Show loading state
+            submitBtn.innerHTML = '<div class="spinner"></div>';
+            submitBtn.disabled = true;
+            
+            // Validate required fields
+            if (!employeeIdField.value) {
+                e.preventDefault();
+                alert('Please select an employee.');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                return;
+            }
+        });
     });
 
-    document.querySelectorAll("#addWarningModal input, #addWarningModal textarea, #addWarningModal select")
-        .forEach(el => el.setAttribute("autocomplete", "off"));
-
-    /* ======================= DATE VALIDATION ====================== */
-    const dateFld = document.getElementById("id_warning_date");
-    if (dateFld) {
-        const today = new Date().toISOString().split("T")[0];
-        dateFld.min = today;
-        dateFld.onchange = () => {
-            if (dateFld.value < today) {
-                dateFld.classList.add("is-invalid");
-                dateFld.setCustomValidity("Backdate selection is not allowed.");
-            } else {
-                dateFld.classList.remove("is-invalid");
-                dateFld.setCustomValidity("");
-            }
-        };
+    // Modal functions
+    function openAddNoticeModal() {
+        const modal = document.getElementById('addNoticeModal');
+        
+        // First ensure the form is reset
+        document.getElementById('noticeForm').reset();
+        
+        // Clear employee selection
+        document.getElementById('employeeSearch').value = '';
+        document.getElementById('employeeId').value = '';
+        document.getElementById('selectedEmployeeSection').style.display = 'none';
+        
+        // Set today's date
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const year = today.getFullYear();
+        document.getElementById('warningDate').value = `${day}/${month}/${year}`;
+        
+        // Reset select fields
+        document.getElementById('id_message_category').value = '';
+        document.getElementById('id_sub_type').innerHTML = '<option value="">Select Category</option>';
+        
+        // Show modal
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
     }
-});
+    function closeModal() {
+        const modal = document.getElementById('addNoticeModal');
+        const form = document.getElementById('noticeForm');
+        
+        // Reset the form
+        form.reset();
+        
+        // Clear employee selection
+        document.getElementById('employeeSearch').value = '';
+        document.getElementById('employeeId').value = '';
+        document.getElementById('selectedEmployeeSection').style.display = 'none';
+        
+        // Reset date to today
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const year = today.getFullYear();
+        document.getElementById('warningDate').value = `${day}/${month}/${year}`;
+        
+        // Reset select fields
+        document.getElementById('id_message_category').value = '';
+        document.getElementById('id_sub_type').innerHTML = '<option value="">Select Category</option>';
+        
+        // Remove modal active class
+        modal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
 
-/* ======================= AJAX LOAD SUBTYPES ====================== */
-$('#id_message_category').change(function () {
-    var categoryId = $(this).val();
-    $('#id_sub_type').html('<option value="">Loading...</option>');
+    function confirmDelete(warningId) {
+        if (confirm('Are you sure you want to delete this notice? This action cannot be undone.')) {
+            window.location.href = `/delete-warning/${warningId}/`;
+        }
+    }
 
-    $.ajax({
-        url: '/ajax/load-subtypes/',
-        data: { category_id: categoryId },
-        success: function (data) {
-
-            let options = '<option value="">Select Type</option>';
-
-            data.forEach(function (item) {
-                options += `<option value="${item.id}">${item.name}</option>`;
-            });
-
-            $('#id_sub_type').html(options);
+    // Close modal when clicking outside
+    document.getElementById('addNoticeModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
         }
     });
-});
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+
+    // Utility function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+function showWarningDetails(id) {
+    const modal = document.getElementById("warningDetailsModal");
+    const modalContent = document.getElementById("warningDetailsContent");
+
+    modalContent.innerHTML = `
+        <div style="text-align:center; padding:40px;">
+            <div class="spinner" style="margin:0 auto 20px;"></div>
+            <p>Loading notice details...</p>
+        </div>
+    `;
+
+    modal.classList.add("active");
+
+    const row = document.querySelector(`tr[data-warning-id="${id}"]`);
+    if (!row) return;
+
+    const employee = row.querySelector(".employee-name")?.textContent.trim() || "";
+    const empId = row.querySelector(".employee-id")?.textContent.replace("ID:", "").trim() || "";
+    const type = row.querySelector(".status-badge")?.textContent.trim() || "";
+    const category = row.querySelector(".type-badge")?.textContent.trim() || "";
+    const subject = row.querySelector(".subject-text")?.getAttribute("title") || "";
+    const description = row.querySelector(".description-text")?.textContent.trim() || "";
+    const date = row.querySelector(".date-main")?.textContent.trim() || "";
+    const issuedBy = row.cells[6]?.textContent.trim() || "";
+
+    modalContent.innerHTML = `
+        <div class="warning-details">
+
+            <div class="warning-card">
+                <h4>Employee</h4>
+                <div class="warning-content">
+                    <div class="warning-value">${employee}</div>
+                    <div class="warning-label"><i class="fas fa-id-card"></i> ${empId}</div>
+                </div>
+            </div>
+
+            <div class="warning-card">
+                <h4>Notice Type</h4>
+                <div class="warning-content">
+                    <div class="warning-value">${type}</div>
+                </div>
+            </div>
+
+            <div class="warning-card">
+                <h4>Category</h4>
+                <div class="warning-content">
+                    <div class="warning-value">${category}</div>
+                </div>
+            </div>
+
+            <div class="warning-card">
+                <h4>Issued Date</h4>
+                <div class="warning-content">
+                    <div class="warning-value">${date}</div>
+                </div>
+            </div>
+
+            <div class="warning-card">
+                <h4>Issued By</h4>
+                <div class="warning-content">
+                    <div class="warning-value">${issuedBy}</div>
+                </div>
+            </div>
+
+            <div class="warning-card full-width">
+                <h4>Subject</h4>
+                <div class="warning-value">${subject}</div>
+            </div>
+
+            <div class="warning-card full-width">
+                <h4>Description</h4>
+                <div class="warning-value">${description || "No description provided"}</div>
+            </div>
+
+
+        </div>
+    `;
+}
+
+function closeWarningModal() {
+    document.getElementById("warningDetailsModal").classList.remove("active");
+}
+
 
 </script>
-
-
 {% endblock %}

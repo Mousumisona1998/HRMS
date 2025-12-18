@@ -21,6 +21,7 @@ urlpatterns = [
     path('withdraw-leave/<int:leave_id>/', views.withdraw_leave, name='withdraw_leave'),
     path('get-region-holidays/', views.get_region_holidays_api, name='get_region_holidays'),
     path('api/optional-holidays/', views.get_optional_holidays_api, name='get_optional_holidays_api'),
+    path('api/get-existing-leaves/', views.get_existing_leaves, name='get_existing_leaves'),
     path('master_data/add-leave-type/', views.add_leave_type, name='add_leave_type'),
     path('master_data/leave-type/update/<int:pk>/', views.update_leave_type, name='update_leave_type'),
     path('master_data/leave-type/delete/<int:pk>/', views.delete_leave_type, name='delete_leave_type'),

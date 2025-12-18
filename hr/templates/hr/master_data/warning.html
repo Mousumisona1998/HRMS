@@ -1,153 +1,797 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}Notice Management • HR System{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-light: #4895ef;
+        --secondary: #7209b7;
+        --accent: #4cc9f0;
+        --warning: #f72585;
+        --success: #10b981;
+        --danger: #ef4444;
+        --dark: #1a1a2e;
+        --light: #f8f9fa;
+        --gray-100: #f8f9fa;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-400: #ced4da;
+        --gray-500: #adb5bd;
+        --gray-600: #6c757d;
+        --gray-700: #495057;
+        --gray-800: #343a40;
+        --gray-900: #212529;
+        --white: #ffffff;
+        --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+        --hover-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background-color: #f8fafc;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: var(--gray-800);
+    }
+
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+
+    /* Header */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .page-header h1 {
+        font-size: 30px;
+        font-weight: 700;
+        color: var(--dark);
+        letter-spacing: -0.5px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .page-header h1 i {
+        color: var(--primary);
+        background: rgba(67, 97, 238, 0.1);
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    .page-subtitle {
+        font-size: 16px;
+        color: var(--gray-600);
+        margin-top: 4px;
+        max-width: 600px;
+    }
+
+    .date-badge {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        padding: 10px 20px;
+        border-radius: 12px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Messages */
+    .alert-container {
+        margin-bottom: 24px;
+    }
+
+    .alert {
+        border-radius: 12px;
+        border: none;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: var(--card-shadow);
+    }
+
+    .alert-success {
+        background: rgba(16, 185, 129, 0.1);
+        color: #065f46;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .alert-success i {
+        color: var(--success);
+    }
+
+    /* Filter Card */
+    .filter-card {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+    }
+
+    .filter-row {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 16px;
+        align-items: center;
+    }
+
+    @media (max-width: 768px) {
+        .filter-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Search Box */
+    .search-box {
+        position: relative;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 12px 16px 12px 44px;
+        border: 1px solid var(--gray-300);
+        border-radius: 10px;
+        font-size: 14px;
+        color: var(--dark);
+        background: var(--white);
+        transition: all 0.2s ease;
+    }
+
+    .search-box input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray-500);
+        font-size: 14px;
+    }
+
+    /* Form Controls */
+    .form-select {
+        min-width: 160px;
+        padding: 12px 16px;
+        border: 1px solid var(--gray-300);
+        border-radius: 10px;
+        font-size: 14px;
+        color: var(--dark);
+        background: var(--white);
+        transition: all 0.2s ease;
+    }
+
+    .form-select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+
+    /* Buttons */
+   
+
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #3a56d4;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+    }
+
+    .btn-secondary {
+        background: var(--gray-200);
+        color: var(--gray-700);
+    }
+
+    .btn-secondary:hover {
+        background: var(--gray-300);
+        transform: translateY(-1px);
+    }
+
+    .btn-success {
+        background: var(--success);
+        color: white;
+    }
+
+    .btn-success:hover {
+        background: #0da271;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-danger {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .btn-danger:hover {
+        background: #ef4444;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: #92400e;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .btn-warning:hover {
+        background: #f59e0b;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-sm {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+    /* Table Card */
+    .table-card {
+        background: var(--white);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+    }
+
+    .table-header {
+        padding: 24px;
+        border-bottom: 1px solid var(--gray-200);
+        background: var(--white);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .table-header h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .count-badge {
+        background: var(--primary);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .table-container {
+        padding: 0;
+        overflow-x: auto;
+    }
+
+    .dataTable {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1000px;
+    }
+
+    .dataTable thead {
+        background: var(--gray-100);
+    }
+
+    .dataTable th {
+        padding: 16px 20px;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--gray-700);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--gray-200);
+        white-space: nowrap;
+    }
+
+    .dataTable tbody tr {
+        border-bottom: 1px solid var(--gray-100);
+        transition: all 0.2s ease;
+    }
+
+    .dataTable tbody tr:hover {
+        background: rgba(67, 97, 238, 0.03);
+    }
+
+    .dataTable td {
+        padding: 16px 20px;
+        font-size: 14px;
+        color: var(--gray-800);
+        vertical-align: middle;
+    }
+
+    /* Badges */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .badge-success {
+        background: rgba(16, 185, 129, 0.1);
+        color: #065f46;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .badge-secondary {
+        background: rgba(107, 114, 128, 0.1);
+        color: #374151;
+        border: 1px solid rgba(107, 114, 128, 0.2);
+    }
+
+    .badge-primary {
+        background: rgba(67, 97, 238, 0.1);
+        color: #1d4ed8;
+        border: 1px solid rgba(67, 97, 238, 0.2);
+    }
+
+    /* Subtype Tags */
+    .subtype-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .subtype-tag {
+        background: var(--gray-100);
+        color: var(--gray-700);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        border: 1px solid var(--gray-200);
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--gray-100);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        color: var(--gray-500);
+        font-size: 32px;
+    }
+
+    .empty-state h4 {
+        font-size: 18px;
+        color: var(--dark);
+        margin-bottom: 8px;
+    }
+
+    .empty-state p {
+        color: var(--gray-600);
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        padding: 20px;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal-container {
+        background: var(--white);
+        border-radius: 16px;
+        width: 100%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: modalSlideIn 0.3s ease;
+    }
+
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .modal-header {
+        padding: 24px;
+        border-bottom: 1px solid var(--gray-200);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .modal-header h3 {
+        font-size: 20px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .modal-close {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 20px;
+        transition: all 0.2s ease;
+    }
+
+    .modal-close:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: rotate(90deg);
+    }
+
+    .modal-body {
+        padding: 32px;
+    }
+
+    .modal-footer {
+        padding: 20px 32px;
+        border-top: 1px solid var(--gray-200);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+
+    /* Form Styles */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--gray-700);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .form-label.required::after {
+        content: '*';
+        color: #ef4444;
+        margin-left: 4px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid var(--gray-300);
+        border-radius: 10px;
+        font-size: 14px;
+        color: var(--dark);
+        background: var(--white);
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+
+    .form-switch {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .form-switch .form-check-input {
+        width: 48px;
+        height: 24px;
+        margin: 0;
+    }
+
+    .form-switch .form-check-label {
+        font-weight: 500;
+        color: var(--dark);
+    }
+
+    /* Error Styles */
+    .error-alert {
+        background: rgba(239, 68, 68, 0.1);
+        color: #b91c1c;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        display: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-container {
+            padding: 16px;
+        }
+        
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+        
+        .filter-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            justify-content: flex-start;
+            flex-wrap: wrap;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            flex-direction: column;
+        }
+    }
+
+    /* Loading Animation */
+    .spinner {
+        border: 3px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        border-top: 3px solid var(--primary);
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+<div class="page-container">
+    <!-- Header -->
     <div class="page-header">
-        <h1 class="mb-3"><i class="fas fa-exclamation-triangle me-2"></i>Warning Management</h1>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
-                <li class="breadcrumb-item active">Warnings</li>
-            </ol>
-        </nav>
+        <div>
+            <h1>
+                <i class="fas fa-exclamation-triangle"></i>
+                Notice Management
+            </h1>
+            <p class="page-subtitle">Manage notice categories and subtypes for employee notices</p>
+        </div>
+        <div class="date-badge">
+            <i class="fas fa-calendar-alt"></i>
+            {% now "d F Y" %}
+        </div>
     </div>
 
     <!-- Django Messages Framework -->
     {% if messages %}
-    <div class="mb-4">
+    <div class="alert-container">
         {% for message in messages %}
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle me-2"></i>{{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i>
+            <div>{{ message }}</div>
+            <button type="button" class="btn-close" onclick="this.parentElement.style.display='none'"></button>
         </div>
         {% endfor %}
     </div>
     {% endif %}
 
-    <!-- Search and Filter Card -->
-    <div class="card custom-card mb-4">
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="search-box">
-                        <i class="fas fa-search search-icon"></i>
-                        <input type="text" 
-                               class="form-control" 
-                               id="search" 
-                               name="search" 
-                               placeholder="Search warnings..."
-                               value="{{ search_query }}">
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <select class="form-select filter-select" id="status" name="status">
-                        <option value="">All Status</option>
-                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
-                        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <div class="d-flex justify-content-end">
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addWarningModal">
-                            <i class="fas fa-plus me-2"></i>Add New Warning
-                        </button>
-                    </div>
-                </div>
+    <!-- Filter Card -->
+    <div class="filter-card">
+        <div class="filter-row">
+            <!-- Search Box -->
+            <div class="search-box">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" 
+                       id="search" 
+                       name="search" 
+                       placeholder="Search notices..."
+                       value="{{ search_query }}">
             </div>
-        </div>
-    </div>
 
-    <!-- Warnings Table Card -->
-    <div class="card custom-card">
-        <div class="card-body p-0">
-            {% if categories %}
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>#</th>
-                            <th>Warning Name</th>
-                            <th>Subtype(s)</th>
-                            <th>Status</th>
-                            <th>Created At</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-<tbody>
-{% for cat in categories %}
-<tr>
-    <td>{{ forloop.counter }}</td>
+            <!-- Status Filter -->
+            <select class="form-select" id="status" name="status">
+                <option value="">All Status</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+            </select>
 
-    <!-- Category -->
-    <td><strong>{{ cat.name }}</strong></td>
-    <td>
-    {% if cat.subtypes.all %}
-        {% for st in cat.subtypes.all %}
-            {{ st.name }}{% if not forloop.last %}, {% endif %}
-        {% endfor %}
-    {% else %}
-        <span class="text-muted">No subtype</span>
-    {% endif %}
-</td>
-
-
-    <!-- Status -->
-    <td>
-        <span class="badge {% if cat.is_active %}bg-success{% else %}bg-secondary{% endif %}">
-            {{ cat.is_active|yesno:"Active,Inactive" }}
-        </span>
-    </td>
-
-    <!-- Created -->
-    <td>
-        {% if cat.created_at %}
-            {{ cat.created_at|date:"Y-m-d" }}
-        {% else %}
-            --
-        {% endif %}
-    </td>
-
-    <!-- Actions -->
-    <td>
-        <div class="btn-group">
-
-            <!-- Edit -->
-            <button type="button"
-    class="btn btn-sm btn-outline-primary edit-warning-btn"
-    data-warning-id="{{ cat.id }}"
-    data-warning-name="{{ cat.name }}"
-    data-warning-subtypes="{% for st in cat.subtypes.all %}{{ st.name }}{% if not forloop.last %}, {% endif %}{% endfor %}"
-    data-warning-is-active="{{ cat.is_active|yesno:'true,false' }}"
-    title="Edit">
-    <i class="fas fa-edit"></i>
-</button>
-
-
-            <!-- Delete -->
-            <button type="button"
-                class="btn btn-sm btn-outline-danger delete-warning-btn"
-                data-category-id="{{ cat.id }}"
-                data-category-name="{{ cat.name }}"
-                title="Delete">
-                <i class="fas fa-trash"></i>
+            <!-- Add Button -->
+            <button type="button" class="btn btn-primary" onclick="openAddModal()">
+                <i class="fas fa-plus"></i>
+                Add New Notice
             </button>
-
         </div>
-    </td>
-</tr>
-{% endfor %}
-</tbody>
+    </div>
 
-                </table>
-            </div>
+    <!-- Notices Table Card -->
+    <div class="table-card">
+        <div class="table-header">
+            <h3>
+                <i class="fas fa-list"></i>
+                Notice Categories
+                <span class="count-badge" id="totalCount">
+                    {{ categories|length }} items
+                </span>
+            </h3>
+        </div>
+        
+        <div class="table-container">
+            {% if categories %}
+            <table class="dataTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Message Type</th>
+                        <th>Subtype(s)</th>
+                        <th>Status</th>
+                        <th>Created At</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cat in categories %}
+                    <tr>
+                        <!-- Serial Number -->
+                        <td style="color: var(--gray-500);">
+                            {{ forloop.counter }}
+                        </td>
+                        
+                        <!-- Category -->
+                        <td>
+                            <strong style="color: var(--dark);">
+                                {{ cat.name }}
+                            </strong>
+                        </td>
+                        
+                        <!-- Subtypes -->
+                        <td>
+                            {% if cat.subtypes.all %}
+                                <div class="subtype-tags">
+                                    {% for st in cat.subtypes.all %}
+                                        <span class="subtype-tag">{{ st.name }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <span style="color: var(--gray-500); font-style: italic;">No subtypes</span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Status -->
+                        <td>
+                            {% if cat.is_active %}
+                                <span class="badge badge-success">
+                                    <i class="fas fa-check-circle"></i>
+                                    Active
+                                </span>
+                            {% else %}
+                                <span class="badge badge-secondary">
+                                    <i class="fas fa-times-circle"></i>
+                                    Inactive
+                                </span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Created At -->
+                        <td>
+                            {% if cat.created_at %}
+                                <div style="font-weight: 500; color: var(--dark);">
+                                    {{ cat.created_at|date:"d M, Y" }}
+                                </div>
+                                <div style="font-size: 12px; color: var(--gray-500);">
+                                    {{ cat.created_at|date:"h:i A" }}
+                                </div>
+                            {% else %}
+                                <span style="color: var(--gray-500); font-style: italic;">—</span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Actions -->
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn btn-warning btn-sm" 
+                                        onclick="openEditModal('{{ cat.id }}', '{{ cat.name|escapejs }}', '{{ cat.subtypes.all|join:", "|escapejs }}', {{ cat.is_active|yesno:"true,false" }})">
+                                    <i class="fas fa-edit"></i>
+                                    Edit
+                                </button>
+                                <button class="btn btn-danger btn-sm"
+                                        onclick="openDeleteModal('{{ cat.id }}', '{{ cat.name|escapejs }}')">
+                                    <i class="fas fa-trash"></i>
+                                    Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
             {% else %}
-            <div class="text-center py-5">
-                <i class="fas fa-exclamation-triangle fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">No warnings found</h5>
-                <p class="text-muted">Get started by adding your first warning.</p>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addWarningModal">
-                    <i class="fas fa-plus me-2"></i>Add New Warning
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h4>No Notice Categories Found</h4>
+                <p>No Notice categories have been created yet. Add your first Notice category.</p>
+                <button type="button" class="btn btn-primary" onclick="openAddModal()">
+                    <i class="fas fa-plus"></i>
+                    Add New Notice
                 </button>
             </div>
             {% endif %}
@@ -155,222 +799,287 @@
     </div>
 </div>
 
-<!-- Add Warning Modal -->
-<div class="modal fade" id="addWarningModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-
-            <div class="modal-header bg-light">
-                <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Add Message Type</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <form method="post" action="{% url 'message_category_create' %}">
-                {% csrf_token %}
-                <div class="modal-body">
-
-                    <!-- CATEGORY FIELD -->
-                    <div class="mb-3">
-                        <label class="form-label">Message Type *</label>
-                        <input type="text"
-                               name="name"
-                               class="form-control"
-                               placeholder="Enter message type (e.g., Warning, Appreciation)"
-                               required>
-                    </div>
-
-                    <!-- SUBTYPE FIELD -->
-                    <div class="mb-3">
-                        <label class="form-label">Subtype *</label>
-                        <input type="text"
-                               name="subtype_name"
-                               class="form-control"
-                               placeholder="Enter subtype (e.g., Late Coming, Misconduct)"
-                               required>
-                    </div>
-
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save</button>
-                </div>
-            </form>
-
+<!-- Add Notice Modal -->
+<div class="modal-overlay" id="addModal">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3>
+                <i class="fas fa-plus-circle"></i>
+                Add Message Type
+            </h3>
+            <button class="modal-close" onclick="closeAddModal()">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
+        <form method="post" action="{% url 'message_category_create' %}" id="addForm">
+            {% csrf_token %}
+            <div class="modal-body">
+                <div class="error-alert" id="addErrorAlert"></div>
+                
+                <!-- Category Field -->
+                <div class="form-group">
+                    <label class="form-label required">
+                        <i class="fas fa-tag"></i>
+                        Message Type
+                    </label>
+                    <input type="text"
+                           name="name"
+                           class="form-control"
+                           placeholder="Enter message type (e.g., Warning, Appreciation)"
+                           required>
+                </div>
+
+                <!-- Subtype Field -->
+                <div class="form-group">
+                    <label class="form-label required">
+                        <i class="fas fa-list"></i>
+                        Subtype
+                    </label>
+                    <input type="text"
+                           name="subtype_name"
+                           class="form-control"
+                           placeholder="Enter subtype (e.g., Late Coming, Misconduct)"
+                           required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeAddModal()">
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save"></i>
+                    Save
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
-
-<!-- Edit Warning Modal -->
-<div class="modal fade" id="editWarningModal" tabindex="-1" aria-labelledby="editWarningModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-light">
-                <h5 class="modal-title" id="editWarningModalLabel"><i class="fas fa-edit me-2"></i>Edit Warning</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="post" action="" id="editWarningForm" novalidate>
-                {% csrf_token %}
-                <div class="modal-body">
-                    <div id="editFormErrors" class="alert alert-danger" style="display: none;"></div>
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label for="edit_id_warning_name" class="form-label">Warning Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="edit_id_warning_name" name="name" placeholder="Enter warning name" required>
-                        </div>
-                        <!-- Subtypes (comma separated) -->
-<div class="col-12">
-    <label class="form-label">Subtype(s) <span class="text-danger">*</span></label>
-    <input type="text" class="form-control" id="edit_id_subtypes"
-           name="subtypes"
-           placeholder="Enter subtypes separated by commas">
-</div>
-
-                        <div class="col-12">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="edit_id_is_active" name="is_active">
-                                <label class="form-check-label" for="edit_id_is_active">Active Warning</label>
-                            </div>
-                        </div>
+<!-- Edit Notice Modal -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3>
+                <i class="fas fa-edit"></i>
+                Edit Notice
+            </h3>
+            <button class="modal-close" onclick="closeEditModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form method="post" action="" id="editForm" novalidate>
+            {% csrf_token %}
+            <div class="modal-body">
+                <div class="error-alert" id="editErrorAlert"></div>
+                
+                <div class="form-group">
+                    <label class="form-label required">
+                        <i class="fas fa-tag"></i>
+                        Notice Name
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="editName" 
+                           name="name" 
+                           placeholder="Enter notice name"
+                           required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-list"></i>
+                        Subtype(s)
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="editSubtypes"
+                           name="subtypes"
+                           placeholder="Enter subtypes separated by commas">
+                </div>
+                
+                <div class="form-group">
+                    <div class="form-switch">
+                        <input class="form-check-input" 
+                               type="checkbox" 
+                               id="editIsActive" 
+                               name="is_active"
+                               style="width: 48px; height: 24px;">
+                        <label class="form-check-label" for="editIsActive">Active Notice</label>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>Cancel
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-2"></i>Update Warning
-                    </button>
-                </div>
-            </form>
-        </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i>
+                    Update Notice
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
-<!-- Delete Warning Modal -->
-<div class="modal fade" id="deleteWarningModal" tabindex="-1" aria-labelledby="deleteWarningModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteWarningModalLabel">
-                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Warning
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center">
-                <div class="mb-4">
-                    <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
-                    <h4>Are you sure?</h4>
-                    <p class="text-muted">
-                        You are about to delete the warning <strong id="delete-warning-name"></strong>. 
+<!-- Delete Notice Modal -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal-container">
+        <div class="modal-header" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+            <h3>
+                <i class="fas fa-exclamation-triangle"></i>
+                Delete Notice
+            </h3>
+            <button class="modal-close" onclick="closeDeleteModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form method="post" action="" id="deleteForm">
+            {% csrf_token %}
+            <div class="modal-body" style="text-align: center;">
+                <div style="margin-bottom: 24px;">
+                    <div style="width: 80px; height: 80px; background: rgba(239, 68, 68, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                        <i class="fas fa-trash-alt" style="color: #ef4444; font-size: 32px;"></i>
+                    </div>
+                    <h4 style="color: var(--dark); margin-bottom: 8px;">Are you sure?</h4>
+                    <p style="color: var(--gray-600);">
+                        You are about to delete the notice <strong id="deleteName" style="color: var(--dark);"></strong>. 
                         This action cannot be undone.
                     </p>
                 </div>
             </div>
-            <div class="modal-footer justify-content-center">
-                <form method="post" action="" id="deleteWarningForm">
-                    {% csrf_token %}
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>Cancel
-                    </button>
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash me-2"></i>Delete Warning
-                    </button>
-                </form>
+            <div class="modal-footer" style="justify-content: center;">
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i>
+                    Delete Notice
+                </button>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('search');
-    const statusSelect = document.getElementById('status');
-    
-    function applyFilters() {
-        const search = searchInput.value;
-        const status = statusSelect.value;
-        const params = new URLSearchParams();
-        if (search) params.append('search', search);
-        if (status) params.append('status', status);
-        window.location.href = '{% url "warning_master_list" %}' + (params.toString() ? '?' + params.toString() : '');
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter functionality
+        const searchInput = document.getElementById('search');
+        const statusSelect = document.getElementById('status');
+        
+        function applyFilters() {
+            const search = searchInput.value;
+            const status = statusSelect.value;
+            const params = new URLSearchParams();
+            if (search) params.append('search', search);
+            if (status) params.append('status', status);
+            window.location.href = '{% url "warning_master_list" %}' + (params.toString() ? '?' + params.toString() : '');
+        }
+        
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(applyFilters, 500);
+        });
+        
+        statusSelect.addEventListener('change', applyFilters);
+
+        // Form submission loading
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const submitBtn = this.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<div class="spinner"></div>';
+                    submitBtn.disabled = true;
+                    
+                    // Re-enable after 3 seconds in case of error
+                    setTimeout(() => {
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
+                    }, 3000);
+                }
+            });
+        });
+    });
+
+    // Modal functions
+    function openAddModal() {
+        document.getElementById('addModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
     }
-    
-    let searchTimeout;
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(applyFilters, 500);
+
+    function closeAddModal() {
+        document.getElementById('addModal').classList.remove('active');
+        document.body.style.overflow = 'auto';
+        document.getElementById('addForm').reset();
+        document.getElementById('addErrorAlert').style.display = 'none';
+    }
+
+    function openEditModal(id, name, subtypes, isActive) {
+        const modal = document.getElementById('editModal');
+        const form = document.getElementById('editForm');
+        
+        // Set form values
+        document.getElementById('editName').value = name;
+        document.getElementById('editSubtypes').value = subtypes || '';
+        document.getElementById('editIsActive').checked = isActive;
+        
+        // Set form action URL
+        form.action = `/master-data/message-category/edit/${id}/`;
+        
+        // Show modal
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        document.getElementById('editErrorAlert').style.display = 'none';
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+
+    function openDeleteModal(id, name) {
+        const modal = document.getElementById('deleteModal');
+        const form = document.getElementById('deleteForm');
+        
+        // Set values
+        document.getElementById('deleteName').textContent = `"${name}"`;
+        
+        // Set form action URL
+        form.action = `/master-data/warning-remove/${id}/`;
+        
+        // Show modal
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+
+    // Close modals when clicking outside
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                if (this.id === 'addModal') closeAddModal();
+                if (this.id === 'editModal') closeEditModal();
+                if (this.id === 'deleteModal') closeDeleteModal();
+            }
+        });
     });
-    statusSelect.addEventListener('change', applyFilters);
 
-    // Edit Warning Modal
-    const editButtons = document.querySelectorAll('.edit-warning-btn');
-    const editWarningModal = new bootstrap.Modal(document.getElementById('editWarningModal'));
-    const editWarningForm = document.getElementById('editWarningForm');
-    
-    editButtons.forEach(button => {
-    button.addEventListener('click', function() {
-
-        const id = this.getAttribute('data-warning-id');
-        const name = this.getAttribute('data-warning-name');
-        const subtypes = this.getAttribute('data-warning-subtypes');
-        const isActive = this.getAttribute('data-warning-is-active') === 'true';
-
-        document.getElementById('edit_id_warning_name').value = name;
-        document.getElementById('edit_id_subtypes').value = subtypes;
-        document.getElementById('edit_id_is_active').checked = isActive;
-
-        editWarningForm.action = "/master-data/message-category/edit/" + id + "/";
-        editWarningModal.show();
+    // Close modals with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeAddModal();
+            closeEditModal();
+            closeDeleteModal();
+        }
     });
-});
-
-  // Delete Warning Modal
-const deleteButtons = document.querySelectorAll('.delete-warning-btn');
-const deleteWarningModal = new bootstrap.Modal(document.getElementById('deleteWarningModal'));
-const deleteWarningForm = document.getElementById('deleteWarningForm');
-const deleteWarningName = document.getElementById('delete-warning-name');
-
-deleteButtons.forEach(button => {
-    button.addEventListener('click', function() {
-        const id = this.getAttribute('data-category-id');   
-        const name = this.getAttribute('data-category-name');
-
-        deleteWarningName.textContent = '"' + name + '"';
-        deleteWarningForm.action = "/master-data/warning-remove/" + id + "/";
-        deleteWarningModal.show();
-    });
-});
-
-
-});
 </script>
-
-<style>
-.search-box {
-    position: relative;
-}
-.search-box input { padding-left: 40px; }
-.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #6c757d; }
-
-.table th { border-top: none; font-weight: 600; color: #2c3e50; background-color: #f8f9fa; padding: 12px 16px; }
-.table td { padding: 12px 16px; vertical-align: middle; }
-
-.form-label { font-weight: 500; margin-bottom: 8px; }
-.form-control, .form-select { border-radius: 6px; border: 1px solid #dee2e6; padding: 8px 12px; }
-.form-control:focus, .form-select:focus { border-color: #3498db; box-shadow: 0 0 0 0.2rem rgba(52,152,219,0.25); }
-.form-check-input:checked { background-color: #3498db; border-color: #3498db; }
-
-.btn-group .btn { border-radius: 4px; margin-right: 4px; }
-.btn-group .btn:last-child { margin-right: 0; }
-
-.is-invalid { border-color: #dc3545 !important; }
-.invalid-feedback { display: block; }
-
-.modal-header { border-bottom: 1px solid #dee2e6; }
-.modal-footer { border-top: 1px solid #dee2e6; }
-.alert { border-radius: 8px; border: none; }
-.badge { font-size: 0.75em; padding: 0.35em 0.65em; }
-</style>
 {% endblock %}

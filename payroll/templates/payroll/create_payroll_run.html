@@ -4,8 +4,483 @@
 {% block title %}Create Payroll Run - HRMS{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="page-header">
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-light: #4895ef;
+        --secondary: #7209b7;
+        --accent: #4cc9f0;
+        --warning: #f72585;
+        --success: #10b981;
+        --dark: #1a1a2e;
+        --light: #f8f9fa;
+        --gray-100: #f8f9fa;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-400: #ced4da;
+        --gray-500: #adb5bd;
+        --gray-600: #6c757d;
+        --gray-700: #495057;
+        --gray-800: #343a40;
+        --gray-900: #212529;
+        --white: #ffffff;
+        --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background-color: #f8fafc;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: var(--gray-800);
+    }
+
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+
+    /* Page Header */
+    .page-header {
+        /* background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); */
+        color: black;
+        padding: 10px 20px;
+        border-radius: 20px;
+        margin-bottom: 32px;
+        /* box-shadow: var(--card-shadow); */
+        position: relative;
+        overflow: hidden;
+        z-index: 100;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+        animation: shimmer 3s infinite linear;
+    }
+
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    .page-header h1 {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .page-header p {
+        font-size: 16px;
+        opacity: 0.9;
+        font-weight: 400;
+        position: relative;
+        z-index: 1;
+        margin: 0;
+    }
+
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        color: var(--white);
+        box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(67, 97, 238, 0.4);
+    }
+    .btn-secondary {
+            background:#d8dde7;
+            color: #000000;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(73, 61, 61, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+
+    /* Card Styles */
+    .custom-card {
+        background: var(--white);
+        border-radius: 20px;
+        padding: 32px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--gray-200);
+        margin-bottom: 24px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .custom-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--hover-shadow);
+        border-color: var(--primary-light);
+    }
+
+    .custom-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+    }
+
+    .card-header {
+        margin: -32px -32px 32px -32px;
+        padding: 24px 32px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-bottom: 1px solid var(--gray-200);
+        border-radius: 20px 20px 0 0;
+    }
+
+    .card-title {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .card-title i {
+        color: var(--primary);
+        font-size: 20px;
+    }
+
+    /* Form Styles */
+    .form-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .form-label span.text-danger {
+        color: var(--warning);
+    }
+
+    .form-control, .form-select {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid var(--gray-300);
+        border-radius: 12px;
+        font-size: 15px;
+        color: var(--gray-800);
+        background: var(--white);
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+    }
+
+    .form-control::placeholder {
+        color: var(--gray-500);
+    }
+
+    .form-text {
+        font-size: 13px;
+        color: var(--gray-600);
+        margin-top: 6px;
+    }
+
+    /* Info Alert */
+    .alert-info {
+        background: linear-gradient(135deg, rgba(76, 201, 240, 0.1) 0%, rgba(76, 201, 240, 0.05) 100%);
+        border: 2px solid rgba(76, 201, 240, 0.3);
+        border-radius: 16px;
+        padding: 20px;
+        color: var(--accent);
+        margin-bottom: 24px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .alert-info i {
+        font-size: 18px;
+        margin-top: 2px;
+        color: var(--accent);
+    }
+
+    /* Employee Selection Header */
+    .employee-selection-header {
+        background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-200) 100%);
+        border-radius: 16px;
+        padding: 20px 24px;
+        margin-bottom: 20px;
+        border: 2px solid var(--gray-300);
+    }
+
+    /* Form Check */
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .form-check-input {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--gray-400);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .form-check-input:checked {
+        background-color: var(--primary);
+        border-color: var(--primary);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
+    }
+
+    .form-check-input:focus {
+        box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+    }
+
+    .form-check-label {
+        font-weight: 600;
+        color: var(--gray-700);
+        cursor: pointer;
+    }
+
+    /* Table Styles */
+    .table-responsive {
+        border-radius: 16px;
+        overflow: hidden;
+        border: 2px solid var(--gray-200);
+    }
+
+    .table {
+        margin: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+    }
+
+    .table thead th {   
+        background: linear-gradient(135deg, #d4d7e1 0%, #bcc9d5 100%);
+        color: #212529;
+        font-weight: 600;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: none;
+        padding: 16px 20px;
+    }
+
+    .table tbody tr {
+        transition: all 0.2s ease;
+        background: var(--white);
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .table tbody tr:hover {
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.05) 0%, rgba(114, 9, 183, 0.02) 100%);
+        transform: translateX(4px);
+    }
+
+    .table tbody td {
+        padding: 20px;
+        vertical-align: middle;
+    }
+
+    .table tbody td:first-child {
+        width: 60px;
+        text-align: center;
+    }
+
+    /* Checkbox in table */
+    .table .form-check-input {
+        width: 18px;
+        height: 18px;
+    }
+
+    /* Salary amount styling */
+    .text-success {
+        color: var(--success) !important;
+    }
+
+    /* Selected Summary */
+    .selected-summary {
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.05) 0%, rgba(114, 9, 183, 0.05) 100%);
+        border: 2px solid var(--gray-200);
+        border-radius: 16px;
+        padding: 20px 24px;
+        margin-top: 24px;
+        transition: all 0.3s ease;
+    }
+
+    .selected-summary:hover {
+        border-color: var(--primary);
+    }
+
+    /* Empty State */
+    .text-center {
+        text-align: center;
+        padding: 60px 40px;
+        background: linear-gradient(135deg, var(--white) 0%, #f8f9fa 100%);
+        border: 2px solid var(--gray-200);
+        border-radius: 20px;
+        margin: 24px 0;
+    }
+
+    .text-center .fa-users {
+        font-size: 48px;
+        color: var(--gray-400);
+        margin-bottom: 20px;
+    }
+
+    .text-center h4 {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 12px;
+    }
+
+    .text-center p {
+        font-size: 16px;
+        color: var(--gray-600);
+        max-width: 500px;
+        margin: 0 auto 32px;
+    }
+
+    /* Button Group */
+    .d-flex.justify-content-between {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 32px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .page-container{
+            padding: 16px;
+        }
+        
+        .page-header {
+            padding: 24px;
+        }
+        
+        .page-header h1 {
+            font-size: 24px;
+        }
+        
+        .custom-card {
+            padding: 24px;
+        }
+        
+        .card-header {
+            margin: -24px -24px 24px -24px;
+            padding: 20px 24px;
+        }
+        
+        .table-responsive {
+            font-size: 14px;
+        }
+        
+        .table thead th {
+            padding: 12px 16px;
+            font-size: 13px;
+        }
+        
+        .table tbody td {
+            padding: 16px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            font-size: 13px;
+        }
+        
+        .d-flex.justify-content-between {
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .d-flex.justify-content-between .btn {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .row {
+            margin-left: -8px;
+            margin-right: -8px;
+        }
+        
+        .col-md-6, .col-md-3, .col-12 {
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+        
+        .employee-selection-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .text-center {
+            padding: 40px 24px;
+        }
+        
+        .text-center h4 {
+            font-size: 20px;
+        }
+    }
+
+    /* Animation Classes */
+    .fade-in {
+        animation: fadeIn 0.5s ease;
+    }
+
+    .slide-up {
+        animation: slideUp 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<div class="page-container">
+    <!-- Page Header -->
+    <div class="page-header fade-in">
         <div class="row align-items-center">
             <div class="col">
                 <h1 class="h3 mb-0">Create Payroll Run</h1>
@@ -43,9 +518,10 @@
                             <label for="payroll_year" class="form-label">Year *</label>
                             <select class="form-control" id="payroll_year" name="payroll_year" required>
                                 <option value="">Select Year</option>
-                                {% for year in years %}
-                                    <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>
-                                        {{ year }}
+                                {% for year_option in years %}
+                                    <option value="{{ year_option }}" 
+                                            {% if year_option == selected_year %}selected{% endif %}>
+                                        {{ year_option }}
                                     </option>
                                 {% endfor %}
                             </select>
@@ -57,7 +533,8 @@
                             <select class="form-control" id="payroll_month" name="payroll_month" required>
                                 <option value="">Select Month</option>
                                 {% for month_num, month_name in months %}
-                                    <option value="{{ month_num }}" {% if month_num == current_month %}selected{% endif %}>
+                                    <option value="{{ month_num }}" 
+                                            {% if month_num == selected_month %}selected{% endif %}>
                                         {{ month_name }}
                                     </option>
                                 {% endfor %}
@@ -72,18 +549,27 @@
                         <div class="form-group">
                             <label class="form-label">Select Employees *</label>
                             
+                            <!-- Info Alert -->
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle me-2"></i>
-                                <strong>Multiple Payroll Runs Per Month Allowed</strong><br>
-                                You can create multiple payroll runs for the same month (e.g., "Regular Payroll", "Missing Employees", "New Hires"). 
-                                Each employee can only be paid once per month.
+                                <div>
+                                    <strong>Multiple Payroll Runs Per Month Allowed</strong><br>
+                                    You can create multiple payroll runs for the same month (e.g., "Regular Payroll", "Missing Employees", "New Hires"). 
+                                    Each employee can only be paid once per month.
+                                </div>
                             </div>
-                            
+
                             {% if available_employees %}
-                            <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="employee-selection-header d-flex justify-content-between align-items-center mb-3">
                                 <div>
                                     <strong>Available Employees: {{ available_employees|length }}</strong>
-                                    <span class="text-muted ms-2">(Employees not yet paid for {{ selected_month }}/{{ selected_year }})</span>
+                                    <span class="text-muted ms-2">
+                                        (Employees not yet paid for 
+                                        {% for month_num, month_name in months %}
+                                            {% if month_num == selected_month %}{{ month_name }}{% endif %}
+                                        {% endfor %} 
+                                        {{ selected_year }})
+                                    </span>
                                 </div>
                                 <div class="form-check">
                                     <input type="checkbox" id="selectAll" class="form-check-input">
@@ -125,7 +611,7 @@
                                 </table>
                             </div>
                             
-                            <div class="mt-3 p-3 bg-light rounded">
+                            <div class="selected-summary mt-3 p-3 rounded">
                                 <strong>Selected: </strong>
                                 <span id="selectedCount" class="fw-bold text-primary">0</span> employees
                                 <span id="totalAmount" class="ms-3"></span>
@@ -171,6 +657,7 @@
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -227,7 +714,7 @@ $(document).ready(function() {
         const year = $('#payroll_year').val();
         const month = $('#payroll_month').val();
         if (year && month) {
-            window.location.href = `{% url 'create_payroll_run' %}?year=${year}&month=${month}`;
+            window.location.href = "{% url 'create_payroll_run' %}?year=" + year + "&month=" + month;
         }
     });
     

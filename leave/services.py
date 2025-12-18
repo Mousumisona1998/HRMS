@@ -1116,7 +1116,7 @@ class LeaveValidationService:
         if start_date > end_date:
             errors.append("Start date cannot be after end date")
         
-        if start_date < date.today():
+        if end_date < date.today():
             errors.append("Cannot apply for leave in the past")
         
         is_valid = len(errors) == 0

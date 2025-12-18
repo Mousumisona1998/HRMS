@@ -999,6 +999,36 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
+    /* MAIN FIX: Add gap from sidebar - Same as employee list page */
+.main-content {
+    margin-left: 270px; /* Creates gap from sidebar */
+    padding: 25px 30px; /* Internal padding */
+    min-height: 100vh;
+    transition: margin-left 0.3s ease;
+    width: calc(100% - 270px); /* Adjust width to account for margin */
+    box-sizing: border-box;
+}
+
+/* Responsive design for sidebar gap */
+@media (max-width: 992px) {
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+        padding: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 576px) {
+    .main-content {
+        padding: 12px;
+    }
+}
 /* Enhanced CSS for better UI */
 .profile-card {
     position: sticky;
