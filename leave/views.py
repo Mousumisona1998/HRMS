@@ -217,10 +217,20 @@ def leave_dashboard(request):
             else:
                 employees_on_leave_today_qs = Leave.objects.none()
         elif user_role in ['MANAGER','TL']:
-            employees_on_leave_today_qs = Leave.objects.filter(
-                base_filter,
-                employee__department=request.session.get('user_department')
-            )
+            # FIX: Use reporting manager filter here too
+            try:
+                current_manager = Employee.objects.get(email=user_email)
+                manager_team_qs = Employee.objects.filter(
+                    Q(reporting_manager_id=current_manager.id) |
+                    Q(reporting_manager__icontains=current_manager.first_name)
+                )
+                
+                employees_on_leave_today_qs = Leave.objects.filter(
+                    base_filter,
+                    employee__in=manager_team_qs
+                )
+            except Employee.DoesNotExist:
+                employees_on_leave_today_qs = Leave.objects.none()
         else:
             employees_on_leave_today_qs = Leave.objects.none()
 
@@ -326,11 +336,22 @@ def leave_dashboard(request):
         except Employee.DoesNotExist:
             planned_unplanned_base = Leave.objects.none()
     elif user_role in ['MANAGER','TL']:
-        planned_unplanned_base = Leave.objects.filter(
-            status='approved',
-            applied_date__isnull=False,
-            employee__department=request.session.get('user_department')
-        )
+        # FIX: Use reporting manager filter instead of department
+        try:
+            current_manager = Employee.objects.get(email=user_email)
+            manager_team_qs = Employee.objects.filter(
+                Q(reporting_manager_id=current_manager.id) |
+                Q(reporting_manager__icontains=current_manager.first_name)
+            )
+            
+            planned_unplanned_base = Leave.objects.filter(
+                status='approved',
+                applied_date__isnull=False,
+                employee__in=manager_team_qs
+            )
+        except Employee.DoesNotExist:
+            planned_unplanned_base = Leave.objects.none()
+            
     else:
         planned_unplanned_base = Leave.objects.none()
 
