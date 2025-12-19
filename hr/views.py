@@ -2628,7 +2628,7 @@ def search_employees(request):
         search_term = request.POST.get('search_term', '').strip()
         
         if not search_term:
-            return JsonResponse({'employees': []})
+            return JsonResponse({'results': []})  # Changed to 'results'
         
         # Search by employee_id or first_name or last_name
         employees = Employee.objects.filter(
@@ -2647,15 +2647,29 @@ def search_employees(request):
         
         employees_data = []
         for emp in employees[:10]:
+            # Format the date properly
+            hiredate = ""
+            if emp.date_of_joining:
+                # Format as YYYY-MM-DD for frontend
+                hiredate = emp.date_of_joining.strftime('%Y-%m-%d')
+            
             employees_data.append({
                 'id': emp.id,
                 'employee_id': emp.employee_id,
-                'name': f"{emp.first_name} {emp.last_name}",
+                'first_name': emp.first_name,
+                'middle_name': emp.middle_name if hasattr(emp, 'middle_name') else '',
+                'last_name': emp.last_name,
                 'department': emp.department,
-                'designation': emp.designation
+                'designation': emp.designation,
+                'email': emp.email,
+                'phone': emp.phone,
+                'hiredate': hiredate,  # ADD THIS LINE - it was missing
+                'status': emp.status,
+                'profile_picture': emp.profile_picture.url if emp.profile_picture else '/static/default-avatar.png',
+                'location': emp.location if hasattr(emp, 'location') else ''
             })
         
-        return JsonResponse({'employees': employees_data})
+        return JsonResponse({'results': employees_data})  # Changed to 'results'
     
     return JsonResponse({'error': 'Invalid request'}, status=400)
 

@@ -803,7 +803,7 @@
         <h5 class="mb-1">You are currently on probation</h5>
         <p class="mb-0">{{ probation_message }}</p>
         {% if employee.probation_end_date %}
-        <small class="d-block mt-1">Probation ends on: {{ employee.probation_end_date|date:"d M, Y" }}</small>
+        <small class="d-block mt-1">Probation ends on: {{ employee.probation_end_date|date:"d M Y" }}</small>
         {% endif %}
       </div>
     </div>

@@ -1326,7 +1326,24 @@
     }
 }
 
+.warning-row {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    border-left: 4px solid #dc3545 !important;
+}
 
+.warning-row:hover {
+    background-color: rgba(220, 53, 69, 0.15) !important;
+}
+
+.advance-notice-badge {
+    background-color: #dc3545;
+    color: white;
+    font-size: 0.7em;
+    padding: 2px 7px;
+    border-radius: 3px;
+    margin-left: 5px;
+    width: fit-content;
+}
 
 
 
@@ -1401,7 +1418,7 @@
                     </div>
                     <div class="stat-trend">
                         <i class="fas fa-chart-bar"></i>
-                        Total: {{ planned_leaves_total }}
+                        Total Employees: {{ planned_leaves_total }}
                     </div>
                 </div>
 
@@ -1417,7 +1434,7 @@
                     </div>
                     <div class="stat-trend">
                         <i class="fas fa-chart-bar"></i>
-                        Total: {{ unplanned_leaves_total }}
+                        Total Employees: {{ unplanned_leaves_total }}
                     </div>
                 </div>
 
@@ -1433,7 +1450,7 @@
                     </div>
                     <div class="stat-trend">
                         <i class="fas fa-chart-bar"></i>
-                        Total: {{ pending_requests_total }}
+                        Total Employees: {{ pending_requests_total }}
                     </div>
                 </div>
             </div>
@@ -1527,7 +1544,8 @@
                         </thead>
                         <tbody>
                             {% for leave in recent_leaves %}
-                            <tr>
+                            <tr class="{% if leave.advance_notice_warning %}warning-row{% endif %}" data-working-days="{{ leave.working_days }}"
+    data-notice-warning="{{ leave.advance_notice_warning|yesno:'true,false' }}">
                                 <td>
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="profile-img-container">
@@ -1540,7 +1558,15 @@
                                             {% endif %}
                                         </div>
                                         <div>
-                                            <div class="fw-bold">{{ leave.employee.first_name }} {{ leave.employee.last_name }}</div>
+                                              <div class="fw-bold">
+                                                {{ leave.employee.first_name }} {{ leave.employee.last_name }}
+                                                <!-- ADD THIS BADGE -->
+                                                {% if leave.advance_notice_warning %}
+                                                <div class="advance-notice-badge" title="Insufficient advance notice applied">
+                                                    <i class="fas fa-exclamation-triangle"></i> Late
+                                                </div>
+                                                {% endif %}
+                                            </div>
                                             <small class="text-muted">{{ leave.employee.employee_id }}</small>
                                         </div>
                                     </div>
@@ -1835,7 +1861,6 @@
                             <option value="">Select Type</option>
                             <option value="National Holiday">National Holiday</option>
                             <option value="State Holiday">State Holiday</option>
-                            <option value="Company Holiday">Company Holiday</option>
                             <option value="Optional Holiday">Optional Holiday</option>
                         </select>
                     </div>
@@ -1888,10 +1913,103 @@
                 <!-- Content will be dynamically loaded -->
             </div>
             <div class="modal-footer">
+                <!-- Close button for all users -->
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times"></i> Close
                 </button>
+                
+                <!-- Edit and Delete buttons - only visible for authorized users -->
+                <div id="holidayActionButtons" style="display: none;">
+                    <button type="button" class="btn btn-warning" id="editHolidayBtn" data-bs-toggle="modal" data-bs-target="#editHolidayModal">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button type="button" class="btn btn-danger" id="deleteHolidayBtn">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
             </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Edit Holiday Modal -->
+<div class="modal fade" id="editHolidayModal" tabindex="-1" aria-labelledby="editHolidayModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-warning">
+                <h5 class="modal-title" id="editHolidayModalLabel">
+                    <i class="fas fa-edit"></i> Edit Holiday
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" id="editHolidayForm">
+                {% csrf_token %}
+                <input type="hidden" id="editHolidayId" name="holiday_id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editHolidayRegion" class="form-label fw-bold">
+                            <i class="fas fa-map-marker-alt"></i> Region *
+                        </label>
+                        <select class="form-select" id="editHolidayRegion" name="region" required>
+                            <option value="">Select Region</option>
+                            {% for region in regions %}
+                            <option value="{{ region.id }}">{{ region.name }} ({{ region.code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editHolidayName" class="form-label fw-bold">
+                            <i class="fas fa-calendar-day"></i> Holiday Name *
+                        </label>
+                        <input type="text" class="form-control" id="editHolidayName" name="holiday_name" 
+                               placeholder="e.g., Diwali, Christmas" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editHolidayType" class="form-label fw-bold">
+                            <i class="fas fa-calendar-day"></i> Holiday Type *
+                        </label>
+                        <select class="form-control" id="editHolidayType" name="holiday_type" required>
+                            <option value="">Select Type</option>
+                            <option value="National Holiday">National Holiday</option>
+                            <option value="State Holiday">State Holiday</option>
+                            <option value="Optional Holiday">Optional Holiday</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editHolidayDate" class="form-label fw-bold">
+                            <i class="fas fa-calendar"></i> Date *
+                        </label>
+                        <input type="date" class="form-control" id="editHolidayDate" name="holiday_date" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editHolidayDescription" class="form-label fw-bold">
+                            <i class="fas fa-align-left"></i> Description
+                        </label>
+                        <textarea class="form-control" id="editHolidayDescription" name="holiday_description" 
+                                  rows="3" placeholder="Brief description of the holiday"></textarea>
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="editIsOptional" name="is_optional">
+                        <label class="form-check-label" for="editIsOptional">
+                            <i class="fas fa-star text-warning"></i> This is an optional holiday
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-check"></i> Update Holiday
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -1930,6 +2048,7 @@ $(document).ready(function() {
         {% for region in regions %}
             {% for holiday in region.holidays.all %}
             {
+                id: "{{ holiday.id }}",
                 name: "{{ holiday.name }}",
                 date: "{{ holiday.date|date:'Y-m-d' }}",
                 region: "{{ region.id|stringformat:'s' }}",
@@ -1963,6 +2082,13 @@ $(document).ready(function() {
     
     // 6. INITIALIZE TAB SYSTEM (this will trigger everything else)
     initializeTabSystem();
+     // 7. Initialize the DataTable and highlight rows
+    initializeLeaveTable();
+    
+    // 8. Call highlight function immediately
+    setTimeout(function() {
+        highlightAdvanceNoticeRows();
+    }, 500); // Small delay to ensure DataTable is ready
 });
 
 // ============================================
@@ -2250,6 +2376,35 @@ function parseDate(dateString) {
 // ============================================
 // DATA TABLE FUNCTIONS - FIXED
 // ============================================
+
+function highlightAdvanceNoticeRows() {
+    $('#leaveTable tbody tr').each(function() {
+        const $row = $(this);
+        const workingDays = parseFloat($row.data('working-days')) || 0;
+        const hasWarning = $row.data('notice-warning') === true;
+        
+        // Debug logging
+        console.log('Row data:', {
+            workingDays: workingDays,
+            hasWarning: hasWarning,
+            rowClass: $row.attr('class')
+        });
+        
+        // // Apply warning styling if needed
+        // if (hasWarning) {
+        //     $row.addClass('warning-row');
+            
+        //     // Add a tooltip for explanation
+        //     $row.attr('title', 'Insufficient advance notice applied for this leave duration');
+        //     $row.tooltip({
+        //         trigger: 'hover',
+        //         placement: 'top'
+        //     });
+        // } else {
+        //     $row.removeClass('warning-row');
+        // }
+    });
+}
 function initializeLeaveTable() {
     console.log('initializeLeaveTable() called');
     
@@ -2266,6 +2421,7 @@ function initializeLeaveTable() {
     if (!hasRealData) {
         console.log('No real data rows found, skipping DataTable');
         table.addClass('table table-striped table-bordered table-hover');
+        highlightAdvanceNoticeRows();
         return;
     }
     
@@ -2296,14 +2452,37 @@ function initializeLeaveTable() {
                 info: "Showing _START_ to _END_ of _TOTAL_ entries",
                 infoEmpty: "No entries available",
                 zeroRecords: "No matching records found"
+            },
+            // Add row callbacks for styling
+            createdRow: function(row, data, dataIndex) {
+                // Get the ORIGINAL row from the table before DataTable initialization
+                const originalTable = document.getElementById('leaveTable');
+                if (originalTable && originalTable.tBodies[0]) {
+                    const originalRows = originalTable.tBodies[0].rows;
+                    if (originalRows[dataIndex]) {
+                        const originalRow = originalRows[dataIndex];
+                        const hasWarning = originalRow.getAttribute('data-notice-warning') === 'true';
+                        
+                        if (hasWarning) {
+                            $(row).addClass('warning-row');
+                        }
+                    }
+                }
+            },
+            drawCallback: function(settings) {
+                // Re-apply warning highlights after DataTable redraws
+                highlightAdvanceNoticeRows();
+                
             }
         });
-        
+        // Apply initial highlighting
+        highlightAdvanceNoticeRows();
         console.log('DataTable initialized successfully');
         
     } catch (error) {
         console.error('DataTable initialization failed:', error);
         table.addClass('table table-striped table-bordered table-hover');
+        highlightAdvanceNoticeRows();
     }
 }
 
@@ -2541,8 +2720,29 @@ function updateHolidayCount() {
     console.log('Holiday count updated:', count);
 }
 
+let currentHoliday = null; // Store current holiday data
 function showHolidayDetails(dayHolidays) {
     console.log('Showing holiday details for', dayHolidays.length, 'holidays');
+    
+    // Check if user has permission to edit/delete
+    const userRole = "{{ request.session.user_role|default:'' }}";
+    const allowedRoles = ['ADMIN', 'HR', 'SUPER ADMIN'];
+    const hasPermission = allowedRoles.includes(userRole);
+    
+    // Show/hide action buttons based on permission
+    const actionButtons = document.getElementById('holidayActionButtons');
+    if (hasPermission && dayHolidays.length === 1) {
+        actionButtons.style.display = 'block';
+        
+        // Store holiday ID for edit/delete actions
+        currentHoliday = dayHolidays[0];
+        actionButtons.setAttribute('data-holiday-id', currentHoliday.id || '');
+        actionButtons.setAttribute('data-holiday-name', currentHoliday.name || '');
+        actionButtons.setAttribute('data-holiday-region', currentHoliday.region || '');
+    } else {
+        actionButtons.style.display = 'none';
+        currentHoliday = null;
+    }
     
     const content = dayHolidays.map(h => {
         const typeColor = {
@@ -2558,6 +2758,9 @@ function showHolidayDetails(dayHolidays) {
                 <p class="mb-1 text-muted small">
                     <i class="fas fa-map-marker-alt"></i> ${h.regionName}
                 </p>
+                <p class="mb-1 text-muted small">
+                    <i class="fas fa-calendar"></i> ${h.date}
+                </p>
                 <span class="badge" style="background-color: ${typeColor}; color: white;">
                     ${h.holidayType}
                 </span>
@@ -2570,8 +2773,135 @@ function showHolidayDetails(dayHolidays) {
     document.getElementById('holidayDetailsContent').innerHTML = content;
     const modal = new bootstrap.Modal(document.getElementById('viewHolidayModal'));
     modal.show();
+    
+    // Bind edit/delete button events
+    bindHolidayActionButtons();
 }
 
+function bindHolidayActionButtons() {
+    const editBtn = document.getElementById('editHolidayBtn');
+    const deleteBtn = document.getElementById('deleteHolidayBtn');
+    
+    if (editBtn) {
+        editBtn.onclick = function() {
+            if (currentHoliday) {
+                openEditHolidayModal(currentHoliday);
+            }
+        };
+    }
+    
+    if (deleteBtn) {
+        deleteBtn.onclick = function() {
+            if (currentHoliday) {
+                deleteHoliday(currentHoliday.id, currentHoliday.name);
+            }
+        };
+    }
+}
+
+function openEditHolidayModal(holiday) {
+    console.log('Opening edit modal for holiday:', holiday);
+    
+    // Set form values
+    document.getElementById('editHolidayId').value = holiday.id;
+    document.getElementById('editHolidayRegion').value = holiday.region;
+    document.getElementById('editHolidayName').value = holiday.name;
+    document.getElementById('editHolidayType').value = holiday.holidayType;
+    document.getElementById('editHolidayDate').value = holiday.date;
+    document.getElementById('editHolidayDescription').value = holiday.description || '';
+    document.getElementById('editIsOptional').checked = holiday.isOptional || false;
+    
+    // Show modal
+    const editModal = new bootstrap.Modal(document.getElementById('editHolidayModal'));
+    
+    // Close the view modal when opening edit modal
+    const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewHolidayModal'));
+    if (viewModal) {
+        viewModal.hide();
+    }
+    
+    editModal.show();
+}
+
+// Handle edit form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const editForm = document.getElementById('editHolidayForm');
+    if (editForm) {
+        editForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitEditHolidayForm(this);
+        });
+    }
+    
+    // Add event listener for when edit modal is shown
+    const editModal = document.getElementById('editHolidayModal');
+    if (editModal) {
+        editModal.addEventListener('show.bs.modal', function() {
+            // Set minimum date to today for future dates
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('editHolidayDate').setAttribute('min', today);
+        });
+    }
+});
+function submitEditHolidayForm(form) {
+    const submitBtn = $(form).find('button[type="submit"]');
+    const originalText = submitBtn.html();
+    
+    console.log('Submitting edit holiday form...');
+    submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Updating...');
+    
+    $.ajax({
+        type: 'POST',
+        url: '{% url "edit_holiday" %}', // You'll need to create this URL
+        data: $(form).serialize(),
+        success: function(response) {
+            console.log('Holiday updated successfully');
+            showAlert('Holiday updated successfully!', 'success');
+            
+            // Close edit modal
+            $('#editHolidayModal').modal('hide');
+            
+            // Refresh the page to show updated data
+            setTimeout(function() {
+                window.location.reload();
+            }, 1000);
+        },
+        error: function(xhr, status, error) {
+            console.error('Error updating holiday:', error, xhr.responseText);
+            showAlert('Error updating holiday. Please try again.', 'error');
+            submitBtn.prop('disabled', false).html(originalText);
+        }
+    });
+}
+
+function deleteHoliday(holidayId, holidayName) {
+    console.log('Deleting holiday:', holidayId);
+    
+    if (confirm(`Are you sure you want to delete "${holidayName}"? This action cannot be undone.`)) {
+        // AJAX request to delete holiday
+        $.ajax({
+            type: 'POST',
+            url: '{% url "delete_holiday" %}',
+            data: {
+                'csrfmiddlewaretoken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'holiday_id': holidayId
+            },
+            success: function(response) {
+                showAlert('Holiday deleted successfully!', 'success');
+                $('#viewHolidayModal').modal('hide');
+                
+                // Reload the page after a short delay
+                setTimeout(function() {
+                    window.location.reload();
+                }, 1000);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error deleting holiday:', error);
+                showAlert('Error deleting holiday. Please try again.', 'error');
+            }
+        });
+    }
+}
 // ============================================
 // HOLIDAY FORM SUBMISSION
 // ============================================

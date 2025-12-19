@@ -102,10 +102,10 @@
                 <span class="detail-label">Location</span>
                 <span class="detail-value">{{ emp.location }}</span>
             </div>
-            <div class="details-row">
+            <!-- <div class="details-row">
                 <span class="detail-label">Hired Date</span>
                 <span class="detail-value">{{ emp.date_of_joining|date:"d M, Y" }}</span>
-            </div>
+            </div> -->
             <div class="contact-info">
                 <i class="fas fa-envelope"></i>
                 <span>{{ emp.email }}</span>
@@ -566,6 +566,14 @@
                                     <div class="details-row">
                                         <span class="detail-label">Location</span>
                                         <span class="detail-value">${emp.location}</span>
+                                    </div>
+                                    <div class="contact-info">
+                                        <i class="fas fa-envelope"></i>
+                                        <span>${emp.email}</span>
+                                    </div>
+                                    <div class="contact-info">
+                                        <i class="fas fa-phone"></i>
+                                        <span>${emp.phone }</span>
                                     </div>
                                 </div>
                             </div>

@@ -191,7 +191,7 @@ body {
         </div>
         <div>
             <strong>Total Days</strong>
-            <span>{{ leave.days_requested }}</span>
+            <span>{{ leave.days_requested|floatformat:"1" }}</span>
         </div>
         <div>
             <strong>Applied on</strong>

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Notice Management • HR System{% endblock %}
+{% block title %}Warning Management • HR System{% endblock %}
 
 {% block content %}
 <style>
@@ -630,9 +630,9 @@
         <div>
             <h1>
                 <i class="fas fa-exclamation-triangle"></i>
-                Notice Management
+                Warning Management
             </h1>
-            <p class="page-subtitle">Manage notice categories and subtypes for employee notices</p>
+            <p class="page-subtitle">Manage warning categories and subtypes for employee notices</p>
         </div>
         <div class="date-badge">
             <i class="fas fa-calendar-alt"></i>
@@ -640,7 +640,7 @@
         </div>
     </div>
 
-    <!-- Django Messages Framework -->
+    <!-- Django Messages Framework
     {% if messages %}
     <div class="alert-container">
         {% for message in messages %}
@@ -651,7 +651,7 @@
         </div>
         {% endfor %}
     </div>
-    {% endif %}
+    {% endif %} -->
 
     <!-- Filter Card -->
     <div class="filter-card">
@@ -662,7 +662,7 @@
                 <input type="text" 
                        id="search" 
                        name="search" 
-                       placeholder="Search notices..."
+                       placeholder="Search warnings..."
                        value="{{ search_query }}">
             </div>
 
@@ -676,17 +676,17 @@
             <!-- Add Button -->
             <button type="button" class="btn btn-primary" onclick="openAddModal()">
                 <i class="fas fa-plus"></i>
-                Add New Notice
+                Add New Warning
             </button>
         </div>
     </div>
 
-    <!-- Notices Table Card -->
+    <!-- Warnings Table Card -->
     <div class="table-card">
         <div class="table-header">
             <h3>
                 <i class="fas fa-list"></i>
-                Notice Categories
+                Warning Categories
                 <span class="count-badge" id="totalCount">
                     {{ categories|length }} items
                 </span>
@@ -787,11 +787,11 @@
                 <div class="empty-icon">
                     <i class="fas fa-exclamation-triangle"></i>
                 </div>
-                <h4>No Notice Categories Found</h4>
-                <p>No Notice categories have been created yet. Add your first Notice category.</p>
+                <h4>No Warning Categories Found</h4>
+                <p>No warning categories have been created yet. Add your first warning category.</p>
                 <button type="button" class="btn btn-primary" onclick="openAddModal()">
                     <i class="fas fa-plus"></i>
-                    Add New Notice
+                    Add New Warning
                 </button>
             </div>
             {% endif %}
@@ -799,7 +799,7 @@
     </div>
 </div>
 
-<!-- Add Notice Modal -->
+<!-- Add Warning Modal -->
 <div class="modal-overlay" id="addModal">
     <div class="modal-container">
         <div class="modal-header">
@@ -856,13 +856,13 @@
     </div>
 </div>
 
-<!-- Edit Notice Modal -->
+<!-- Edit Warning Modal -->
 <div class="modal-overlay" id="editModal">
     <div class="modal-container">
         <div class="modal-header">
             <h3>
                 <i class="fas fa-edit"></i>
-                Edit Notice
+                Edit Warning
             </h3>
             <button class="modal-close" onclick="closeEditModal()">
                 <i class="fas fa-times"></i>
@@ -876,13 +876,13 @@
                 <div class="form-group">
                     <label class="form-label required">
                         <i class="fas fa-tag"></i>
-                        Notice Name
+                        Warning Name
                     </label>
                     <input type="text" 
                            class="form-control" 
                            id="editName" 
                            name="name" 
-                           placeholder="Enter notice name"
+                           placeholder="Enter warning name"
                            required>
                 </div>
                 
@@ -905,7 +905,7 @@
                                id="editIsActive" 
                                name="is_active"
                                style="width: 48px; height: 24px;">
-                        <label class="form-check-label" for="editIsActive">Active Notice</label>
+                        <label class="form-check-label" for="editIsActive">Active Warning</label>
                     </div>
                 </div>
             </div>
@@ -916,20 +916,20 @@
                 </button>
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save"></i>
-                    Update Notice
+                    Update Warning
                 </button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Delete Notice Modal -->
+<!-- Delete Warning Modal -->
 <div class="modal-overlay" id="deleteModal">
     <div class="modal-container">
         <div class="modal-header" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
             <h3>
                 <i class="fas fa-exclamation-triangle"></i>
-                Delete Notice
+                Delete Warning
             </h3>
             <button class="modal-close" onclick="closeDeleteModal()">
                 <i class="fas fa-times"></i>
@@ -944,7 +944,7 @@
                     </div>
                     <h4 style="color: var(--dark); margin-bottom: 8px;">Are you sure?</h4>
                     <p style="color: var(--gray-600);">
-                        You are about to delete the notice <strong id="deleteName" style="color: var(--dark);"></strong>. 
+                        You are about to delete the warning <strong id="deleteName" style="color: var(--dark);"></strong>. 
                         This action cannot be undone.
                     </p>
                 </div>
@@ -956,7 +956,7 @@
                 </button>
                 <button type="submit" class="btn btn-danger">
                     <i class="fas fa-trash"></i>
-                    Delete Notice
+                    Delete Warning
                 </button>
             </div>
         </form>
@@ -1022,20 +1022,26 @@
     function openEditModal(id, name, subtypes, isActive) {
         const modal = document.getElementById('editModal');
         const form = document.getElementById('editForm');
-        
-        // Set form values
+
+        // Remove "Category - " prefix from subtypes
+        let cleanSubtypes = '';
+        if (subtypes) {
+            cleanSubtypes = subtypes
+                .split(',')
+                .map(s => s.replace(name + ' - ', '').trim())
+                .join(', ');
+        }
+
         document.getElementById('editName').value = name;
-        document.getElementById('editSubtypes').value = subtypes || '';
+        document.getElementById('editSubtypes').value = cleanSubtypes;
         document.getElementById('editIsActive').checked = isActive;
-        
-        // Set form action URL
+
         form.action = `/master-data/message-category/edit/${id}/`;
-        
-        // Show modal
+
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
-        document.getElementById('editErrorAlert').style.display = 'none';
     }
+
 
     function closeEditModal() {
         document.getElementById('editModal').classList.remove('active');
@@ -1081,5 +1087,71 @@
             closeDeleteModal();
         }
     });
+
+    function showError(alertBox, message) {
+        alertBox.innerText = message;
+        alertBox.style.display = 'block';
+
+        // Auto hide after 5 seconds
+        setTimeout(() => {
+            alertBox.style.display = 'none';
+        }, 5000);
+    }
+
+
+    function isValidText(value, allowComma = false) {
+        const regex = allowComma
+            ? /^[A-Za-z\s,]+$/   // For subtypes
+            : /^[A-Za-z\s]+$/;   // For warning name
+        return regex.test(value.trim());
+    }
+
+    // Add form validation
+    document.addEventListener('DOMContentLoaded', function () {
+
+        // ADD FORM VALIDATION
+        document.getElementById('addForm').addEventListener('submit', function (e) {
+            const name = this.querySelector('input[name="name"]').value;
+            const subtype = this.querySelector('input[name="subtype_name"]').value;
+            const errorBox = document.getElementById('addErrorAlert');
+
+            if (!isValidText(name)) {
+                e.preventDefault();
+                errorBox.innerText = "Message Type should contain only letters and spaces.";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            if (!isValidText(subtype)) {
+                e.preventDefault();
+                errorBox.innerText = "Subtype should contain only letters and spaces.";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            errorBox.style.display = 'none';
+        });
+
+        // EDIT FORM VALIDATION
+       document.getElementById('editForm').addEventListener('submit', function (e) {
+            const name = document.getElementById('editName').value;
+            const subtypes = document.getElementById('editSubtypes').value;
+            const errorBox = document.getElementById('editErrorAlert');
+
+            if (!isValidText(name)) {
+                e.preventDefault();
+                showError(errorBox, "Warning Name should contain only letters and spaces.");
+                return;
+            }
+
+            if (subtypes && !isValidText(subtypes, true)) {
+                e.preventDefault();
+                showError(errorBox, "Subtypes can contain only letters, spaces, and commas.");
+                return;
+            }
+        });
+
+    });
 </script>
+
 {% endblock %}

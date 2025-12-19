@@ -473,29 +473,54 @@ def leave_dashboard(request):
     recent_leaves_list = list(recent_leaves)
     
     # Compute notice_type for each leave instance
+    # Replace the problematic section with this:
     for leave in recent_leaves_list:
-        # Compute notice_type for UI
         notice = 'unknown'
+        advance_notice_warning = False
+        working_days = leave.days_requested or 0
+        
         try:
-            if leave.status == 'approved' and getattr(leave, 'applied_date', None) and getattr(leave, 'start_date', None):
+            # Check if we have the necessary dates
+            if getattr(leave, 'applied_date', None) and getattr(leave, 'start_date', None):
                 applied_val = leave.applied_date
                 if hasattr(applied_val, 'date'):
                     applied_date_val = applied_val.date()
                 else:
                     applied_date_val = applied_val
-
-                delta = leave.start_date - applied_date_val
-                if delta >= NOTICE_THRESHOLD:
-                    notice = 'planned'
+                
+                # Calculate days between applied date and start date
+                days_until_start = (leave.start_date - applied_date_val).days
+                
+                # Check for short notice (less than 3 days notice)
+                if days_until_start >= 0:  # Only check if applied before or on start date
+                    if days_until_start < 3:  # Less than 3 days notice
+                        notice = 'short_notice'
+                    else:
+                        notice = 'planned'
+                    
+                    # Check advance notice requirements for warning highlighting
+                    if not leave.is_half_day and working_days >= 3 and days_until_start >= 0:
+                        # For 3+ working days: need at least 7 days advance notice
+                        # For 7+ working days: need at least 15 days advance notice
+                        if working_days >= 7 and days_until_start < 15:
+                            advance_notice_warning = True
+                            print(f"WARNING: {leave.employee.first_name} - {working_days} days leave, only {days_until_start} days notice")
+                        elif working_days >= 3 and working_days < 7 and days_until_start < 7:
+                            advance_notice_warning = True
+                            print(f"WARNING: {leave.employee.first_name} - {working_days} days leave, only {days_until_start} days notice")
                 else:
-                    notice = 'short_notice'
+                    # Applied after start date - definitely a warning
+                    notice = 'late_application'
+                    advance_notice_warning = True
             else:
-                # keep pending/new labels so UI can show them
                 notice = leave.status or 'unknown'
-        except Exception:
+        except Exception as e:
+            print(f"Error calculating notice for leave {leave.id}: {e}")
             notice = leave.status or 'unknown'
-
+        
         leave.notice_type = notice
+        leave.advance_notice_warning = advance_notice_warning
+        leave.working_days = working_days
     
     # Get all active regions with their holidays for current year
     regions = Location.objects.filter(is_active=True).prefetch_related(
@@ -539,6 +564,7 @@ def leave_dashboard(request):
         'user_region': user_region,
         'default_region_id': default_region_id,
         'notice_threshold_days': 3,  
+        # 'advance_notice_warning':advance_notice_warning
     }
     
     
@@ -1476,7 +1502,7 @@ def apply_leave(request):
     is_on_probation = ProbationService.is_on_probation(employee)
     probation_message = None
     if is_on_probation:
-        probation_message = "⚠️ You are currently on probation. You have no paid leave balance. Any leave taken will be unpaid."
+        probation_message = "⚠️ You are currently on probation. You have no earned leave balance. Any leave taken will be unpaid."
     
     # Get mandatory holidays for JavaScript calculation
     national_holidays = Holiday.objects.filter(
@@ -1603,8 +1629,12 @@ def approve_leave(request, leave_id):
     # Check authentication
     if not request.session.get('user_authenticated'):
         return redirect('login')
+    try:
+        updated_by = Employee.objects.get(email=request.session.get('user_email'))
+    except Employee.DoesNotExist:
+        messages.error(request, 'Employee profile not found.')
+        return redirect('leave_dashboard')
     
-    updated_by = Employee.objects.get(email=request.session.get('user_email'))
     now = timezone.now()
     
     if request.method == 'POST':
@@ -1716,7 +1746,11 @@ def update_leave_status(request, leave_id):
         return redirect('login')
     
     leave = get_object_or_404(Leave, id=leave_id)
-    updated_by = Employee.objects.get(email=request.session.get('user_email'))
+    try:
+        updated_by = Employee.objects.get(email=request.session.get('user_email'))
+    except Employee.DoesNotExist:
+        messages.error(request, 'Employee profile not found.')
+        return redirect('leave_dashboard')
     now = timezone.now()
     
     if request.method == 'POST':
@@ -2107,6 +2141,68 @@ def add_custom_event(request):
             messages.error(request, f'Error adding event: {str(e)}')
     
     return redirect('leave_dashboard')
+
+
+def edit_holiday(request):
+    if request.method == 'POST':
+        try:
+            # Check permission
+            user_role = request.session.get('user_role', '')
+            if user_role not in ['ADMIN', 'HR', 'SUPER ADMIN']:
+                return JsonResponse({'error': 'Permission denied'}, status=403)
+            
+            holiday_id = request.POST.get('holiday_id')
+            holiday = get_object_or_404(Holiday, id=holiday_id)
+            
+            # Update holiday fields
+            holiday.name = request.POST.get('holiday_name')
+            holiday.holiday_type = request.POST.get('holiday_type')
+            holiday.date = request.POST.get('holiday_date')
+            holiday.description = request.POST.get('holiday_description', '')
+            holiday.is_optional = request.POST.get('is_optional') == 'on'
+            
+            # Check if region changed
+            region_id = request.POST.get('region')
+            if region_id and str(holiday.region.id) != region_id:
+                from .models import Region  # Import here to avoid circular import
+                region = get_object_or_404(Region, id=region_id)
+                holiday.region = region
+            
+            holiday.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Holiday updated successfully'
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+def delete_holiday(request):
+    if request.method == 'POST':
+        try:
+            # Check permission
+            user_role = request.session.get('user_role', '')
+            if user_role not in ['ADMIN', 'HR', 'SUPER ADMIN']:
+                return JsonResponse({'error': 'Permission denied'}, status=403)
+            
+            holiday_id = request.POST.get('holiday_id')
+            holiday = get_object_or_404(Holiday, id=holiday_id)
+            holiday_name = holiday.name
+            holiday.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Holiday "{holiday_name}" deleted successfully'
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
+
 def employee_leave_details(request):
     """Employee-specific leave details page with strict rules information"""
     if not request.session.get('user_authenticated'):
