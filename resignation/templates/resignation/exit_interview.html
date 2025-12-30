@@ -17,7 +17,7 @@
               <p class="text-muted mb-0">Exit interview form for {{ resignation.employee.first_name }} {{ resignation.employee.last_name }}</p>
             </div>
             <div class="col-auto">
-              <a href="{% url 'resignation:resignation_detail' resignation.id %}" class="btn btn-outline-secondary me-2"><i class="fas fa-arrow-left me-2"></i>Back to Details</a>
+              <a href="{% url 'resignation:my_resignation' %}?resignation_id={{ my_resignation.0.id }}" class="btn btn-outline-secondary me-2"><i class="fas fa-arrow-left me-2"></i>Back to Details</a>
               {% if exit_interview.is_completed %}
                 <a href="{% url 'resignation:download_exit_interview' resignation.id %}" class="btn btn-primary" target="_blank"><i class="fas fa-download me-2"></i>Download PDF</a>
               {% endif %}

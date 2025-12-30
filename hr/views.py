@@ -561,6 +561,37 @@ def employee_dashboard(request):
         return redirect('access_denied')
 
     today = timezone.now().date()
+    # ✅ Check if employee is on leave today using your Leave model
+    is_on_leave_today = False
+    leave_status = None
+    leave_type_name = None
+    half_day_info = None
+    today_leave = None
+    
+    # Check in approved leaves for today
+    today_leaves = Leave.objects.filter(
+        employee=employee_profile,
+        start_date__lte=today,
+        end_date__gte=today,
+        status__in=['approved', 'pending']  # Using lowercase as per your model
+    )
+
+    if today_leaves.exists():
+        today_leave = today_leaves.first()
+        is_on_leave_today = True
+        leave_status = today_leave.status
+        
+        # Get leave type name
+        if today_leave.leave_type:
+            leave_type_name = today_leave.leave_type.name
+        
+        # Check if it's a half day
+        if today_leave.is_half_day:
+            half_day_info = today_leave.get_half_day_period_display()
+        
+        # Also check if it's unpaid leave
+        is_unpaid = today_leave.is_unpaid if hasattr(today_leave, 'is_unpaid') else False
+    
     today_attendance = Attendance.objects.filter(employee=employee_profile, date=today).first()
     office_start_time = time(9, 30)  # 9:30 AM
     punctuality_status = None
@@ -572,6 +603,11 @@ def employee_dashboard(request):
         
     if request.method == 'POST':
         action = request.POST.get('action')
+
+        # ✅ Prevent attendance if on approved leave
+        if is_on_leave_today and leave_status == 'approved':
+            messages.error(request, 'Cannot check in/out while on approved leave.')
+            return redirect('employee_dashboard')
 
         if action == 'check_in':
             if today_attendance:
@@ -730,6 +766,13 @@ def employee_dashboard(request):
         # Notification bell popup = same messages
         'notifications': notifications,
         'notifications_count': notifications_count,
+
+        # ✅ Add leave status
+        'is_on_leave_today': is_on_leave_today,
+        'leave_status': leave_status,
+        'leave_type': leave_type_name,
+        'half_day_info': half_day_info,
+        'today_leave': today_leave,  # Pass the full leave object
     }
     return render(request, 'hr/employee_dashboard.html', context)
 
@@ -3076,19 +3119,20 @@ def employee_search_ajax(request):
 
     for emp in employees:
         data.append({
-            "id": emp.id,
-            "first_name": emp.first_name,
-            "middle_name": emp.middle_name,
-            "last_name": emp.last_name,
-            "employee_id": emp.employee_id,
-            "email": emp.email,
-            "phone": emp.phone,
-            "department": emp.department,
-            "designation": emp.designation,
-            "location": emp.location,
-            "status": emp.status,
-            "profile_picture": emp.profile_picture.url if emp.profile_picture else "/static/default.png",
-        })
+    "id": emp.id,
+    "first_name": emp.first_name,
+    "last_name": emp.last_name,
+    "email": emp.email,
+    "phone": emp.phone,
+    "employee_id": emp.employee_id,
+    "department": emp.department,
+    "designation": emp.designation,
+    "location": emp.location,
+    "status": emp.status,
+    "date_of_joining": emp.date_of_joining.strftime("%d %b, %Y") if emp.date_of_joining else "-",
+    "profile_picture": emp.profile_picture.url if emp.profile_picture else "/static/default.png",
+})
+
 
     return JsonResponse({"results": data})
 

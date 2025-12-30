@@ -1116,6 +1116,13 @@ def apply_leave(request):
                             return redirect('apply_leave')
                     
                     # Create optional leave application
+                    if valid_selected_holidays:
+                        optional_start = min(valid_selected_holidays)
+                        optional_end = max(valid_selected_holidays)
+                    else:
+                        optional_start = start_date_obj
+                        optional_end = end_date_obj
+
                     optional_leave = Leave(
                         employee=employee,
                         leave_type=optional_final_leave_type,
@@ -1123,7 +1130,7 @@ def apply_leave(request):
                         start_date=start_date_obj,
                         end_date=end_date_obj,
                         days_requested=Decimal(str(optional_days_count)),
-                        reason=f"{reason} - Using optional holidays",
+                        reason=f"{reason} - Optional holidays on ({optional_start.strftime('%d-%m-%Y')})",
                         status='pending',
                         applied_date=timezone.now(),
                         is_half_day=False,

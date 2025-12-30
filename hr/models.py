@@ -568,44 +568,6 @@ class EmployeeWarning(models.Model):
         else:
             return self.appreciation_type   
 
-# Menu and submenu
-
-class YsMenuMaster(models.Model):
-    menu_id = models.AutoField(primary_key=True)
-    menu_name = models.CharField(max_length=45)
-    menu_icon = models.CharField(max_length=200, null=True, blank=True)
-    menu_id_name = models.CharField(max_length=45, null=True, blank=True)
-    menu_url = models.CharField(max_length=100, null=True, blank=True)
-    display_area_type = models.CharField(max_length=1, null=True, blank=True)
-    icon_bytes = models.BinaryField(null=True, blank=True)
-    seq = models.IntegerField(null=True, blank=True)
-    status = models.BooleanField(default=False)
-
-    class Meta:
-        db_table = 'ys_menu_master'
-        ordering = ['seq']
-
-    def _str_(self):
-        return self.menu_name
-
-
-class YsMenuLinkMaster(models.Model):
-    menu_link_id = models.AutoField(primary_key=True)
-    menu_link_name = models.CharField(max_length=45)
-    menu_link_icon = models.CharField(max_length=200, null=True, blank=True)
-    menu_link_url = models.CharField(max_length=100, null=True, blank=True)
-    menu_link_id_name = models.CharField(max_length=45, null=True, blank=True)
-    menu = models.ForeignKey(YsMenuMaster, on_delete=models.CASCADE)
-    seq = models.IntegerField(null=True, blank=True)
-    status = models.IntegerField(default=1)  # Change from BooleanField to IntegerField
-
-    class Meta:
-        db_table = 'ys_menu_link_master'
-        ordering = ['seq']
-
-    def _str_(self):
-        return self.menu_link_name
-    
 
 # Menu and submenu
 

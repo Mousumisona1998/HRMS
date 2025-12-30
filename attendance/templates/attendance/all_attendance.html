@@ -727,7 +727,7 @@
     .dataTables_wrapper .dataTables_length select {
         border: 1px solid var(--gray-300);
         border-radius: 8px;
-        padding: 8px 20px;
+        padding: 8px 12px;
         font-size: 14px;
     }
 
@@ -812,7 +812,7 @@
                 <i class="fas fa-list-check"></i>
                 Attendance Records
             </h1>
-            <p class="page-subtitle">Track your attendance history, punctuality and working hours</p>
+            <p class="page-subtitle">Track your attendance history, punctuality, and working hours</p>
         </div>
         <div class="date-badge" style="background: var(--white); border: 1px solid var(--gray-200); padding: 10px 20px; border-radius: 12px; font-weight: 500;">
             <i class="fas fa-calendar-alt"></i>
@@ -879,7 +879,7 @@
                        onchange="this.form.submit()">
                 <a href="{% url 'attendance:all_attendance' %}" 
                 class="reset-btn">
-                    <i class="fas fa-rotate-left"></i>
+                    <i class="fas fa-rotate-right"></i>
                     
                 </a>  
                      
@@ -918,7 +918,11 @@
                 </thead>
                 <tbody>
                     {% for attendance in attendances %}
-                    <tr data-attendance-id="{{ attendance.id }}">
+                    <tr 
+                        data-attendance-id="{{ attendance.id }}"
+                        data-checkin-location="{{ attendance.checkin_address|default:'' }}"
+                        data-checkout-location="{{ attendance.checkout_address|default:'' }}"
+                        >
                         <!-- Date -->
                         <td data-order="{{ attendance.date|date:'Y-m-d' }}">
                             <strong>{{ attendance.date|date:"d" }}</strong>
@@ -1160,6 +1164,19 @@
     function showAttendanceDetails(attendanceId) {
         const modal = document.getElementById('attendanceModal');
         const modalContent = document.getElementById('modalContent');
+
+         const row = document.querySelector(`tr[data-attendance-id="${attendanceId}"]`);
+
+          if (!row) {
+        alert("Attendance record not found");
+        return;
+    }
+
+    // ✅ THEN: read dataset
+    const checkinLocation = row.dataset.checkinLocation || 'Location not recorded';
+    const checkoutLocation = row.dataset.checkoutLocation || 'Location not recorded';
+
+
         
         // Show loading state
         modalContent.innerHTML = `
@@ -1175,7 +1192,7 @@
         // For now, we'll simulate it with the data we have
         setTimeout(() => {
             // Find the attendance record in the table
-            const row = document.querySelector(`tr[data-attendance-id="${attendanceId}"]`);
+           
             if (!row) {
                 modalContent.innerHTML = `
                     <div class="empty-state">
@@ -1288,7 +1305,7 @@
                 </h4>
                 
                 <div class="timeline">
-                    <div class="timeline-item">
+                   <div class="timeline-item">
                         <div class="timeline-icon in">
                             <i class="fas fa-sign-in-alt"></i>
                         </div>
@@ -1297,11 +1314,7 @@
                             <div class="timeline-meta">
                                 <span class="timeline-location">
                                     <i class="fas fa-map-marker-alt"></i>
-                                    {% if attendance.checkin_address %}
-                                        {{ attendance.checkin_address|truncatechars:30 }}
-                                    {% else %}
-                                        Location not recorded
-                                    {% endif %}
+                                    ${checkinLocation || 'Location not recorded'}
                                 </span>
                             </div>
                         </div>
@@ -1316,22 +1329,14 @@
                             <div class="timeline-meta">
                                 <span class="timeline-location">
                                     <i class="fas fa-map-marker-alt"></i>
-                                    {% if attendance.checkout_address %}
-                                        {{ attendance.checkout_address|truncatechars:30 }}
-                                    {% else %}
-                                        Location not recorded
-                                    {% endif %}
+                                    ${checkoutLocation || 'Location not recorded'}
                                 </span>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="map-container">
-                    <i class="fas fa-map-marked-alt" style="font-size: 48px; margin-bottom: 16px;"></i>
-                    <p>Location tracking map would appear here</p>
-                    <p style="font-size: 12px; margin-top: 8px;">Map integration requires location permissions</p>
-                </div>
+                
             `;
         }, 500);
     }

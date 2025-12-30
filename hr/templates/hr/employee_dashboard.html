@@ -1077,120 +1077,158 @@
         <!-- Right Column: Attendance & Profile -->
         <div class="side-panel">
             <!-- Today's Attendance -->
-            <div class="attendance-card">
-                <div class="section-header" style="margin-bottom: 0;">
-                    <h2>Today's Attendance</h2>
+<div class="attendance-card">
+    <div class="section-header" style="margin-bottom: 0;">
+        <h2>Today's Attendance</h2>        
+    </div>
+    
+    <div class="attendance-time">
+        <div class="time-grid">
+            <div class="time-block">
+                <div class="time-chip">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Check In
                 </div>
-                
-                <div class="attendance-time">
-                    <div class="time-grid">
-                        <div class="time-block">
-                            <div class="time-chip">
-                                <i class="fas fa-sign-in-alt"></i>
-                                Check In
-                            </div>
-                            <div class="time-display">
-                                {% if today_attendance and today_attendance.check_in %}
-                                    {{ today_attendance.check_in|date:"h:i A" }}
-                                {% else %}
-                                    --:--
-                                {% endif %}
-                            </div>
-                            <div class="time-label">
-                                {% if today_attendance and today_attendance.check_in %}
-                                    <i class="far fa-clock"></i> Logged at {{ today_attendance.check_in|date:"h:i A" }}
-                                {% else %}
-                                    <i class="far fa-clock"></i> Waiting to check in
-                                {% endif %}
-                            </div>
-                            {% if today_attendance and today_attendance.checkin_address %}
-                            <div class="location-pill">
-                                <i class="fas fa-map-marker-alt"></i>
-                                {{ today_attendance.checkin_address|truncatechars:60 }}
-                            </div>
-                            {% endif %}
-                        </div>
-                        <div class="time-block">
-                            <div class="time-chip" style="background: var(--white); border-color: #ffd5d5;">
-                                <i class="fas fa-sign-out-alt" style="color:#ef4444;"></i>
-                                Check Out
-                            </div>
-                            <div class="time-display out">
-                                {% if today_attendance and today_attendance.check_out %}
-                                    {{ today_attendance.check_out|date:"h:i A" }}
-                                {% else %}
-                                    --:--
-                                {% endif %}
-                            </div>
-                            <div class="time-label">
-                                {% if today_attendance and today_attendance.check_out %}
-                                    <i class="far fa-clock"></i> Logged at {{ today_attendance.check_out|date:"h:i A" }}
-                                {% elif today_attendance and today_attendance.check_in %}
-                                    <i class="far fa-clock"></i> Awaiting check out
-                                {% else %}
-                                    <i class="far fa-clock"></i> Start with a check in
-                                {% endif %}
-                            </div>
-                            {% if today_attendance and today_attendance.checkout_address %}
-                            <div class="location-pill">
-                                <i class="fas fa-map-marker-alt"></i>
-                                {{ today_attendance.checkout_address|truncatechars:60 }}
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                
-                {% if punctuality_status %}
-                <div class="attendance-status">
-                    <i class="fas {% if punctuality_status == 'Late' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %}"></i>
-                    {{ punctuality_status }}
-                </div>
-                {% endif %}
-                
-                {% if today_attendance and today_attendance.check_in and not today_attendance.check_out %}
-                <div class="progress-container">
-                    <div class="progress-label">
-                        <span>Work Duration</span>
-                        <span id="workDuration" data-checkin="{{ today_attendance.check_in|date:'Y-m-d H:i:s' }}">00:00:00</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="workProgress"></div>
-                    </div>
-                </div>
-                {% endif %}
-                
-                <form method="POST" id="attendanceForm" class="attendance-form">
-                    {% csrf_token %}
-                    <input type="hidden" name="latitude" id="latitude">
-                    <input type="hidden" name="longitude" id="longitude">
-                    <input type="hidden" name="address" id="address">
-                    
-                    <div class="btn-group">
-                        {% if not today_attendance %}
-                        <button type="submit" name="action" value="check_in" class="btn-attendance btn-checkin">
-                            <i class="fas fa-sign-in-alt"></i>
-                            Check In
-                        </button>
-                        {% elif not today_attendance.check_out %}
-                        <button type="submit" name="action" value="check_out" class="btn-attendance btn-checkout">
-                            <i class="fas fa-sign-out-alt"></i>
-                            Check Out
-                        </button>
+                <div class="time-display">
+                    {% if today_attendance and today_attendance.check_in %}
+                        {{ today_attendance.check_in|date:"h:i A" }}
+                    {% else %}
+                        {% if is_on_leave_today and leave_status == 'approved' %}
+                            <span style="color: #f0ad4e; font-size: 16px;">On Leave</span>
                         {% else %}
-                        <button type="button" class="btn-attendance btn-disabled" disabled>
-                            <i class="fas fa-check-circle"></i>
-                            Attendance Complete
-                        </button>
+                            --:--
                         {% endif %}
-                    </div>
-                    
-                    <div class="geo-status" id="geoStatus">
-                        <i class="fas fa-map-pin"></i>
-                        <span>Trying to lock your location…</span>
-                    </div>
-                </form>
+                    {% endif %}
+                </div>
+                <div class="time-label">
+                    {% if is_on_leave_today and leave_status == 'approved' %}
+                        <i class="fas fa-umbrella-beach"></i> 
+                        Check-in not required on leave                    
+                    {% elif today_attendance and today_attendance.check_in %}
+                        <i class="far fa-clock"></i> Logged at {{ today_attendance.check_in|date:"h:i A" }}
+                    {% else %}
+                        <i class="far fa-clock"></i> Waiting to check in
+                    {% endif %}
+                </div>
+                {% if today_attendance and today_attendance.checkin_address %}
+                <div class="location-pill">
+                    <i class="fas fa-map-marker-alt"></i>
+                    {{ today_attendance.checkin_address|truncatechars:60 }}
+                </div>
+                {% endif %}
             </div>
+            <div class="time-block">
+                <div class="time-chip" style="background: var(--white); border-color: #ffd5d5;">
+                    <i class="fas fa-sign-out-alt" style="color:#ef4444;"></i>
+                    Check Out
+                </div>
+                <div class="time-display out">
+                    {% if today_attendance and today_attendance.check_out %}
+                        {{ today_attendance.check_out|date:"h:i A" }}
+                    {% else %}
+                        {% if is_on_leave_today and leave_status == 'approved' %}
+                            <span style="color: #f0ad4e; font-size: 16px;">On Leave</span>
+                        {% else %}
+                            --:--
+                        {% endif %}
+                    {% endif %}
+                </div>
+                <div class="time-label">
+                    {% if is_on_leave_today and leave_status == 'approved' %}
+                        <i class="fas fa-umbrella-beach"></i> 
+                        {% if half_day_info == 'First Half' %}
+                            Check-out available after 2:00 PM
+                        {% else %}
+                            Check-out not required on leave
+                        {% endif %}                    
+                    {% elif today_attendance and today_attendance.check_out %}
+                        <i class="far fa-clock"></i> Logged at {{ today_attendance.check_out|date:"h:i A" }}
+                    {% elif today_attendance and today_attendance.check_in %}
+                        <i class="far fa-clock"></i> Awaiting check out
+                    {% else %}
+                        <i class="far fa-clock"></i> Start with a check in
+                    {% endif %}
+                </div>
+                {% if today_attendance and today_attendance.checkout_address %}
+                <div class="location-pill">
+                    <i class="fas fa-map-marker-alt"></i>
+                    {{ today_attendance.checkout_address|truncatechars:60 }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    {% if punctuality_status and not is_on_leave_today %}
+    <div class="attendance-status">
+        <i class="fas {% if punctuality_status == 'Late' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %}"></i>
+        {{ punctuality_status }}
+    </div>
+    {% endif %}
+    
+    {% if today_attendance and today_attendance.check_in and not today_attendance.check_out and not is_on_leave_today %}
+    <div class="progress-container">
+        <div class="progress-label">
+            <span>Work Duration</span>
+            <span id="workDuration" data-checkin="{{ today_attendance.check_in|date:'Y-m-d H:i:s' }}">00:00:00</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="workProgress"></div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- ✅ Modified attendance form to handle leave status -->
+    {% if not is_on_leave_today or leave_status == 'pending' %}
+    <form method="POST" id="attendanceForm" class="attendance-form">
+        {% csrf_token %}
+        <input type="hidden" name="latitude" id="latitude">
+        <input type="hidden" name="longitude" id="longitude">
+        <input type="hidden" name="address" id="address">
+        
+        <div class="btn-group">
+            {% if not today_attendance %}
+            <button type="submit" name="action" value="check_in" class="btn-attendance btn-checkin"
+                {% if is_on_leave_today and leave_status == 'approved' %}disabled{% endif %}>
+                <i class="fas fa-sign-in-alt"></i>
+                {% if is_on_leave_today and leave_status == 'approved' %}
+                    On Leave
+                {% else %}
+                    Check In
+                {% endif %}
+            </button>
+            {% elif not today_attendance.check_out %}
+            <button type="submit" name="action" value="check_out" class="btn-attendance btn-checkout"
+                {% if is_on_leave_today and leave_status == 'approved' %}disabled{% endif %}>
+                <i class="fas fa-sign-out-alt"></i>
+                {% if is_on_leave_today and leave_status == 'approved' %}
+                    On Leave
+                {% else %}
+                    Check Out
+                {% endif %}
+            </button>
+            {% else %}
+            <button type="button" class="btn-attendance btn-disabled" disabled>
+                <i class="fas fa-check-circle"></i>
+                Attendance Complete
+            </button>
+            {% endif %}
+        </div>
+        
+        {% if is_on_leave_today and leave_status == 'approved' %}
+        <div class="geo-status" style="border-color: #f0ad4e; color: #d39e00;">
+            <i class="fas fa-umbrella-beach" style="color: #f0ad4e;"></i>
+            <span>Attendance disabled for approved leave</span>
+        </div>
+        {% else %}
+        <div class="geo-status" id="geoStatus">
+            <i class="fas fa-map-pin"></i>
+            <span>Trying to lock your location…</span>
+        </div>
+        {% endif %}
+    </form>     
+    {% endif %}
+</div>
 
             <!-- Profile Card -->
             <div class="profile-card">

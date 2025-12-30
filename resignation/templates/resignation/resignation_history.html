@@ -110,18 +110,6 @@
         margin-bottom: 32px;
     }
 
-    @media (max-width: 1200px) {
-        .stats-summary {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
-
-    @media (max-width: 640px) {
-        .stats-summary {
-            grid-template-columns: 1fr;
-        }
-    }
-
     .stat-card {
         background: var(--white);
         border-radius: 12px;
@@ -187,12 +175,6 @@
         grid-template-columns: 1fr 350px;
         gap: 24px;
         margin-bottom: 24px;
-    }
-
-    @media (max-width: 1200px) {
-        .resignation-content {
-            grid-template-columns: 1fr;
-        }
     }
 
     /* History Card */
@@ -373,6 +355,7 @@
         box-shadow: var(--card-shadow);
         border: 1px solid var(--gray-200);
         margin-bottom: 24px;
+        height: fit-content;
     }
 
     .policy-header {
@@ -478,6 +461,22 @@
     }
 
     /* Responsive */
+     @media (max-width: 1280px) {
+      .resignation-content {
+            grid-template-columns: 1fr;
+        }
+      .policy-card-container {
+            display: flex;
+            gap: inherit;
+      } 
+     }
+      @media (max-width: 1200px) {
+       
+        .stats-summary {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+    }
     @media (max-width: 768px) {
         .resignation-container {
             padding: 16px;
@@ -554,6 +553,9 @@
             font-size: 12px;
             color: var(--gray-700);
             border: 1px solid var(--gray-200);
+        }
+         .stats-summary {
+            grid-template-columns: 1fr;
         }
     }
 
@@ -861,7 +863,7 @@
         </div>
 
         <!-- Right Column: Policy & Info -->
-        <div>
+        <div class="policy-card-container">
             <div class="policy-card">
                 <div class="policy-header">
                     <div class="policy-icon">
@@ -1072,4 +1074,4 @@
         window.addEventListener('resize', checkViewport);
     });
 </script>
-{% endblock %}a
+{% endblock %}
