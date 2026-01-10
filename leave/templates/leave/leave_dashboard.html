@@ -1563,7 +1563,7 @@
                                                 <!-- ADD THIS BADGE -->
                                                 {% if leave.advance_notice_warning %}
                                                 <div class="advance-notice-badge" title="Insufficient advance notice applied">
-                                                    <i class="fas fa-exclamation-triangle"></i> Late
+                                                    <i class="fas fa-exclamation-triangle"></i> Short-Notice
                                                 </div>
                                                 {% endif %}
                                             </div>
@@ -1733,8 +1733,8 @@
 
                         <div class="holiday-summary">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="text-muted">Total Holidays:</span>
-                                <span id="holidayCount" class="badge bg-primary">{{ holidays|length }}</span>
+                                <span class="text-muted">Total Holidays for({{ current_year }}):</span>
+                                <span id="holidayCount" class="badge bg-primary">{{ current_year_holidays_count }}</span>
                             </div>
                         </div>
                     </div>
@@ -1742,7 +1742,7 @@
                     <!-- Calendar -->
                     <div class="calendar-container">
                         <div class="calendar-header">
-                            <div class="calendar-month" id="currentMonth">October 2025</div>
+                            <div class="calendar-month" id="currentMonth"></div>
                             <div class="calendar-nav">
                                 <button onclick="changeMonth(-1)">
                                     <i class="fas fa-chevron-left"></i>
@@ -2703,17 +2703,28 @@ function filterHolidayCalendar() {
 function updateHolidayCount() {
     console.log('updateHolidayCount() called');
     
+    const currentYear = new Date().getFullYear();
     let count = 0;
     
     if (isEmployee) {
-        // Employees: Count only their region's holidays
-        count = holidays.filter(h => h.region === selectedRegion.toString()).length;
+        // Employees: current year + their region
+        count = holidays.filter(h =>
+            h.region === selectedRegion.toString() &&
+            new Date(h.date).getFullYear() === currentYear
+        ).length;
+
     } else if (selectedRegion) {
-        // Admins with region selected: Count that region's holidays
-        count = holidays.filter(h => h.region === selectedRegion.toString()).length;
+        // Admins: current year + selected region
+        count = holidays.filter(h =>
+            h.region === selectedRegion.toString() &&
+            new Date(h.date).getFullYear() === currentYear
+        ).length;
+
     } else {
-        // Admins with "All Regions": Count all holidays
-        count = holidays.length;
+        // Admins: current year + all regions
+        count = holidays.filter(h =>
+            new Date(h.date).getFullYear() === currentYear
+        ).length;
     }
     
     document.getElementById('holidayCount').textContent = count;

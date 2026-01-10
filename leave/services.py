@@ -249,23 +249,63 @@ class ProbationService:
     
     
 class CarryForwardService:
-    """Service to handle annual leave carry forward"""
+    """Service to handle annual leave carry forward for financial year (April-March)"""
     
     MAX_CARRY_FORWARD = 12  # Maximum days that can be carried forward
+    FINANCIAL_YEAR_START_MONTH = 4  # April (1-based: 1=Jan, 4=April)
+    FINANCIAL_YEAR_END_MONTH = 3    # March
+    
+    @staticmethod
+    def get_financial_year(date_obj=None):
+        """
+        Get financial year for a given date
+        Financial year runs from April 1st to March 31st
+        Example: For date 15-04-2024 → FY 2024-2025
+        Example: For date 15-03-2024 → FY 2023-2024
+        """
+        from datetime import date
+        
+        if date_obj is None:
+            date_obj = date.today()
+        
+        # If date is on or after April 1st, financial year starts in current year
+        # If date is before April 1st, financial year started in previous year
+        if date_obj.month >= CarryForwardService.FINANCIAL_YEAR_START_MONTH:
+            fy_start = date_obj.year
+        else:
+            fy_start = date_obj.year - 1
+        
+        fy_end = fy_start + 1
+        return fy_start, fy_end
     
     @staticmethod
     @transaction.atomic
-    def process_year_end_carry_forward(year):
+    def process_year_end_carry_forward():
         """
-        Process carry forward for all employees at year end
-        Call this on December 31st or January 1st
-        
-        Args:
-            year: The year that just ended (e.g., 2024 to carry forward to 2025)
+        Process carry forward for all employees at FINANCIAL year end (April 1st)
+        Call this on April 1st
         """
         from hr.models import Employee
         
-        next_year = year + 1
+        current_date = date.today()
+        print(f"DEBUG: Current date for carry forward: {current_date}")
+        
+        # Get financial year that just ended
+        # On April 1st 2025, we carry forward from FY 2024-2025 (ended March 31st 2025)
+        fy_start, fy_end = CarryForwardService.get_financial_year(current_date)
+        
+        # Since we're at year end, we need to get the PREVIOUS financial year
+        if current_date.month == CarryForwardService.FINANCIAL_YEAR_START_MONTH and current_date.day == 1:
+            # It's April 1st - process carry forward from previous FY
+            from_year = fy_start - 1  # Previous financial year start
+            to_year = fy_start        # Current financial year start
+        else:
+            print(f"DEBUG: Not financial year start (April 1st). Current date: {current_date}")
+            return 0
+        
+        print(f"DEBUG: Processing carry forward from FY {from_year}-{from_year+1} to {to_year}-{to_year+1}")
+        print(f"DEBUG: from_year: {from_year}, to_year: {to_year}")
+        
         carried_forward_count = 0
         
         # Get Earned Leave type
@@ -275,51 +315,69 @@ class CarryForwardService:
                 accrual_rate=Decimal('1.5')
             )
         except LeaveType.DoesNotExist:
+            print("DEBUG: Earned Leave type not found")
             return 0
         
         # Get all active employees
         employees = Employee.objects.filter(status='active')
+        print(f"DEBUG: Processing {employees.count()} active employees")
         
         for employee in employees:
             try:
-                # Get previous year balance
+                # Get previous financial year balance
                 prev_balance = LeaveBalance.objects.get(
                     employee=employee,
                     leave_type=annual_leave,
-                    year=year
+                    year=from_year
                 )
+                
+                print(f"DEBUG: Employee {employee.first_name} - Previous year balance: {prev_balance.leaves_remaining} days")
                 
                 # Calculate carry forward (max 12 days)
                 remaining = prev_balance.leaves_remaining
                 carry_forward_amount = min(remaining, CarryForwardService.MAX_CARRY_FORWARD)
                 
                 if carry_forward_amount > 0:
-                    # Create or update next year balance
-                    next_balance, created = LeaveBalance.objects.get_or_create(
-                        employee=employee,
-                        leave_type=annual_leave,
-                        year=next_year,
-                        defaults={
-                            'total_leaves': carry_forward_amount,
-                            'leaves_taken': 0,
-                            'leaves_remaining': carry_forward_amount,
-                            'carry_forward': carry_forward_amount
-                        }
-                    )
+                    # Check if balance already exists for next year
+                    try:
+                        next_balance = LeaveBalance.objects.get(
+                            employee=employee,
+                            leave_type=annual_leave,
+                            year=to_year
+                        )
+                        created = False
+                        print(f"DEBUG: Existing balance found for {to_year}")
+                    except LeaveBalance.DoesNotExist:
+                        # Create new balance for next year
+                        next_balance = LeaveBalance.objects.create(
+                            employee=employee,
+                            leave_type=annual_leave,
+                            year=to_year,
+                            total_leaves=carry_forward_amount,
+                            leaves_taken=0,
+                            leaves_remaining=carry_forward_amount,
+                            carry_forward=carry_forward_amount
+                        )
+                        created = True
+                        print(f"DEBUG: Created new balance for {to_year}")
                     
                     if not created:
-                        # Update existing balance
-                        next_balance.carry_forward = carry_forward_amount
-                        next_balance.total_leaves += carry_forward_amount
-                        next_balance.leaves_remaining += carry_forward_amount
+                        # Update existing balance - Add to existing
+                        next_balance.carry_forward = float(next_balance.carry_forward or 0) + float(carry_forward_amount)
+                        next_balance.total_leaves = float(next_balance.total_leaves or 0) + float(carry_forward_amount)
+                        next_balance.leaves_remaining = float(next_balance.leaves_remaining or 0) + float(carry_forward_amount)
                         next_balance.save()
                     
                     carried_forward_count += 1
+                    print(f"DEBUG: Carried forward {carry_forward_amount} days for {employee.first_name} "
+                          f"(from {prev_balance.leaves_remaining} remaining)")
                     
             except LeaveBalance.DoesNotExist:
                 # No balance in previous year, skip
+                print(f"DEBUG: No balance for {employee.first_name} in year {from_year}")
                 continue
         
+        print(f"DEBUG: Total employees processed: {carried_forward_count}")
         return carried_forward_count
     
     @staticmethod
@@ -353,8 +411,11 @@ class CarryForwardService:
     @staticmethod
     def get_carry_forward_summary(year):
         """
-        Get summary of carry forward for all employees
+        Get summary of carry forward for all employees for a financial year
         Used for reporting
+        
+        Args:
+            year: The START year of financial year (e.g., 2024 for FY 2024-2025)
         
         Returns: List of dicts with employee carry forward info
         """
@@ -377,7 +438,7 @@ class CarryForwardService:
                 prev_balance = LeaveBalance.objects.get(
                     employee=employee,
                     leave_type=annual_leave,
-                    year=year
+                    year=year  # Financial year start year
                 )
                 
                 remaining = prev_balance.leaves_remaining
@@ -387,6 +448,7 @@ class CarryForwardService:
                 summary.append({
                     'employee_id': employee.employee_id,
                     'employee_name': f"{employee.first_name} {employee.last_name}",
+                    'financial_year': f"{year}-{year+1}",
                     'total_allocated': prev_balance.total_leaves,
                     'leaves_taken': prev_balance.leaves_taken,
                     'leaves_remaining': remaining,
@@ -969,8 +1031,14 @@ class CompOffService:
         # Get or create comp off leave type
         comp_off_type, created = LeaveType.objects.get_or_create(
             name='comp_off',
-            defaults={'max_days': 30, 'is_active': True}
+            defaults={
+                'max_days': 30, 
+                'is_active': True
+                }
         )
+        
+        # Calculate validity
+        valid_until = work_date + timedelta(days=CompOffService.COMP_OFF_VALIDITY_DAYS)
         
         # Create comp off balance entry
         balance, created = LeaveBalance.objects.get_or_create(
@@ -981,13 +1049,21 @@ class CompOffService:
                 'total_leaves': 1,
                 'leaves_remaining': 1,
                 'leaves_taken': 0,
-                'carry_forward': 0
+                'carry_forward': 0,
+                'earned_date': work_date,
+                'valid_until': valid_until,
+                'is_expired': False
             }
         )
         
         if not created:
             balance.total_leaves += 1
             balance.leaves_remaining += 1
+            # Update earned_date and valid_until for the new comp off
+            if not balance.earned_date:
+                balance.earned_date = work_date
+            if not balance.valid_until:
+                balance.valid_until = valid_until
             balance.save()
         
         # Create comp off leave record
@@ -997,12 +1073,94 @@ class CompOffService:
             start_date=work_date,
             end_date=work_date,
             days_requested=1,
-            reason=f"Comp off for working on holiday: {reason}",
+            reason=f"Comp off for working on holiday: {reason}. Valid until {valid_until.strftime('%d-%m-%Y')}",
             status='approved',
             applied_date=timezone.now()
         )
         
-        return True, "Comp off earned successfully"
+        return True, "Comp off earned successfully Valid until {valid_until.strftime('%d-%m-%Y')}"
+    @staticmethod
+    def expire_old_compoff():
+        """Automatically expire comp off that's older than 45 days"""
+        today = timezone.now().date()
+        
+        # Find comp off balances that are expired
+        comp_off_type = LeaveType.objects.filter(
+            name__icontains='comp off'
+        ).first()
+        
+        if not comp_off_type:
+            return 0
+        
+        expired_balances = LeaveBalance.objects.filter(
+            leave_type=comp_off_type,
+            valid_until__lt=today,
+            is_expired=False,
+            leaves_remaining__gt=0
+        )
+        
+        expired_count = 0
+        for balance in expired_balances:
+            # Mark as expired and zero out the remaining balance
+            original_remaining = balance.leaves_remaining
+            balance.leaves_remaining = 0
+            balance.is_expired = True
+            balance.save()
+            
+            expired_count += 1
+            print(f"DEBUG: Expired {original_remaining} comp off days for {balance.employee.first_name}")
+        
+        return expired_count
+    
+    @staticmethod
+    def get_compoff_expiration_info(employee):
+        """Get comp off expiration details for an employee"""
+        from datetime import date
+        today = date.today()
+        
+        # Find comp off leave type
+        comp_off_type = LeaveType.objects.filter(
+            name__icontains='comp off'
+        ).first()
+        
+        if not comp_off_type:
+            return None
+        
+        try:
+            # Get comp off balance for current year
+            balance = LeaveBalance.objects.get(
+                employee=employee,
+                leave_type=comp_off_type,
+                year=today.year
+            )
+        except LeaveBalance.DoesNotExist:
+            return {
+                'balance': 0,
+                'total': 0,
+                'taken': 0,
+                'days_remaining': 0,
+                'expiring_soon': False,
+                'valid_until': None,
+                'is_expired': False,
+                'is_comp_off': True
+            }
+        
+        # Calculate days remaining
+        days_remaining = 0
+        if balance.valid_until and not balance.is_expired:
+            days_remaining = (balance.valid_until - today).days
+        
+        return {
+            'balance': balance.leaves_remaining,
+            'total': balance.total_leaves,
+            'taken': balance.leaves_taken,
+            'days_remaining': max(0, days_remaining),
+            'expiring_soon': 0 < days_remaining <= 7,
+            'valid_until': balance.valid_until,
+            'is_expired': balance.is_expired or (balance.valid_until and balance.valid_until < today),
+            'is_comp_off': True,
+            'earned_date': balance.earned_date
+        }
 
 class YearEndService:
     """Handles year-end processing and automatic loss of excess leaves"""

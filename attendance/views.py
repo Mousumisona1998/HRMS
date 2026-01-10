@@ -178,14 +178,20 @@ def all_attendance(request):
                 else:
                     standard_hours = 9
 
-                extra_hours = worked_hours - standard_hours
-                if extra_hours > 0:
-                    eh_minutes = int(extra_hours * 60)        # ✅ convert to minutes
-                    total_extra_minutes += eh_minutes         # ✅ add month-wise
+                extra_minutes = int((worked_hours - standard_hours) * 60)
 
-                    eh_hours = eh_minutes // 60
-                    eh_mins = eh_minutes % 60
-                    record.extra_hours_display = f"{eh_hours}h {eh_mins}m"
+                # Add to total only if positive (company policy)
+                if extra_minutes > 0:
+                    total_extra_minutes += extra_minutes
+
+                abs_minutes = abs(extra_minutes)
+                eh_hours = abs_minutes // 60
+                eh_mins = abs_minutes % 60
+
+                if extra_minutes > 0:
+                    record.extra_hours_display = f"+{eh_hours}h {eh_mins}m"
+                elif extra_minutes < 0:
+                    record.extra_hours_display = f"-{eh_hours}h {eh_mins}m"
                 else:
                     record.extra_hours_display = "0h 0m"
 

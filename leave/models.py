@@ -198,7 +198,12 @@ class LeaveBalance(models.Model):
     year = models.IntegerField(default=2025)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    
+    # ADD THESE FIELDS FOR COMP OFF EXPIRATION
+    earned_date = models.DateField(null=True, blank=True, help_text="Date when comp off was earned")
+    valid_until = models.DateField(null=True, blank=True, help_text="Valid until date (for comp off)")
+    is_expired = models.BooleanField(default=False, help_text="Whether comp off has expired")
+    
     class Meta:
         db_table = 'leave_balances'
         managed = True
@@ -206,3 +211,17 @@ class LeaveBalance(models.Model):
 
     def __str__(self):
         return f"{self.employee.first_name} - {self.leave_type.name} ({self.year})"        
+    @property
+    def days_remaining(self):
+        """Calculate days remaining before expiration (for comp off only)"""
+        from datetime import date
+        if not self.valid_until or self.is_expired:
+            return 0
+        remaining = (self.valid_until - date.today()).days
+        return max(0, remaining)
+    
+    @property
+    def is_comp_off(self):
+        """Check if this is a comp off balance"""
+        comp_off_keywords = ['comp off', 'compensatory', 'compoff', 'comp-off']
+        return any(keyword in self.leave_type.name.lower() for keyword in comp_off_keywords)

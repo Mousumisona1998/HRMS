@@ -562,7 +562,7 @@ def withdraw_resignation(request, resignation_id):
             return redirect('resignation:dashboard')
         
         # Check if resignation can be withdrawn
-        if resignation.status not in ['applied', 'under_review']:
+        if resignation.status not in ['applied', 'under_review','accepted']:
             messages.error(request, 'Resignation cannot be withdrawn at this stage.')
             return redirect('resignation:resignation_detail', resignation_id=resignation_id)
         
@@ -572,6 +572,11 @@ def withdraw_resignation(request, resignation_id):
             resignation.withdrawal_reason = withdrawal_reason
             resignation.withdrawal_requested_at = timezone.now()
             resignation.save()
+            
+            # 2️⃣ DELETE checklist items
+            ResignationChecklist.objects.filter(
+                resignation=resignation
+            ).delete()
             
             messages.success(request, 
                 ' Resignation withdrawn successfully! '
@@ -779,118 +784,76 @@ class BaseStyledPDF(FPDF):
 
 class NoDueCertificatePDF(BaseStyledPDF):
     def __init__(self):
-        super().__init__()
+        super().__init__(orientation="P", unit="mm", format="A4")
         font_path = os.path.join(settings.BASE_DIR, "static", "fonts", "DejaVuSans.ttf")
         self.add_font("DejaVu", "", font_path, uni=True)
         self.add_font("DejaVu", "B", font_path, uni=True)
         self.add_font("DejaVu", "I", font_path, uni=True)
-        # smaller bottom margin to reduce large white gap above footer
-        self.set_auto_page_break(auto=True, margin=18)
+
+        # tighter bottom margin to reduce height
+        self.set_auto_page_break(auto=True, margin=16)
 
     def header(self):
-        # Single header placement (logo + title), set starting Y so content is consistent
         logo_path = os.path.join(settings.BASE_DIR, "static", "img", "ikontellogot.png")
         try:
-            img_w = 34
+            img_w = 28  # smaller logo
             x_pos = self.w - self.r_margin - img_w
-            self.image(logo_path, x=x_pos, y=10, w=img_w)
+            self.image(logo_path, x=x_pos, y=8, w=img_w)
         except Exception:
             pass
-        # Title and small gap under it (consistent)
-        self.set_xy(self.l_margin, 12)
-        self.set_font("DejaVu", "B", 16)
-        self.cell(0, 7, "NO DUE CERTIFICATE", ln=True, align="L")
-        # ensure gap is consistent after header
-        self.ln(4)
+
+        self.set_xy(self.l_margin, 10)
+        self.set_font("DejaVu", "B", 15)
+        self.cell(0, 7, "NO DUE CERTIFICATE", ln=True)
+        self.ln(3)
 
     def footer(self):
-        # Keep footer compact and at a consistent distance from bottom
-        self.set_y(-22)
+        self.set_y(-20)
         self.set_font("DejaVu", "", 8)
-        self.set_text_color(128, 128, 128)
-        footer_text = (
-            "IKONTEL SOLUTIONS PVT LTD | "
-            "NO.72, 73 & 74, 1ST FLOOR AMRBP BUILDING, MARGOSA ROAD, 17TH CROSS RD, "
-            "MALLESWARAM, BENGALURU, KARNATAKA"
-        )
+        self.set_text_color(120, 120, 120)
         self.set_draw_color(200, 200, 200)
         self.line(10, self.get_y(), self.w - 10, self.get_y())
         self.ln(3)
-        self.multi_cell(0, 4, footer_text, align="C")
+        self.multi_cell(
+            0,
+            4,
+            "IKONTEL SOLUTIONS PVT LTD | NO.72, 73 & 74, 1ST FLOOR AMRBP BUILDING, "
+            "MARGOSA ROAD, 17TH CROSS RD, MALLESWARAM, BENGALURU, KARNATAKA",
+            align="C",
+        )
 
     def section_box(self, title):
-        # Clean heading: no left square, consistent spacing
         self.set_font("DejaVu", "B", 11)
         self.cell(0, 6, title, ln=True)
-        self.ln(2)
         self.set_draw_color(220, 220, 220)
-        line_y = self.get_y()
-        self.line(self.l_margin, line_y, self.w - self.r_margin, line_y)
+        y = self.get_y()
+        self.line(self.l_margin, y, self.w - self.r_margin, y)
         self.ln(4)
 
-    def cell_pair(self, label, value, label_w=120, value_w=None, value_line_height=6):
-        """
-        Uniform label/value box across the document.
-        label_w is wide so label and value alignment match UI screenshot style.
-        """
-        # ensure there's room for this pair
-        estimated_h = 18
-        self.check_page_break(estimated_h)
-        page_inner_w = self.w - self.l_margin - self.r_margin
-        if value_w is None:
-            value_w = page_inner_w - label_w
-        # Label (left aligned)
-        self.set_font("DejaVu", "B", 9)
-        # label placed in left column (we emulate two-column layout to match screenshot)
-        self.cell(label_w, value_line_height, f"{label}:", ln=False)
-        x_before = self.get_x()
-        y_before = self.get_y()
-        # Value as boxed region
-        self.set_font("DejaVu", "", 9)
-        self.set_xy(x_before, y_before)
-        self.multi_cell(value_w, value_line_height, value or "N/A")
-        y_after = self.get_y()
-        box_h = y_after - y_before
-        # draw light rectangle around value area
-        self.set_xy(x_before - 1, y_before - 1)
-        self.set_draw_color(210, 210, 210)
-        try:
-            self.rect(x_before - 1, y_before - 1, value_w + 2, box_h + 2)
-        except Exception:
-            pass
-        # move cursor to next line (left margin)
-        self.set_xy(self.l_margin, y_after + 6)
+    def cell_pair(self, label, value, label_w=110, value_line_height=6):
+        self.check_page_break(18)
+        page_w = self.w - self.l_margin - self.r_margin
+        value_w = page_w - label_w
 
-    def boxed_text(self, text, box_width=None, line_height=6, padding=3):
-        # boxed multiline answer with guard
-        if box_width is None:
-            box_width = self.w - self.l_margin - self.r_margin
-        approx_lines = max(2, text.count('\n') + 1)
-        needed = approx_lines * line_height + padding*2 + 12
-        self.check_page_break(needed)
-        x_before = self.get_x()
-        y_before = self.get_y()
+        self.set_font("DejaVu", "B", 9)
+        self.cell(label_w, value_line_height, f"{label}:", ln=False)
+
+        x = self.get_x()
+        y = self.get_y()
+
         self.set_font("DejaVu", "", 9)
-        # print text with internal padding
-        self.set_xy(x_before + padding, y_before + padding)
-        inner_w = box_width - 2*padding
-        self.multi_cell(inner_w, line_height, text or "")
-        y_after = self.get_y()
-        used_h = (y_after - y_before) + padding
-        # draw rect around box
-        self.set_xy(x_before, y_before)
+        self.multi_cell(value_w, value_line_height, value or "N/A")
+
+        h = self.get_y() - y
         self.set_draw_color(210, 210, 210)
-        try:
-            self.rect(x_before, y_before, box_width, used_h)
-        except Exception:
-            pass
-        self.set_xy(self.l_margin, y_before + used_h + 8)
+        self.rect(x - 1, y - 1, value_w + 2, h + 2)
+
+        self.set_xy(self.l_margin, y + h + 4)
 
     def declaration_content(self, text):
-        self.check_page_break(20)
         self.set_font("DejaVu", "", 10)
         self.multi_cell(0, 6, text)
-        self.ln(3)
+        self.ln(6)
 
 class ExitInterviewPDF(BaseStyledPDF):
     def __init__(self):
@@ -1012,55 +975,104 @@ class ExitInterviewPDF(BaseStyledPDF):
 def download_no_due_certificate(request, resignation_id):
     resignation = get_object_or_404(Resignation, id=resignation_id)
     no_due_cert = get_object_or_404(NoDueCertificate, resignation=resignation)
+
     try:
         pdf = NoDueCertificatePDF()
         pdf.add_page()
+
+        # Declaration
         pdf.section_box("Declaration")
         paragraphs = [
-            "Received my salary towards my full and final settlement through online/NEFT/Transfer. All my dues from IKONTEL Solutions Pvt Ltd are cleared.",
-            "I have received all my dues pertaining to earned leave encashment, notice pay, service compensation, leave or any other claim in connection with my employment with the management.",
-            "I have no further claim/Demand for reinstatement or re-employment.",
-            "I will not raise any claim or demand, whatsoever against the Company."
+            "Received my salary towards my full and final settlement through online/NEFT/Transfer. "
+            "All my dues from IKONTEL Solutions Pvt Ltd are cleared.",
+            "I have received all my dues pertaining to earned leave encashment, notice pay, "
+            "service compensation, leave or any other claim in connection with my employment.",
+            "I have no further claim or demand for reinstatement or re-employment.",
+            "I will not raise any claim or demand whatsoever against the Company.",
         ]
         for p in paragraphs:
             pdf.declaration_content(p)
-        pdf.ln(4)
-        # Employee details block using uniform cell_pair (label column left, boxed value right)
+        pdf.ln(15)
+        # Employee details
         pdf.section_box("Employee Details")
-        pdf.cell_pair("Employee Name", f"{resignation.employee.first_name} {resignation.employee.last_name}")
+        pdf.cell_pair(
+            "Employee Name",
+            f"{resignation.employee.first_name} {resignation.employee.last_name}",
+        )
+        pdf.ln(2)
         pdf.cell_pair("Employee ID", resignation.employee.employee_id)
+        pdf.ln(2)
         pdf.cell_pair("Department", resignation.employee.department or "N/A")
+        pdf.ln(2)
         pdf.cell_pair("Region", resignation.employee.location or "N/A")
-        pdf.ln(4)
-        # Signature area - right aligned visually using cell offsets
-        pdf.check_page_break(40)
-        right_start = 120
-        pdf.set_font("DejaVu", "", 10)
-        pdf.cell(right_start)
-        pdf.cell(0, 6, "_________________________", ln=True)
-        pdf.cell(right_start)
-        pdf.cell(0, 6, "Employee Signature", ln=True)
-        pdf.ln(8)
-        settlement_display_date = no_due_cert.settlement_date.strftime("%d %b %Y") if no_due_cert.settlement_date else datetime.now().strftime("%d %b %Y")
-        pdf.set_font("DejaVu", "B", 10)
-        pdf.cell(right_start)
-        pdf.cell(0, 6, f"Place: Bangalore", ln=True)
-        pdf.cell(right_start)
-        pdf.cell(0, 6, f"Date: {settlement_display_date}", ln=True)
+
+        pdf.ln(70)
+
+        # =========================
+        # SIGNATURE BLOCK
+        # =========================
+        pdf.check_page_break(50)
+        pdf.set_font("DejaVu", "", 9)
+
+        sign_w = 55      # reduced width
+        sign_h = 14      # reduced height
+        gap = 80
+
+        left_x = pdf.l_margin
+        right_x = left_x + sign_w + gap
+        y = pdf.get_y()
+
+        # HR SIGNATURE (LEFT)
+        if no_due_cert.hr_signature:
+            pdf.image(no_due_cert.hr_signature, x=left_x +15, y=y, w=sign_w, h=sign_h)
+        pdf.set_xy(left_x, y + sign_h + 1)
+        
+        pdf.set_x(left_x)
+        pdf.cell(sign_w, 5, "HR Signature", align="C")
+
+        # EMPLOYEE SIGNATURE (RIGHT)
+        if no_due_cert.employee_signature:
+            pdf.image(
+                no_due_cert.employee_signature,
+                x=right_x +15,
+                y=y,
+                w=sign_w,
+                h=sign_h,
+            )
+
+        pdf.set_xy(right_x, y + sign_h + 1)
+        pdf.set_x(right_x)
+        pdf.cell(sign_w, 5, "Employee Signature", align="C")
+        
+        # Place & Date under employee sign only
+        settlement_date = (
+            no_due_cert.settlement_date.strftime("%d %b %Y")
+            if no_due_cert.settlement_date
+            else datetime.now().strftime("%d %b %Y")
+        )
+
+        pdf.ln(10)
+        pdf.set_x(right_x -1)
+        pdf.set_font("DejaVu", "", 9)
+        pdf.cell(sign_w, 5, "Place: Bangalore", align="C")
+        pdf.ln(6)
+        pdf.set_x(right_x)
+        pdf.cell(sign_w, 5, f"Date: {settlement_date}", align="C")
+
         # Output
-        pdf_buffer = io.BytesIO()
-        pdf.output(pdf_buffer)
-        pdf_buffer.seek(0)
-        response = HttpResponse(pdf_buffer, content_type="application/pdf")
-        employee_name_safe = f"{resignation.employee.first_name}_{resignation.employee.last_name}".replace(" ", "_")
-        filename = f"No_Due_Certificate_{employee_name_safe}_{datetime.now().strftime('%b_%Y')}.pdf"
+        buffer = io.BytesIO()
+        pdf.output(buffer)
+        buffer.seek(0)
+
+        response = HttpResponse(buffer, content_type="application/pdf")
+        filename = f"No_Due_Certificate_{resignation.employee.employee_id}.pdf"
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         return response
+
     except Exception as e:
         import traceback
-        print(f"PDF Error: {str(e)}")
         print(traceback.format_exc())
-        return download_no_due_certificate_fallback(request, resignation_id)
+        return HttpResponse("Error generating PDF")
 
 def download_no_due_certificate_fallback(request, resignation_id):
     resignation = get_object_or_404(Resignation, id=resignation_id)

@@ -1,6 +1,6 @@
 # In context_processors.py
 from hr.models import Role, Employee, YsMenuMaster, YsMenuLinkMaster, YsMenuRoleMaster, YsUserRoleMaster,CelebrationWish
-from datetime import date
+from datetime import date, timedelta
 from django.utils import timezone
 
 
@@ -158,7 +158,7 @@ def get_assigned_menus(request):
         return {'menu_data': []}
     
 def celebration_notifications(request):
-    """Context processor to check for birthdays and anniversaries"""
+    """Context processor to check for birthdays and anniversaries for next 7 days"""
     if not request.session.get('user_authenticated'):
         return {}
     
@@ -167,18 +167,22 @@ def celebration_notifications(request):
     
     celebrations = {
         'birthdays_today': [],
+        'birthdays_upcoming': [],  # NEW: For next 7 days
         'work_anniversaries_today': [],
+        'work_anniversaries_upcoming': [],  # NEW: For next 7 days
         'marriage_anniversaries_today': [],
+        'marriage_anniversaries_upcoming': [],  # NEW: For next 7 days
         'show_celebration_popup': False,
         'has_seen_popup_today': False,
-        'current_user_id': None
+        'current_user_id': None,
+        'total_count': 0,
+        'upcoming_dates': []  # NEW: Store upcoming dates info
     }
     
     try:
         # Get current user
         current_user = None
         if user_role == 'SUPER ADMIN':
-            # SUPER ADMIN doesn't have Employee record
             celebrations['current_user_id'] = 'admin'
         else:
             try:
@@ -187,92 +191,149 @@ def celebration_notifications(request):
             except Employee.DoesNotExist:
                 celebrations['current_user_id'] = None
 
+        # Get today's date and next 7 days
+        today = timezone.now().date()
+        week_from_now = today + timedelta(days=7)
+        
+        # Create list of upcoming dates for display
+        upcoming_dates = []
+        for i in range(8):  # 0-7 days (including today)
+            date_obj = today + timedelta(days=i)
+            upcoming_dates.append({
+                'date': date_obj,
+                'day_name': date_obj.strftime('%A'),
+                'display': date_obj.strftime('%d %b') + (" (Today)" if i == 0 else (" (Tomorrow)" if i == 1 else ""))
+            })
+        
+        celebrations['upcoming_dates'] = upcoming_dates
+        
         # Check if user has already seen popup today
-        today_str = timezone.now().date().isoformat()
+        today_str = today.isoformat()
         if request.session.get('last_popup_date') != today_str:
             celebrations['show_celebration_popup'] = True
-            # Mark as seen for this session (will show again tomorrow)
             request.session['last_popup_date'] = today_str
         
-        # Get today's date
-        today = timezone.now().date()
+        # Get all active employees
+        active_employees = Employee.objects.filter(status='active')
         
-        # For all roles, show celebrations of all active employees
-        # Everyone can see all celebrations
-        birthdays = Employee.objects.filter(
-            date_of_birth__month=today.month,
-            date_of_birth__day=today.day,
-            status='active'
-        ).exclude(date_of_birth__isnull=True)
+        # Process birthdays (today + next 7 days)
+        for emp in active_employees:
+            if emp.date_of_birth:
+                # Get next birthday
+                next_birthday = date(today.year, emp.date_of_birth.month, emp.date_of_birth.day)
+                if next_birthday < today:
+                    next_birthday = date(today.year + 1, emp.date_of_birth.month, emp.date_of_birth.day)
+                
+                # Check if birthday is within next 7 days
+                days_until = (next_birthday - today).days
+                if 0 <= days_until <= 7:
+                    birthday_data = {
+                        'id': emp.id,
+                        'employee_id': emp.employee_id,
+                        'name': emp.full_name,
+                        'designation': emp.designation,
+                        'department': emp.department,
+                        'years_old': today.year - emp.date_of_birth.year if next_birthday.year > emp.date_of_birth.year else today.year - emp.date_of_birth.year - 1,
+                        'is_current_user': current_user and emp.id == current_user.id,
+                        'date': next_birthday,
+                        'days_until': days_until,
+                        'formatted_date': next_birthday.strftime('%d %b')
+                    }
+                    
+                    if days_until == 0:
+                        celebrations['birthdays_today'].append(birthday_data)
+                    else:
+                        celebrations['birthdays_upcoming'].append(birthday_data)
         
-        work_anniversaries = Employee.objects.filter(
-            date_of_joining__month=today.month,
-            date_of_joining__day=today.day,
-            status='active'
-        ).exclude(date_of_joining__isnull=True)
+        # Process work anniversaries (today + next 7 days)
+        for emp in active_employees:
+            if emp.date_of_joining:
+                # Get next anniversary
+                next_anniversary = date(today.year, emp.date_of_joining.month, emp.date_of_joining.day)
+                if next_anniversary < today:
+                    next_anniversary = date(today.year + 1, emp.date_of_joining.month, emp.date_of_joining.day)
+                
+                # Check if anniversary is within next 7 days
+                days_until = (next_anniversary - today).days
+                if 0 <= days_until <= 7:
+                    years_of_service = emp.get_years_of_service()
+                    anniversary_data = {
+                        'id': emp.id,
+                        'employee_id': emp.employee_id,
+                        'name': emp.full_name,
+                        'designation': emp.designation,
+                        'department': emp.department,
+                        'years': years_of_service,
+                        'is_current_user': current_user and emp.id == current_user.id,
+                        'date': next_anniversary,
+                        'days_until': days_until,
+                        'formatted_date': next_anniversary.strftime('%d %b')
+                    }
+                    
+                    if days_until == 0:
+                        celebrations['work_anniversaries_today'].append(anniversary_data)
+                    else:
+                        celebrations['work_anniversaries_upcoming'].append(anniversary_data)
         
-        marriage_anniversaries = Employee.objects.filter(
-            marriage_date__month=today.month,
-            marriage_date__day=today.day,
-            status='active'
-        ).exclude(marriage_date__isnull=True)
+        # Process marriage anniversaries (today + next 7 days)
+        for emp in active_employees:
+            if emp.marriage_date:
+                # Get next anniversary
+                next_anniversary = date(today.year, emp.marriage_date.month, emp.marriage_date.day)
+                if next_anniversary < today:
+                    next_anniversary = date(today.year + 1, emp.marriage_date.month, emp.marriage_date.day)
+                
+                # Check if anniversary is within next 7 days
+                days_until = (next_anniversary - today).days
+                if 0 <= days_until <= 7:
+                    years_of_marriage = emp.get_years_of_marriage()
+                    anniversary_data = {
+                        'id': emp.id,
+                        'employee_id': emp.employee_id,
+                        'name': emp.full_name,
+                        'designation': emp.designation,
+                        'department': emp.department,
+                        'years': years_of_marriage,
+                        'is_current_user': current_user and emp.id == current_user.id,
+                        'date': next_anniversary,
+                        'days_until': days_until,
+                        'formatted_date': next_anniversary.strftime('%d %b')
+                    }
+                    
+                    if days_until == 0:
+                        celebrations['marriage_anniversaries_today'].append(anniversary_data)
+                    else:
+                        celebrations['marriage_anniversaries_upcoming'].append(anniversary_data)
         
-        # Process birthdays
-        for emp in birthdays:
-            celebrations['birthdays_today'].append({
-                'id': emp.id,
-                'employee_id': emp.employee_id,
-                'name': emp.full_name,
-                'designation': emp.designation,
-                'department': emp.department,
-                'years_old': today.year - emp.date_of_birth.year if emp.date_of_birth else None,
-                'is_current_user': current_user and emp.id == current_user.id
-            })
-        
-        # Process work anniversaries
-        for emp in work_anniversaries:
-            years_of_service = emp.get_years_of_service()
-            celebrations['work_anniversaries_today'].append({
-                'id': emp.id,
-                'employee_id': emp.employee_id,
-                'name': emp.full_name,
-                'designation': emp.designation,
-                'department': emp.department,
-                'years': years_of_service,
-                'is_current_user': current_user and emp.id == current_user.id
-            })
-        
-        # Process marriage anniversaries
-        for emp in marriage_anniversaries:
-            years_of_marriage = emp.get_years_of_marriage()
-            celebrations['marriage_anniversaries_today'].append({
-                'id': emp.id,
-                'employee_id': emp.employee_id,
-                'name': emp.full_name,
-                'designation': emp.designation,
-                'department': emp.department,
-                'years': years_of_marriage,
-                'is_current_user': current_user and emp.id == current_user.id
-            })
+        # Sort upcoming events by date
+        celebrations['birthdays_upcoming'] = sorted(celebrations['birthdays_upcoming'], key=lambda x: x['days_until'])
+        celebrations['work_anniversaries_upcoming'] = sorted(celebrations['work_anniversaries_upcoming'], key=lambda x: x['days_until'])
+        celebrations['marriage_anniversaries_upcoming'] = sorted(celebrations['marriage_anniversaries_upcoming'], key=lambda x: x['days_until'])
         
         # Update show_celebration_popup based on actual celebrations
         if celebrations['show_celebration_popup']:
             celebrations['show_celebration_popup'] = (
                 len(celebrations['birthdays_today']) > 0 or
                 len(celebrations['work_anniversaries_today']) > 0 or
-                len(celebrations['marriage_anniversaries_today']) > 0
+                len(celebrations['marriage_anniversaries_today']) > 0 or
+                len(celebrations['birthdays_upcoming']) > 0 or
+                len(celebrations['work_anniversaries_upcoming']) > 0 or
+                len(celebrations['marriage_anniversaries_upcoming']) > 0
             )
         
     except Exception as e:
         # Log error but don't break the application
         print(f"Error in celebration notifications: {str(e)}")
-    # Calculate total count
+    
+    # Calculate total count (today + upcoming)
     total_count = (
         len(celebrations['birthdays_today']) +
         len(celebrations['work_anniversaries_today']) +
-        len(celebrations['marriage_anniversaries_today'])
+        len(celebrations['marriage_anniversaries_today']) +
+        len(celebrations['birthdays_upcoming']) +
+        len(celebrations['work_anniversaries_upcoming']) +
+        len(celebrations['marriage_anniversaries_upcoming'])
     )
-    celebrations['total_count'] = total_count    
-        
+    celebrations['total_count'] = total_count
     
     return {'celebrations': celebrations}

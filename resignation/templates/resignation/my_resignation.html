@@ -1279,7 +1279,7 @@
                     {% endif %}
                     
                     <!-- Withdrawal Option -->
-                    {% if current_resignation.status == 'applied' or current_resignation.status == 'under_review' %}
+                    {% if current_resignation.status == 'applied' or current_resignation.status == 'under_review' or current_resignation.status == 'accepted' %}
                         <div class="alert-box alert-warning" style="margin-top: 24px;">
                             <i class="fas fa-exclamation-triangle alert-icon"></i>
                             <div>
@@ -1496,7 +1496,7 @@
 </div>
 
 <!-- Withdrawal Modal -->
-{% if current_resignation and current_resignation.status in 'applied,under_review' %}
+{% if current_resignation and current_resignation.status in 'applied,under_review,accepted' %}
 <div class="modal fade" id="withdrawModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">

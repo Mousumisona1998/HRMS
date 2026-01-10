@@ -332,13 +332,13 @@
     }
 
     .type-badge {
-        /* background: var(--gray-100); */
+        background: var(--gray-100);
         color: var(--gray-700);
         padding: 4px 10px;
         border-radius: 6px;
         font-size: 12px;
         font-weight: 500;
-        /* border: 1px solid var(--gray-200); */
+        border: 1px solid var(--gray-200);
     }
 
     /* Subject */
@@ -464,6 +464,7 @@
             opacity: 0;
             transform: translateY(-20px);
         }
+
         to {
             opacity: 1;
             transform: translateY(0);
@@ -717,52 +718,53 @@
         .page-container {
             padding: 16px;
         }
-        
+
         .page-header {
             flex-direction: column;
             align-items: flex-start;
             gap: 16px;
         }
-        
+
         .stats-summary {
             grid-template-columns: 1fr;
         }
-        
+
         .table-header {
             flex-direction: column;
             gap: 16px;
             align-items: flex-start;
         }
-        
+
         .dataTable {
             min-width: 800px;
         }
-        
+
         .modal-body {
             padding: 20px;
         }
-        
+
         .form-actions {
             flex-direction: column;
         }
+
         .modal-container {
-        width: 100% !important;
-        max-width: 100% !important;
-        margin: 0;
-        border-radius: 0;
-    }
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0;
+            border-radius: 0;
+        }
 
-    .warning-details {
-        grid-template-columns: 1fr !important;
-    }
+        .warning-details {
+            grid-template-columns: 1fr !important;
+        }
 
-    .warning-card {
-        width: 100% !important;
-    }
+        .warning-card {
+            width: 100% !important;
+        }
 
-    .warning-value {
-        font-size: 16px !important;
-    }
+        .warning-value {
+            font-size: 16px !important;
+        }
     }
 
     /* Loading Animation */
@@ -776,95 +778,109 @@
     }
 
     @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
     }
 
     .view-btn {
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-.view-btn:hover {
-    background: #334ad4;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
-}
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
 
-/* Warning Modal Cards */
-.warning-details {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-}
+    .view-btn:hover {
+        background: #334ad4;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
+    }
 
-.warning-card {
-    background: var(--gray-100);
-    padding: 20px;
-    border-radius: 12px;
-    border: 1px solid var(--gray-200);
-}
+    /* Warning Modal Cards */
+    .warning-details {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+    }
 
-.warning-card.full-width {
-    grid-column: span 2;
-}
+    .warning-card {
+        background: var(--gray-100);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid var(--gray-200);
+    }
 
-.warning-card h4 {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--gray-600);
-    margin-bottom: 10px;
-    text-transform: uppercase;
-}
+    .warning-card.full-width {
+        grid-column: span 2;
+    }
 
-.warning-content {
-    display: block !important;
-}
+    .warning-card h4 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--gray-600);
+        margin-bottom: 10px;
+        text-transform: uppercase;
+    }
 
-.warning-value {
-    font-size: 22px;
-    font-weight: 700;
-}
+    .warning-content {
+        display: block !important;
+    }
 
-.warning-label {
-    font-size: 13px;
-    color: var(--gray-500);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
+    .warning-value {
+        font-size: 22px;
+        font-weight: 700;
+    }
+
+    .warning-label {
+        font-size: 13px;
+        color: var(--gray-500);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
 
 
-.warning-value {
-    font-size: 18px;
-    font-weight: 500;
-    text-align: left !important;
-    line-height: 1.6;
-    white-space: pre-wrap;
-}
-.date-badge {
-    background: var(--white);
-    border: 1px solid var(--gray-200);
-    padding: 8px 16px;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--gray-600);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    box-shadow: var(--card-shadow);
-    white-space: nowrap;
-}
+    .warning-value {
+        font-size: 18px;
+        font-weight: 500;
+        text-align: left !important;
+        line-height: 1.6;
+        white-space: pre-wrap;
+    }
 
+    .selected-employee-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 10px;
+        background: rgba(16, 185, 129, 0.08);
+        border-radius: 6px;
+        margin-bottom: 6px;
+    }
+
+    .remove-employee-btn {
+        background: none;
+        border: none;
+        color: #ef4444;
+        font-size: 18px;
+        cursor: pointer;
+        line-height: 1;
+    }
+
+    .remove-employee-btn:hover {
+        transform: scale(1.2);
+    }
 </style>
 
 <div class="page-container">
@@ -875,7 +891,7 @@
                 <i class="fas fa-exclamation-circle"></i>
                 Employee Notices
             </h1>
-            <p class="page-subtitle">Manage warnings, appreciations and other employee notices</p>
+            <p class="page-subtitle">Manage warnings, appreciations, and other employee notices</p>
         </div>
         <div class="date-badge">
             <i class="fas fa-calendar-alt"></i>
@@ -883,11 +899,11 @@
         </div>
     </div>
 
-   <!-- Stats Summary -->
+    <!-- Stats Summary -->
     <div class="stats-summary">
 
-        
-       <div class="summary-card warning">
+
+        <div class="summary-card warning">
             <div class="summary-value">
                 {{ warning_count }}
                 <div class="summary-label">Warnings</div>
@@ -897,7 +913,7 @@
             </div>
         </div>
 
-        
+
         <div class="summary-card appreciation">
             <div class="summary-value">
                 {{ appreciation_count }}
@@ -908,7 +924,7 @@
             </div>
         </div>
 
-        
+
         <div class="summary-card notice">
             <div class="summary-value">
                 {{ notice_count }}
@@ -919,7 +935,7 @@
             </div>
         </div>
 
-        
+
         <div class="summary-card">
             <div class="summary-value">
                 {{ total_count }}
@@ -930,7 +946,7 @@
             </div>
         </div>
 
-        
+
 
     </div>
     <!-- Main Container -->
@@ -948,7 +964,7 @@
                 Add New Notice
             </button>
         </div>
-        
+
         <div class="table-container">
             {% if warnings %}
             <table class="dataTable" id="warningsTable">
@@ -958,7 +974,7 @@
                         <th>Notice Type</th>
                         <th>Category</th>
                         <th>Subject</th>
-                        <th style="display:none;">Description</th> 
+                        <th style="display:none;">Description</th>
                         <th>Date</th>
                         <th>Issued By</th>
                         <th style="text-align: right;">Actions</th>
@@ -980,38 +996,38 @@
                                 </div>
                             </div>
                         </td>
-                        
+
                         <!-- Notice Type -->
                         <td>
                             {% if warn.message_category == "Warning" %}
-                                <span class="status-badge badge-warning">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                    Warning
-                                </span>
+                            <span class="status-badge badge-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Warning
+                            </span>
                             {% elif warn.message_category == "Appreciation" or warn.message_category == "Appreciations" %}
-                                <span class="status-badge badge-appreciation">
-                                    <i class="fas fa-award"></i>
-                                    {{ warn.message_category }}
-                                </span>
+                            <span class="status-badge badge-appreciation">
+                                <i class="fas fa-award"></i>
+                                {{ warn.message_category }}
+                            </span>
                             {% else %}
-                                <span class="status-badge badge-notice">
-                                    <i class="fas fa-bell"></i>
-                                    {{ warn.message_category }}
-                                </span>
+                            <span class="status-badge badge-notice">
+                                <i class="fas fa-bell"></i>
+                                {{ warn.message_category }}
+                            </span>
                             {% endif %}
                         </td>
-                        
+
                         <!-- Category -->
                         <td>
                             <span class="type-badge">
-                               {% if warn.sub_type %}
-                                  {{ warn.sub_type }}
-                               {% else %}
-                                   —
-                               {% endif %}
+                                {% if warn.sub_type %}
+                                {{ warn.sub_type }}
+                                {% else %}
+                                —
+                                {% endif %}
                             </span>
                         </td>
-                        
+
                         <!-- Subject -->
                         <td>
                             <div class="subject-text" title="{{ warn.subject }}">
@@ -1022,30 +1038,27 @@
                         <td class="description-text" style="display:none;">
                             {{ warn.description|default_if_none:"" }}
                         </td>
-                        
+
                         <!-- Date -->
                         <td>
                             <div class="date-cell">
                                 <div class="date-main">
                                     {{ warn.warning_date|date:"d M, Y" }}
                                 </div>
-                                <div class="date-relative">
-                                    {{ warn.warning_date|timesince }} ago
-                                </div>
                             </div>
                         </td>
-                        
+
                         <!-- Issued By -->
                         <td>
                             <span style="font-weight: 500; color: var(--dark);">
                                 {{ warn.issued_by }}
                             </span>
                         </td>
-                        
+
                         <!-- Actions -->
                         <td>
                             <div class="action-buttons">
-                                 <button class="view-btn" onclick="showWarningDetails('{{ warn.id }}')">
+                                <button class="view-btn" onclick="showWarningDetails('{{ warn.id }}')">
                                     <i class="fas fa-eye"></i> View
                                 </button>
                                 <button class="delete-btn" onclick="confirmDelete('{{ warn.id }}')">
@@ -1064,7 +1077,8 @@
                     <i class="fas fa-inbox"></i>
                 </div>
                 <h4>No Notices Found</h4>
-                <p>No warnings or appreciations have been recorded yet. Add your first employee notice using the button above.</p>
+                <p>No warnings or appreciations have been recorded yet. Add your first employee notice using the button
+                    above.</p>
             </div>
             {% endif %}
         </div>
@@ -1105,7 +1119,7 @@
         <div class="modal-body">
             <form method="POST" autocomplete="off" id="noticeForm">
                 {% csrf_token %}
-                
+
                 <!-- Employee Search -->
                 <div class="form-group">
                     <label class="form-label required">
@@ -1113,33 +1127,28 @@
                         Employee
                     </label>
                     <div class="employee-search-container">
-                        <input type="text" 
-                               class="form-control" 
-                               id="employeeSearch" 
-                               placeholder="Search employee by name or ID..."
-                               autocomplete="off">
+                        <input type="text" class="form-control" id="employeeSearch"
+                            placeholder="Search employee by name or ID..." autocomplete="off">
                         <div class="employee-search-dropdown" id="employeeSuggestions"></div>
-                        <input type="hidden" name="employee_code" id="employeeId">
+                        <input type="hidden" name="employee_codes" id="employeeIds">
                     </div>
-                    
+
                     <!-- Selected Employee Display -->
                     <div class="selected-employee" id="selectedEmployeeSection">
                         <div class="selected-employee-header">
                             <div class="selected-employee-label">
                                 <i class="fas fa-check-circle"></i>
-                                Selected Employee
+                                Selected Employees
                             </div>
                             <button type="button" class="selected-employee-clear" id="clearEmployeeSelection">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
-                        <div class="selected-employee-info">
-                            <strong id="selectedEmployeeName"></strong>
-                            <span style="color: var(--gray-500); margin-left: 8px;">(ID: <span id="selectedEmployeeId"></span>)</span>
-                        </div>
+                        <div id="selectedEmployeeList"></div>
                     </div>
+
                 </div>
-                
+
                 <!-- Message Category and Sub Type -->
                 <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                     <div>
@@ -1154,7 +1163,7 @@
                             {% endfor %}
                         </select>
                     </div>
-                    
+
                     <div>
                         <label class="form-label required">
                             <i class="fas fa-filter"></i>
@@ -1165,33 +1174,27 @@
                         </select>
                     </div>
                 </div>
-                
+
                 <!-- Subject -->
                 <div class="form-group">
                     <label class="form-label required">
                         <i class="fas fa-heading"></i>
                         Subject
                     </label>
-                    <input type="text" 
-                           name="subject" 
-                           class="form-control" 
-                           placeholder="Enter notice subject..."
-                           required
-                           maxlength="200">
+                    <input type="text" name="subject" class="form-control" placeholder="Enter notice subject..."
+                        required maxlength="200">
                 </div>
-                
+
                 <!-- Description -->
                 <div class="form-group">
                     <label class="form-label required">
                         <i class="fas fa-align-left"></i>
                         Description
                     </label>
-                    <textarea name="description" 
-                              class="form-textarea" 
-                              placeholder="Enter detailed description..."
-                              required></textarea>
+                    <textarea name="description" class="form-textarea" placeholder="Enter detailed description..."
+                        required></textarea>
                 </div>
-                
+
                 <!-- Date and Issued By -->
                 <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                     <div>
@@ -1199,27 +1202,20 @@
                             <i class="fas fa-calendar"></i>
                             Notice Date
                         </label>
-                        <input type="text" 
-                                name="warning_date" 
-                                id="warningDate" 
-                                class="form-control" 
-                                placeholder="dd/mm/yyyy"
-                                required>
+                        <input type="text" name="warning_date" id="warningDate" class="form-control"
+                            placeholder="dd/mm/yyyy" required>
                     </div>
-                    
+
                     <div>
                         <label class="form-label">
                             <i class="fas fa-user-tie"></i>
                             Issued By (Auto)
                         </label>
-                        <input type="text" 
-                               class="form-control" 
-                               value="{{ request.session.user_name }}" 
-                               readonly
-                               style="background: var(--gray-100);">
+                        <input type="text" class="form-control" value="{{ request.session.user_name }}" readonly
+                            style="background: var(--gray-100);">
                     </div>
                 </div>
-                
+
                 <div class="form-actions">
                     <button type="button" class="btn btn-cancel" onclick="closeModal()">
                         <i class="fas fa-times"></i>
@@ -1242,16 +1238,28 @@
 
 <!-- Include jQuery and DataTables JS -->
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+<script type="text/javascript" charset="utf8"
+    src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" charset="utf8"
+    src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script type="text/javascript" charset="utf8"
+    src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" charset="utf8"
+    src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+<script type="text/javascript" charset="utf8"
+    src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script type="text/javascript" charset="utf8"
+    src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
+
+        // ===== MULTI EMPLOYEE SELECTION VARIABLES =====
+        const selectedEmployees = new Map(); // employee_id => employee_name
+        const employeeIdsField = document.getElementById('employeeIds');
+        const selectedEmployeeList = document.getElementById('selectedEmployeeList');
+
         // Initialize DataTable
         const table = $('#warningsTable').DataTable({
             pageLength: 25,
@@ -1296,7 +1304,7 @@
                     previous: "Previous"
                 }
             },
-            initComplete: function(settings, json) {
+            initComplete: function (settings, json) {
                 // Add custom styling to DataTable elements
                 $('.dataTables_filter input').addClass('form-control-sm');
                 $('.dataTables_length select').addClass('form-control-sm');
@@ -1306,7 +1314,8 @@
         flatpickr("#warningDate", {
             dateFormat: "d/m/Y",
             defaultDate: "today",
-            allowInput: true
+            allowInput: false,
+            minDate: "today",
         });
 
         // Set today's date as default for warning date
@@ -1321,22 +1330,20 @@
         const employeeSearch = document.getElementById('employeeSearch');
         const employeeSuggestions = document.getElementById('employeeSuggestions');
         const selectedEmployeeSection = document.getElementById('selectedEmployeeSection');
-        const selectedEmployeeName = document.getElementById('selectedEmployeeName');
-        const selectedEmployeeId = document.getElementById('selectedEmployeeId');
-        const employeeIdField = document.getElementById('employeeId');
+
         const clearEmployeeBtn = document.getElementById('clearEmployeeSelection');
 
         let searchTimeout;
 
-        employeeSearch.addEventListener('input', function() {
+        employeeSearch.addEventListener('input', function () {
             const searchTerm = this.value.trim();
-            
+
             clearTimeout(searchTimeout);
             if (searchTerm.length < 2) {
                 employeeSuggestions.style.display = 'none';
                 return;
             }
-            
+
             searchTimeout = setTimeout(() => searchEmployees(searchTerm), 300);
         });
 
@@ -1349,24 +1356,24 @@
                 },
                 body: `search_term=${encodeURIComponent(term)}`
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.employees && data.employees.length > 0) {
-                    displayEmployeeSuggestions(data.employees);
-                } else {
-                    employeeSuggestions.innerHTML = '<div class="employee-search-item">No employees found</div>';
-                    employeeSuggestions.style.display = 'block';
-                }
-            })
-            .catch(error => {
-                console.error('Error searching employees:', error);
-                employeeSuggestions.style.display = 'none';
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.employees && data.employees.length > 0) {
+                        displayEmployeeSuggestions(data.employees);
+                    } else {
+                        employeeSuggestions.innerHTML = '<div class="employee-search-item">No employees found</div>';
+                        employeeSuggestions.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error searching employees:', error);
+                    employeeSuggestions.style.display = 'none';
+                });
         }
 
         function displayEmployeeSuggestions(employees) {
             employeeSuggestions.innerHTML = '';
-            
+
             employees.forEach(employee => {
                 const item = document.createElement('div');
                 item.className = 'employee-search-item';
@@ -1374,53 +1381,98 @@
                     <div class="employee-search-name">${employee.name}</div>
                     <div class="employee-search-id">ID: ${employee.employee_id}</div>
                 `;
-                
+
                 item.addEventListener('click', () => {
                     selectEmployee(employee);
                 });
-                
+
                 employeeSuggestions.appendChild(item);
             });
-            
+
             employeeSuggestions.style.display = 'block';
         }
 
         function selectEmployee(employee) {
-            employeeSearch.value = `${employee.name} (${employee.employee_id})`;
-            employeeIdField.value = employee.employee_id;
-            selectedEmployeeName.textContent = employee.name;
-            selectedEmployeeId.textContent = employee.employee_id;
-            selectedEmployeeSection.style.display = 'block';
+            if (selectedEmployees.has(employee.employee_id)) return;
+
+            selectedEmployees.set(employee.employee_id, employee.name);
+            renderSelectedEmployees();
+
+            employeeSearch.value = '';
             employeeSuggestions.style.display = 'none';
         }
 
-        clearEmployeeBtn.addEventListener('click', function() {
-            employeeSearch.value = '';
-            employeeIdField.value = '';
-            selectedEmployeeSection.style.display = 'none';
-            selectedEmployeeName.textContent = '';
-            selectedEmployeeId.textContent = '';
+        function renderSelectedEmployees() {
+            selectedEmployeeList.innerHTML = '';
+            employeeIdsField.value = [...selectedEmployees.keys()].join(',');
+
+            selectedEmployees.forEach((name, id) => {
+                const div = document.createElement('div');
+                div.className = 'selected-employee-item';
+
+                const info = document.createElement('div');
+                info.innerHTML = `
+            <strong>${name}</strong>
+            <span style="color:#6b7280;">(ID: ${id})</span>
+        `;
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'remove-employee-btn';
+                btn.innerHTML = '&times;';
+                btn.title = 'Remove';
+
+                // ✅ THIS IS THE FIX
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();   // 🔥 THIS IS THE KEY
+
+                    selectedEmployees.delete(id);
+                    renderSelectedEmployees();
+                });
+
+
+                div.appendChild(info);
+                div.appendChild(btn);
+                selectedEmployeeList.appendChild(div);
+            });
+
+            document.getElementById('selectedEmployeeSection').style.display =
+                selectedEmployees.size ? 'block' : 'none';
+        }
+
+
+
+
+
+        clearEmployeeBtn.addEventListener('click', function () {
+            selectedEmployees.clear();
+            renderSelectedEmployees();
         });
 
+
+
+
+
         // Close suggestions when clicking outside
-        document.addEventListener('click', function(event) {
+        document.addEventListener('click', function (event) {
             if (!event.target.closest('.employee-search-container')) {
                 employeeSuggestions.style.display = 'none';
             }
         });
 
         // Load sub-types based on message category
-        document.getElementById('id_message_category').addEventListener('change', function() {
+        document.getElementById('id_message_category').addEventListener('change', function () {
             const categoryId = this.value;
             const subTypeSelect = document.getElementById('id_sub_type');
-            
+
             if (!categoryId) {
                 subTypeSelect.innerHTML = '<option value="">Select Category</option>';
                 return;
             }
-            
+
             subTypeSelect.innerHTML = '<option value="">Loading...</option>';
-            
+
             fetch(`/ajax/load-subtypes/?category_id=${categoryId}`)
                 .then(response => response.json())
                 .then(data => {
@@ -1437,48 +1489,48 @@
         });
 
         // Form submission
-        document.getElementById('noticeForm').addEventListener('submit', function(e) {
+        document.getElementById('noticeForm').addEventListener('submit', function (e) {
             const submitBtn = document.getElementById('submitBtn');
             const originalText = submitBtn.innerHTML;
-            
+
             // Show loading state
             submitBtn.innerHTML = '<div class="spinner"></div>';
             submitBtn.disabled = true;
-            
+
             // Validate required fields
-            if (!employeeIdField.value) {
+            if (!employeeIdsField.value) {
                 e.preventDefault();
-                alert('Please select an employee.');
+                alert('Please select at least one employee.');
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
                 return;
             }
+
         });
     });
 
     // Modal functions
     function openAddNoticeModal() {
         const modal = document.getElementById('addNoticeModal');
-        
+
         // First ensure the form is reset
         document.getElementById('noticeForm').reset();
-        
+
         // Clear employee selection
         document.getElementById('employeeSearch').value = '';
-        document.getElementById('employeeId').value = '';
         document.getElementById('selectedEmployeeSection').style.display = 'none';
-        
+
         // Set today's date
         const today = new Date();
         const day = String(today.getDate()).padStart(2, '0');
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const year = today.getFullYear();
         document.getElementById('warningDate').value = `${day}/${month}/${year}`;
-        
+
         // Reset select fields
         document.getElementById('id_message_category').value = '';
         document.getElementById('id_sub_type').innerHTML = '<option value="">Select Category</option>';
-        
+
         // Show modal
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
@@ -1486,26 +1538,25 @@
     function closeModal() {
         const modal = document.getElementById('addNoticeModal');
         const form = document.getElementById('noticeForm');
-        
+
         // Reset the form
         form.reset();
-        
+
         // Clear employee selection
         document.getElementById('employeeSearch').value = '';
-        document.getElementById('employeeId').value = '';
         document.getElementById('selectedEmployeeSection').style.display = 'none';
-        
+
         // Reset date to today
         const today = new Date();
         const day = String(today.getDate()).padStart(2, '0');
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const year = today.getFullYear();
         document.getElementById('warningDate').value = `${day}/${month}/${year}`;
-        
+
         // Reset select fields
         document.getElementById('id_message_category').value = '';
         document.getElementById('id_sub_type').innerHTML = '<option value="">Select Category</option>';
-        
+
         // Remove modal active class
         modal.classList.remove('active');
         document.body.style.overflow = 'auto';
@@ -1513,19 +1564,19 @@
 
     function confirmDelete(warningId) {
         if (confirm('Are you sure you want to delete this notice? This action cannot be undone.')) {
-            window.location.href = `/delete-warning/${warningId}/`;
+            window.location.href = `/employees/warnings/delete/${warningId}/`;
         }
     }
 
     // Close modal when clicking outside
-    document.getElementById('addNoticeModal').addEventListener('click', function(e) {
+    document.getElementById('addNoticeModal').addEventListener('click', function (e) {
         if (e.target === this) {
             closeModal();
         }
     });
 
     // Close modal with Escape key
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
             closeModal();
         }
@@ -1546,32 +1597,32 @@
         }
         return cookieValue;
     }
-function showWarningDetails(id) {
-    const modal = document.getElementById("warningDetailsModal");
-    const modalContent = document.getElementById("warningDetailsContent");
+    function showWarningDetails(id) {
+        const modal = document.getElementById("warningDetailsModal");
+        const modalContent = document.getElementById("warningDetailsContent");
 
-    modalContent.innerHTML = `
+        modalContent.innerHTML = `
         <div style="text-align:center; padding:40px;">
             <div class="spinner" style="margin:0 auto 20px;"></div>
             <p>Loading notice details...</p>
         </div>
     `;
 
-    modal.classList.add("active");
+        modal.classList.add("active");
 
-    const row = document.querySelector(`tr[data-warning-id="${id}"]`);
-    if (!row) return;
+        const row = document.querySelector(`tr[data-warning-id="${id}"]`);
+        if (!row) return;
 
-    const employee = row.querySelector(".employee-name")?.textContent.trim() || "";
-    const empId = row.querySelector(".employee-id")?.textContent.replace("ID:", "").trim() || "";
-    const type = row.querySelector(".status-badge")?.textContent.trim() || "";
-    const category = row.querySelector(".type-badge")?.textContent.trim() || "";
-    const subject = row.querySelector(".subject-text")?.getAttribute("title") || "";
-    const description = row.querySelector(".description-text")?.textContent.trim() || "";
-    const date = row.querySelector(".date-main")?.textContent.trim() || "";
-    const issuedBy = row.cells[6]?.textContent.trim() || "";
+        const employee = row.querySelector(".employee-name")?.textContent.trim() || "";
+        const empId = row.querySelector(".employee-id")?.textContent.replace("ID:", "").trim() || "";
+        const type = row.querySelector(".status-badge")?.textContent.trim() || "";
+        const category = row.querySelector(".type-badge")?.textContent.trim() || "";
+        const subject = row.querySelector(".subject-text")?.getAttribute("title") || "";
+        const description = row.querySelector(".description-text")?.textContent.trim() || "";
+        const date = row.querySelector(".date-main")?.textContent.trim() || "";
+        const issuedBy = row.cells[6]?.textContent.trim() || "";
 
-    modalContent.innerHTML = `
+        modalContent.innerHTML = `
         <div class="warning-details">
 
             <div class="warning-card">
@@ -1623,11 +1674,11 @@ function showWarningDetails(id) {
 
         </div>
     `;
-}
+    }
 
-function closeWarningModal() {
-    document.getElementById("warningDetailsModal").classList.remove("active");
-}
+    function closeWarningModal() {
+        document.getElementById("warningDetailsModal").classList.remove("active");
+    }
 
 
 </script>

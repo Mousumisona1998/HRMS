@@ -1167,6 +1167,9 @@
                         1.5 days per month
                         {% elif leave_type == 'Optional' %}
                         Max 2 usable per year
+                        {% elif stats.is_comp_off %}
+                        Valid until: {{ stats.valid_until|date:"d M Y" }} ({{ stats.days_remaining|default:0 }} days left)
+                        
                         {% else %}
                         Unpaid basis
                         {% endif %}

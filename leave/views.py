@@ -531,7 +531,15 @@ def leave_dashboard(request):
     holidays = Holiday.objects.filter(
         date__year=current_year
     ).select_related('region').order_by('date')
-    
+    if user_region:
+        current_year_holidays_count = Holiday.objects.filter(
+            date__year=current_year,
+            region=user_region
+        ).count()
+    else:
+        current_year_holidays_count = Holiday.objects.filter(
+            date__year=current_year
+        ).count()
     context = {
         'is_hr_admin_manager': is_hr_admin_manager,
         'employees_on_leave_today': len(set(employees_on_leave_today)),
@@ -561,6 +569,7 @@ def leave_dashboard(request):
         'current_year': current_year,
         'regions': regions,
         'holidays': holidays,
+        'current_year_holidays_count': current_year_holidays_count,
         'user_region': user_region,
         'default_region_id': default_region_id,
         'notice_threshold_days': 3,  
@@ -2249,15 +2258,57 @@ def employee_leave_details(request):
     
     # Calculate statistics for each leave type
     leave_stats = {}
+    comp_off_expiration_info = None
+    comp_off_valid_until = None
+    
     for balance in leave_balances:
-        leave_stats[balance.leave_type.name] = {
-            'total': balance.total_leaves,
-            'taken': balance.leaves_taken,
-            'remaining': balance.leaves_remaining,
-            'carry_forward': balance.carry_forward,
-            'max_carry_forward': balance.leave_type.max_carry_forward,
-            'is_optional': balance.leave_type.is_optional,
-        }
+        # Check if this is comp off
+        is_comp_off = any(keyword in balance.leave_type.name.lower() 
+                         for keyword in ['comp off', 'compensatory', 'compoff', 'comp-off'])
+        
+        if is_comp_off:
+            # Get expiration info from the balance itself
+            days_remaining = balance.days_remaining if hasattr(balance, 'days_remaining') else 0
+            is_expired = balance.is_expired if hasattr(balance, 'is_expired') else False
+            
+            # Calculate days remaining if we have valid_until
+            if hasattr(balance, 'valid_until') and balance.valid_until:
+                days_remaining = (balance.valid_until - today).days
+                is_expired = balance.is_expired or (balance.valid_until < today)
+                comp_off_valid_until = balance.valid_until  # STORE THIS
+            
+            leave_stats[balance.leave_type.name] = {
+                'total': balance.total_leaves,
+                'taken': balance.leaves_taken,
+                'remaining': balance.leaves_remaining,
+                'carry_forward': balance.carry_forward,
+                'max_carry_forward': balance.leave_type.max_carry_forward,
+                'is_optional': balance.leave_type.is_optional,
+                'is_comp_off': True,
+                'days_remaining': days_remaining,
+                'expiring_soon': 0 < days_remaining <= 7,
+                'valid_until': balance.valid_until if hasattr(balance,'valid_until') else None,
+                'is_expired': is_expired,
+                'earned_date': balance.earned_date if hasattr(balance,'earned_date') else None
+            }
+            # Store comp off info for the template
+            comp_off_expiration_info = {
+                'balance': balance.leaves_remaining,
+                'total': balance.total_leaves,
+                'days_remaining': days_remaining,
+                'expiring_soon': 0 < days_remaining <= 7,
+                'valid_until': balance.valid_until if hasattr(balance, 'valid_until') else None,
+                'is_expired': is_expired,
+                'earned_date': balance.earned_date if hasattr(balance, 'earned_date') else None
+            }
+        else:
+            leave_stats[balance.leave_type.name] = {
+                'total': balance.total_leaves,
+                'taken': balance.leaves_taken,
+                'remaining': balance.leaves_remaining,
+                'carry_forward': balance.carry_forward,
+                'is_comp_off': False
+            }
     
     # Optional leave specific rules
     optional_leave_info = None
@@ -2305,7 +2356,9 @@ def employee_leave_details(request):
         'current_year': current_year,
         'today_date': today,
         'user_email': user_email,
-        'can_withdraw': True,  # ✅ ADD THIS LINE - Since this is employee's own page
+        'can_withdraw': True,  # Since this is employee's own page
+        'comp_off_expiration_info': comp_off_expiration_info,
+        'valid_until': comp_off_valid_until, 
     }
     
     return render(request, 'leave/emp_leave_details.html', context)
@@ -2531,8 +2584,11 @@ def add_leave_balance(request):
             
             print(f"DEBUG: Is Comp Off: {is_comp_off}")
             
-            # For Comp Off: Update existing balance if exists, otherwise create new
+            # For Comp Off: Update existing balance if exists, otherwise create new WITH EXPIRATION
             if is_comp_off:
+                today = timezone.now().date()
+                valid_until = today + timedelta(days=45)  # 45-day validity
+                
                 existing_balance = LeaveBalance.objects.filter(
                     employee=employee,
                     leave_type=leave_type,
@@ -2544,6 +2600,13 @@ def add_leave_balance(request):
                     existing_balance.total_leaves += total_leaves
                     existing_balance.leaves_remaining += total_leaves + carry_forward
                     existing_balance.carry_forward += carry_forward
+                    
+                    # Update expiration date (extend if not expired)
+                    if not existing_balance.is_expired:
+                        existing_balance.valid_until = valid_until
+                        if not existing_balance.earned_date:
+                            existing_balance.earned_date = today
+                            
                     existing_balance.save()
                     
                     messages.success(
@@ -2561,13 +2624,17 @@ def add_leave_balance(request):
                         leaves_taken=0,
                         leaves_remaining=leaves_remaining,
                         carry_forward=carry_forward,
-                        year=year
+                        year=year,
+                        earned_date=today,
+                        valid_until=valid_until,
+                        is_expired=False
                     )
                     
                     messages.success(
                         request, 
                         f'Comp Off balance created for {employee.first_name} {employee.last_name} '
                         f'- {total_leaves} days ({year})'
+                        f'Valid until {valid_until.strftime("%d-%m-%Y")}'
                     )
             
             else:

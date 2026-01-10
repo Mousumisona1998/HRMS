@@ -432,7 +432,7 @@
         border: 1px solid rgba(67, 97, 238, 0.2);
     }
 
-    .extra-hours {
+    /* .extra-hours {
         background: rgba(76, 201, 240, 0.1);
         color: #0369a1;
         padding: 6px 12px;
@@ -440,7 +440,19 @@
         font-weight: 600;
         font-size: 12px;
         border: 1px solid rgba(76, 201, 240, 0.2);
-    }
+    } */
+         /* Extra Hours color override – no design change */
+.extra-hours.green {
+    /* background: rgba(16, 185, 129, 0.15); */
+    color: #065f46;
+    border-color: rgba(16, 185, 129, 0.35);
+}
+
+.extra-hours.red {
+    /* background: rgba(239, 68, 68, 0.15); */
+    color: #991b1b;
+    border-color: rgba(239, 68, 68, 0.35);
+}
 
     /* View Button */
     .view-btn {
@@ -1030,9 +1042,12 @@
                         </td>
                         
                         <!-- Extra Hours -->
-                        <td>
+                       <td>
                             {% if attendance.extra_hours_display %}
-                                <span class="extra-hours">
+                                <span class="extra-hours
+                                    {% if attendance.extra_hours_display|slice:":1" == "+" %} green
+                                    {% elif attendance.extra_hours_display|slice:":1" == "-" %} red
+                                    {% endif %}">
                                     <i class="fas fa-plus-circle"></i>
                                     {{ attendance.extra_hours_display }}
                                 </span>

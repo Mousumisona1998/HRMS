@@ -2575,30 +2575,45 @@ def warning_list(request):
     ).count()
 
     total_count = warnings.count()
-    
+            
     if request.method == "POST":
-        form = EmployeeWarningForm(request.POST)
-        if form.is_valid():
-            warning = form.save(commit=False)
 
-            # Category
-            cat_id = request.POST.get("message_category")
-            cat_obj = MessageCategory.objects.get(id=cat_id)
-            warning.message_category = cat_obj.name
+        employee_codes = request.POST.get("employee_codes", "")
+        employee_codes = [e for e in employee_codes.split(",") if e]
 
-            # Subtype
-            subtype_id = request.POST.get("sub_type")
-            subtype_obj = MessageSubType.objects.get(id=subtype_id)
-            warning.sub_type = subtype_obj.name   # store name
-
-            warning.issued_by = request.session.get("user_name")
-            warning.save()
-
-            messages.success(request, "Notice added successfully!")
+        if not employee_codes:
+            messages.error(request, "No employees selected.")
             return redirect("warning_list")
 
-        else:
-            print("FORM ERRORS:", form.errors)
+        warning_date = datetime.strptime(
+            request.POST.get("warning_date"),
+            "%d/%m/%Y"
+        ).date()
+
+        cat_obj = MessageCategory.objects.get(
+            id=request.POST.get("message_category")
+        )
+        subtype_obj = MessageSubType.objects.get(
+            id=request.POST.get("sub_type")
+        )
+
+        for emp_code in employee_codes:
+            EmployeeWarning.objects.create(
+                employee_code=emp_code,
+                subject=request.POST.get("subject"),
+                description=request.POST.get("description"),
+                warning_date=warning_date,
+                message_category=cat_obj.name,
+                sub_type=subtype_obj.name,
+                issued_by=request.session.get("user_name"),
+            )
+
+        messages.success(
+            request,
+            "Notices sent to selected employees successfully!"
+        )
+        return redirect("warning_list")
+       
 
     else:
         form = EmployeeWarningForm()
@@ -2612,7 +2627,7 @@ def warning_list(request):
         "notice_count": notice_count,
         "total_count": total_count,
     })
-
+    
 def add_warning(request):
     if request.method == 'POST':
         form = EmployeeWarningForm(request.POST)
@@ -2671,50 +2686,31 @@ def search_employees(request):
         search_term = request.POST.get('search_term', '').strip()
         
         if not search_term:
-            return JsonResponse({'results': []})  # Changed to 'results'
+            return JsonResponse({'employees': []}) 
         
         # Search by employee_id or first_name or last_name
         employees = Employee.objects.filter(
             status='active'
         ).filter(
-            employee_id__icontains=search_term
-        ) | Employee.objects.filter(
-            status='active'
-        ).filter(
-            first_name__icontains=search_term
-        ) | Employee.objects.filter(
-            status='active'
-        ).filter(
-            last_name__icontains=search_term
+            Q(employee_id__icontains=search_term) |
+            Q(first_name__icontains=search_term) |
+            Q(last_name__icontains=search_term)
         )
         
         employees_data = []
         for emp in employees[:10]:
-            # Format the date properly
-            hiredate = ""
-            if emp.date_of_joining:
-                # Format as YYYY-MM-DD for frontend
-                hiredate = emp.date_of_joining.strftime('%Y-%m-%d')
-            
             employees_data.append({
                 'id': emp.id,
                 'employee_id': emp.employee_id,
+                'name': f"{emp.first_name} {emp.last_name}",  # Add full name field
                 'first_name': emp.first_name,
-                'middle_name': emp.middle_name if hasattr(emp, 'middle_name') else '',
                 'last_name': emp.last_name,
-                'department': emp.department,
-                'designation': emp.designation,
-                'email': emp.email,
-                'phone': emp.phone,
-                'hiredate': hiredate,  # ADD THIS LINE - it was missing
-                'status': emp.status,
-                'profile_picture': emp.profile_picture.url if emp.profile_picture else '/static/default-avatar.png',
-                'location': emp.location if hasattr(emp, 'location') else ''
             })
         
-        return JsonResponse({'results': employees_data})  # Changed to 'results'
+        return JsonResponse({'employees': employees_data})  # Changed from 'results' to 'employees'
     
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
 
 
 @login_required

@@ -1428,168 +1428,298 @@ function toggleSidebar() {
         {% block extra_js %}{% endblock %}
 
         <!-- Celebration Popup Modal -->
-        {% if celebrations and celebrations.birthdays_today or celebrations.work_anniversaries_today or celebrations.marriage_anniversaries_today %}
-        <div class="modal fade" id="celebrationModal" tabindex="-1" aria-labelledby="celebrationModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="celebrationModalLabel">
-                            <i class="fas fa-party-horn me-2"></i>Today's Celebrations! 🎉
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <!-- Birthdays -->
-                        {% if celebrations.birthdays_today %}
-                        <div class="celebration-section mb-4">
-                            <h6 class="text-gradient mb-3">
-                                <i class="fas fa-birthday-cake me-2"></i>Birthdays Today
-                            </h6>
-                            {% for birthday in celebrations.birthdays_today %}
-                            <div class="celebration-item mb-3 position-relative {% if birthday.is_current_user %}current-user-celebration{% endif %}">
-                                <div class="d-flex align-items-center">
-                                    <div class="celebration-icon birthday me-3">
-                                        <i class="fas fa-birthday-cake"></i>
-                                        {% if birthday.is_current_user %}
-                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-info">
-                                            You!
-                                        </span>
-                                        {% endif %}
-                                    </div>
-                                    <div class="celebration-details flex-grow-1">
-                                        <strong class="h6 mb-1">
-                                            {{ birthday.name }}
-                                            {% if birthday.is_current_user %}(You){% endif %}
-                                        </strong>
-                                        <p class="mb-1 text-muted">{{ birthday.designation }} - {{ birthday.department }}</p>
-                                        {% if birthday.years_old %}
-                                        <small class="text-success fw-bold">Turning {{ birthday.years_old }} today! 🎂</small>
-                                        {% endif %}
-                                    </div>
+{% if celebrations and celebrations.total_count > 0 %}
+<div class="modal fade" id="celebrationModal" tabindex="-1" aria-labelledby="celebrationModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="celebrationModalLabel">
+                    <i class="fas fa-calendar-alt me-2"></i>Upcoming Celebrations (Next 7 Days) 🎉
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Timeline for upcoming dates -->
+                <div class="upcoming-dates-timeline mb-4">
+                    <div class="d-flex justify-content-between mb-3">
+                        {% for date_info in celebrations.upcoming_dates %}
+                            <div class="text-center {% if date_info.date == today %}current-date{% endif %}" style="flex: 1;">
+                                <div class="date-circle {% if date_info.date == today %}today-circle{% endif %} mx-auto mb-1" 
+                                     style="width: 40px; height: 40px; border-radius: 50%; 
+                                            background: {% if date_info.date == today %}#4361ee{% else %}#f8f9fa{% endif %}; 
+                                            display: flex; align-items: center; justify-content: center;
+                                            border: 2px solid {% if date_info.date == today %}#4361ee{% else %}#dee2e6{% endif %};">
+                                    <span style="font-size: 14px; font-weight: 600; 
+                                                 color: {% if date_info.date == today %}white{% else %}#495057{% endif %};">
+                                        {{ date_info.date.day }}
+                                    </span>
                                 </div>
-                                {% if not birthday.is_current_user %}
-                                <button class="btn btn-sm btn-primary wish-btn position-absolute top-0 end-0 m-2"
-                                        data-celebrant-id="{{ birthday.id }}"
-                                        data-celebrant-name="{{ birthday.name }}"
-                                        data-wish-type="birthday">
-                                    <i class="fas fa-gift me-1"></i>Send Wish
-                                </button>
-                                {% else %}
-                                <button class="btn btn-sm btn-info view-wishes-btn position-absolute top-0 end-0 m-2"
-                                        data-celebrant-id="{{ birthday.id }}"
-                                        data-celebrant-name="{{ birthday.name }}"
-                                        data-wish-type="birthday">
-                                    <i class="fas fa-eye me-1"></i>View Wishes
-                                </button>
-                                {% endif %}
-                            </div>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
-
-                        <!-- Work Anniversaries -->
-                        {% if celebrations.work_anniversaries_today %}
-                        <div class="celebration-section mb-4">
-                            <h6 class="text-success mb-3">
-                                <i class="fas fa-briefcase me-2"></i>Work Anniversaries
-                            </h6>
-                            {% for anniversary in celebrations.work_anniversaries_today %}
-                            <div class="celebration-item mb-3 position-relative {% if anniversary.is_current_user %}current-user-celebration{% endif %}">
-                                <div class="d-flex align-items-center">
-                                    <div class="celebration-icon work me-3">
-                                        <i class="fas fa-briefcase"></i>
-                                        {% if anniversary.is_current_user %}
-                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-info">
-                                            You!
-                                        </span>
-                                        {% endif %}
-                                    </div>
-                                    <div class="celebration-details flex-grow-1">
-                                        <strong class="h6 mb-1">
-                                            {{ anniversary.name }}
-                                            {% if anniversary.is_current_user %}(You){% endif %}
-                                        </strong>
-                                        <p class="mb-1 text-muted">{{ anniversary.designation }} - {{ anniversary.department }}</p>
-                                        <small class="text-success fw-bold">
-                                            {{ anniversary.years }} year{{ anniversary.years|pluralize }} of dedicated service! 🏆
-                                        </small>
-                                    </div>
+                                <div style="font-size: 11px; color: {% if date_info.date == today %}#4361ee{% else %}#6c757d{% endif %};">
+                                    {{ date_info.day_name|slice:":3" }}
                                 </div>
-                                {% if not anniversary.is_current_user %}
-                                <button class="btn btn-sm btn-success wish-btn position-absolute top-0 end-0 m-2"
-                                        data-celebrant-id="{{ anniversary.id }}"
-                                        data-celebrant-name="{{ anniversary.name }}"
-                                        data-wish-type="work_anniversary">
-                                    <i class="fas fa-gift me-1"></i>Send Wish
-                                </button>
-                                {% else %}
-                                <button class="btn btn-sm btn-info view-wishes-btn position-absolute top-0 end-0 m-2"
-                                        data-celebrant-id="{{ anniversary.id }}"
-                                        data-celebrant-name="{{ anniversary.name }}"
-                                        data-wish-type="work_anniversary">
-                                    <i class="fas fa-eye me-1"></i>View Wishes
-                                </button>
-                                {% endif %}
                             </div>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
-
-                        <!-- Marriage Anniversaries -->
-                        {% if celebrations.marriage_anniversaries_today %}
-                        <div class="celebration-section mb-4">
-                            <h6 class="text-danger mb-3">
-                                <i class="fas fa-heart me-2"></i>Marriage Anniversaries
-                            </h6>
-                            {% for anniversary in celebrations.marriage_anniversaries_today %}
-                            <div class="celebration-item mb-3 position-relative {% if anniversary.is_current_user %}current-user-celebration{% endif %}">
-                                <div class="d-flex align-items-center">
-                                    <div class="celebration-icon marriage me-3">
-                                        <i class="fas fa-heart"></i>
-                                        {% if anniversary.is_current_user %}
-                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-info">
-                                            You!
-                                        </span>
-                                        {% endif %}
-                                    </div>
-                                    <div class="celebration-details flex-grow-1">
-                                        <strong class="h6 mb-1">
-                                            {{ anniversary.name }}
-                                            {% if anniversary.is_current_user %}(You){% endif %}
-                                        </strong>
-                                        <p class="mb-1 text-muted">{{ anniversary.designation }} - {{ anniversary.department }}</p>
-                                        <small class="text-danger fw-bold">
-                                            {{ anniversary.years }} year{{ anniversary.years|pluralize }} of togetherness! 💖
-                                        </small>
-                                    </div>
-                                </div>
-                                {% if not anniversary.is_current_user %}
-                                <button class="btn btn-sm btn-danger wish-btn position-absolute top-0 end-0 m-2"
-                                        data-celebrant-id="{{ anniversary.id }}"
-                                        data-celebrant-name="{{ anniversary.name }}"
-                                        data-wish-type="marriage_anniversary">
-                                    <i class="fas fa-gift me-1"></i>Send Wish
-                                </button>
-                                {% else %}
-                                <button class="btn btn-sm btn-info view-wishes-btn position-absolute top-0 end-0 m-2"
-                                        data-celebrant-id="{{ anniversary.id }}"
-                                        data-celebrant-name="{{ anniversary.name }}"
-                                        data-wish-type="marriage_anniversary">
-                                    <i class="fas fa-eye me-1"></i>View Wishes
-                                </button>
-                                {% endif %}
-                            </div>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        {% endfor %}
                     </div>
                 </div>
+
+                <!-- Today's Celebrations -->
+                {% if celebrations.birthdays_today or celebrations.work_anniversaries_today or celebrations.marriage_anniversaries_today %}
+                <div class="celebration-section mb-4">
+                    <h6 class="text-gradient mb-3">
+                        <i class="fas fa-calendar-day me-2"></i>Today's Celebrations
+                    </h6>
+                    
+                    <!-- Birthdays Today -->
+                    {% if celebrations.birthdays_today %}
+                    <div class="mb-3">
+                        <h7 class="text-primary mb-2">
+                            <i class="fas fa-birthday-cake me-2"></i>Birthdays Today
+                        </h7>
+                        {% for birthday in celebrations.birthdays_today %}
+                        <div class="celebration-item mb-2 position-relative {% if birthday.is_current_user %}current-user-celebration{% endif %}">
+                            <div class="d-flex align-items-center">
+                                <div class="celebration-icon birthday me-3">
+                                    <i class="fas fa-birthday-cake"></i>
+                                </div>
+                                <div class="celebration-details flex-grow-1">
+                                    <strong class="h6 mb-1">
+                                        {{ birthday.name }}
+                                        {% if birthday.is_current_user %}<span class="badge bg-info ms-1">You</span>{% endif %}
+                                    </strong>
+                                    <p class="mb-1 text-muted">{{ birthday.designation }} - {{ birthday.department }}</p>
+                                    <small class="text-success fw-bold">
+                                        Turning {{ birthday.years_old }} today! 🎂
+                                    </small>
+                                </div>
+                            </div>
+                            {% if not birthday.is_current_user %}
+                            <button class="btn btn-sm btn-primary wish-btn position-absolute top-0 end-0 m-2"
+                                    data-celebrant-id="{{ birthday.id }}"
+                                    data-celebrant-name="{{ birthday.name }}"
+                                    data-wish-type="birthday">
+                                <i class="fas fa-gift me-1"></i>Send Wish
+                            </button>
+                            {% else %}
+                            <button class="btn btn-sm btn-info view-wishes-btn position-absolute top-0 end-0 m-2"
+                                    data-celebrant-id="{{ birthday.id }}"
+                                    data-celebrant-name="{{ birthday.name }}"
+                                    data-wish-type="birthday">
+                                <i class="fas fa-eye me-1"></i>View Wishes
+                            </button>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Work Anniversaries Today -->
+                    {% if celebrations.work_anniversaries_today %}
+                    <div class="mb-3">
+                        <h7 class="text-success mb-2">
+                            <i class="fas fa-briefcase me-2"></i>Work Anniversaries Today
+                        </h7>
+                        {% for anniversary in celebrations.work_anniversaries_today %}
+                        <div class="celebration-item mb-2 position-relative {% if anniversary.is_current_user %}current-user-celebration{% endif %}">
+                            <div class="d-flex align-items-center">
+                                <div class="celebration-icon work me-3">
+                                    <i class="fas fa-briefcase"></i>
+                                </div>
+                                <div class="celebration-details flex-grow-1">
+                                    <strong class="h6 mb-1">
+                                        {{ anniversary.name }}
+                                        {% if anniversary.is_current_user %}<span class="badge bg-info ms-1">You</span>{% endif %}
+                                    </strong>
+                                    <p class="mb-1 text-muted">{{ anniversary.designation }} - {{ anniversary.department }}</p>
+                                    <small class="text-success fw-bold">
+                                        {{ anniversary.years }} year{{ anniversary.years|pluralize }} of dedicated service! 🏆
+                                    </small>
+                                </div>
+                            </div>
+                            {% if not anniversary.is_current_user %}
+                            <button class="btn btn-sm btn-success wish-btn position-absolute top-0 end-0 m-2"
+                                    data-celebrant-id="{{ anniversary.id }}"
+                                    data-celebrant-name="{{ anniversary.name }}"
+                                    data-wish-type="work_anniversary">
+                                <i class="fas fa-gift me-1"></i>Send Wish
+                            </button>
+                            {% else %}
+                            <button class="btn btn-sm btn-info view-wishes-btn position-absolute top-0 end-0 m-2"
+                                    data-celebrant-id="{{ anniversary.id }}"
+                                    data-celebrant-name="{{ anniversary.name }}"
+                                    data-wish-type="work_anniversary">
+                                <i class="fas fa-eye me-1"></i>View Wishes
+                            </button>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Marriage Anniversaries Today -->
+                    {% if celebrations.marriage_anniversaries_today %}
+                    <div class="mb-3">
+                        <h7 class="text-danger mb-2">
+                            <i class="fas fa-heart me-2"></i>Marriage Anniversaries Today
+                        </h7>
+                        {% for anniversary in celebrations.marriage_anniversaries_today %}
+                        <div class="celebration-item mb-2 position-relative {% if anniversary.is_current_user %}current-user-celebration{% endif %}">
+                            <div class="d-flex align-items-center">
+                                <div class="celebration-icon marriage me-3">
+                                    <i class="fas fa-heart"></i>
+                                </div>
+                                <div class="celebration-details flex-grow-1">
+                                    <strong class="h6 mb-1">
+                                        {{ anniversary.name }}
+                                        {% if anniversary.is_current_user %}<span class="badge bg-info ms-1">You</span>{% endif %}
+                                    </strong>
+                                    <p class="mb-1 text-muted">{{ anniversary.designation }} - {{ anniversary.department }}</p>
+                                    <small class="text-danger fw-bold">
+                                        {{ anniversary.years }} year{{ anniversary.years|pluralize }} of togetherness! 💖
+                                    </small>
+                                </div>
+                            </div>
+                            {% if not anniversary.is_current_user %}
+                            <button class="btn btn-sm btn-danger wish-btn position-absolute top-0 end-0 m-2"
+                                    data-celebrant-id="{{ anniversary.id }}"
+                                    data-celebrant-name="{{ anniversary.name }}"
+                                    data-wish-type="marriage_anniversary">
+                                <i class="fas fa-gift me-1"></i>Send Wish
+                            </button>
+                            {% else %}
+                            <button class="btn btn-sm btn-info view-wishes-btn position-absolute top-0 end-0 m-2"
+                                    data-celebrant-id="{{ anniversary.id }}"
+                                    data-celebrant-name="{{ anniversary.name }}"
+                                    data-wish-type="marriage_anniversary">
+                                <i class="fas fa-eye me-1"></i>View Wishes
+                            </button>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Upcoming Celebrations -->
+                {% if celebrations.birthdays_upcoming or celebrations.work_anniversaries_upcoming or celebrations.marriage_anniversaries_upcoming %}
+                <div class="celebration-section">
+                    <h6 class="text-gradient mb-3">
+                        <i class="fas fa-calendar-week me-2"></i>Upcoming This Week
+                    </h6>
+                    
+                    <!-- Upcoming Birthdays -->
+                    {% if celebrations.birthdays_upcoming %}
+                    <div class="mb-3">
+                        <h7 class="text-primary mb-2">
+                            <i class="fas fa-birthday-cake me-2"></i>Upcoming Birthdays
+                        </h7>
+                        {% for birthday in celebrations.birthdays_upcoming %}
+                        <div class="celebration-item mb-2 position-relative {% if birthday.is_current_user %}current-user-celebration{% endif %}">
+                            <div class="d-flex align-items-center">
+                                <div class="upcoming-icon me-3" style="width: 40px; text-align: center;">
+                                    <div style="font-size: 24px; color: #ff9a9e;">
+                                        {{ birthday.days_until }}
+                                    </div>
+                                    <div style="font-size: 10px; color: #6c757d;">days left</div>
+                                </div>
+                                <div class="celebration-details flex-grow-1">
+                                    <strong class="h6 mb-1">
+                                        {{ birthday.name }}
+                                        {% if birthday.is_current_user %}<span class="badge bg-info ms-1">You</span>{% endif %}
+                                    </strong>
+                                    <p class="mb-1 text-muted">{{ birthday.designation }} - {{ birthday.department }}</p>
+                                    <small class="text-muted">
+                                        <i class="far fa-calendar me-1"></i>{{ birthday.formatted_date }}
+                                        • Turning {{ birthday.years_old }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Upcoming Work Anniversaries -->
+                    {% if celebrations.work_anniversaries_upcoming %}
+                    <div class="mb-3">
+                        <h7 class="text-success mb-2">
+                            <i class="fas fa-briefcase me-2"></i>Upcoming Work Anniversaries
+                        </h7>
+                        {% for anniversary in celebrations.work_anniversaries_upcoming %}
+                        <div class="celebration-item mb-2 position-relative {% if anniversary.is_current_user %}current-user-celebration{% endif %}">
+                            <div class="d-flex align-items-center">
+                                <div class="upcoming-icon me-3" style="width: 40px; text-align: center;">
+                                    <div style="font-size: 24px; color: #4cc9f0;">
+                                        {{ anniversary.days_until }}
+                                    </div>
+                                    <div style="font-size: 10px; color: #6c757d;">days left</div>
+                                </div>
+                                <div class="celebration-details flex-grow-1">
+                                    <strong class="h6 mb-1">
+                                        {{ anniversary.name }}
+                                        {% if anniversary.is_current_user %}<span class="badge bg-info ms-1">You</span>{% endif %}
+                                    </strong>
+                                    <p class="mb-1 text-muted">{{ anniversary.designation }} - {{ anniversary.department }}</p>
+                                    <small class="text-muted">
+                                        <i class="far fa-calendar me-1"></i>{{ anniversary.formatted_date }}
+                                        • {{ anniversary.years }} year{{ anniversary.years|pluralize }} of service
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Upcoming Marriage Anniversaries -->
+                    {% if celebrations.marriage_anniversaries_upcoming %}
+                    <div class="mb-3">
+                        <h7 class="text-danger mb-2">
+                            <i class="fas fa-heart me-2"></i>Upcoming Marriage Anniversaries
+                        </h7>
+                        {% for anniversary in celebrations.marriage_anniversaries_upcoming %}
+                        <div class="celebration-item mb-2 position-relative {% if anniversary.is_current_user %}current-user-celebration{% endif %}">
+                            <div class="d-flex align-items-center">
+                                <div class="upcoming-icon me-3" style="width: 40px; text-align: center;">
+                                    <div style="font-size: 24px; color: #f72585;">
+                                        {{ anniversary.days_until }}
+                                    </div>
+                                    <div style="font-size: 10px; color: #6c757d;">days left</div>
+                                </div>
+                                <div class="celebration-details flex-grow-1">
+                                    <strong class="h6 mb-1">
+                                        {{ anniversary.name }}
+                                        {% if anniversary.is_current_user %}<span class="badge bg-info ms-1">You</span>{% endif %}
+                                    </strong>
+                                    <p class="mb-1 text-muted">{{ anniversary.designation }} - {{ anniversary.department }}</p>
+                                    <small class="text-muted">
+                                        <i class="far fa-calendar me-1"></i>{{ anniversary.formatted_date }}
+                                        • {{ anniversary.years }} year{{ anniversary.years|pluralize }} together
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <!-- No celebrations message -->
+                {% if not celebrations.birthdays_today and not celebrations.work_anniversaries_today and not celebrations.marriage_anniversaries_today and not celebrations.birthdays_upcoming and not celebrations.work_anniversaries_upcoming and not celebrations.marriage_anniversaries_upcoming %}
+                <div class="text-center py-4">
+                    <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
+                    <h6 class="text-muted">No celebrations in the next 7 days</h6>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
-        {% endif %}
+    </div>
+</div>
+{% endif %}
 
         <!-- Wish Modal -->
         <div class="modal fade" id="wishModal" tabindex="-1" aria-labelledby="wishModalLabel" aria-hidden="true">

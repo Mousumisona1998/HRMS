@@ -218,7 +218,7 @@
         border-radius: 6px;
         border: 1px solid var(--gray-300);
         cursor: pointer;
-        width: 120px;
+        width:fit-content;
     }
 
     .date-filter input:focus {
@@ -740,6 +740,7 @@
 </style>
 
 <div class="page-container">
+
     <!-- Header -->
     <div class="page-header">
         <div>
@@ -761,87 +762,60 @@
             <div class="summary-icon payslips">
                 <i class="fas fa-file-alt"></i>
             </div>
-            <div class="summary-value">
-                {{ payslips|length }}
-            </div>
+            <div class="summary-value">{{ payslips|length }}</div>
             <div class="summary-label">Total Payslips</div>
         </div>
-        
+
         <div class="summary-card">
             <div class="summary-icon amount">
                 <i class="fas fa-rupee-sign"></i>
             </div>
-            <div class="summary-value">
-                ₹{{ total_salary_sum }}
-            </div>
+            <div class="summary-value">₹{{ total_salary_sum|floatformat:2 }}</div>
             <div class="summary-label">Total Amount</div>
         </div>
-        
+
         <div class="summary-card">
             <div class="summary-icon pending">
                 <i class="fas fa-clock"></i>
             </div>
-            <div class="summary-value">
-                {% with pending_count=0 %}
-                    {% for payslip in payslips %}
-                        {% if payslip.status == 'generated' %}
-                            {% with pending_count=pending_count|add:1 %}{% endwith %}
-                        {% endif %}
-                    {% endfor %}
-                    {{ pending_count }}
-                {% endwith %}
-            </div>
+            <div class="summary-value">{{ pending_count }}</div>
             <div class="summary-label">Pending Approval</div>
         </div>
     </div>
 
-    <!-- Filter Container -->
+    <!-- Filter -->
     <div class="filter-container">
         <div class="filter-left">
             <div class="date-filter">
-                <label for="fromDate">
-                    <i class="fas fa-calendar-day"></i>
-                    From
+                <label>
+                    <i class="fas fa-calendar-alt"></i> Month
                 </label>
-                <input type="text" id="fromDate" class="datepicker" placeholder="dd-mm-yyyy">
+                <input type="month" id="monthFilter">
             </div>
-            
-            <div class="date-filter">
-                <label for="toDate">
-                    <i class="fas fa-calendar-day"></i>
-                    To
-                </label>
-                <input type="text" id="toDate" class="datepicker" placeholder="dd-mm-yyyy">
-            </div>
-            
-            <button id="filterDateBtn" class="btn-filter">
-                <i class="fas fa-filter"></i>
-                Apply Filter
+
+            <button id="filterMonthBtn" class="btn-filter">
+                <i class="fas fa-filter"></i> Apply Filter
             </button>
-            
+
             <button id="resetDateBtn" class="btn-reset">
-                <i class="fas fa-redo"></i>
-                Reset
+                <i class="fas fa-redo"></i> Reset
             </button>
         </div>
-        
+
         <div class="search-box">
             <i class="fas fa-search"></i>
             <input type="text" id="tableSearch" placeholder="Search payslips...">
         </div>
     </div>
 
-    <!-- Payslips Table -->
+    <!-- Table -->
     <div class="payslip-table-container">
         <div class="table-header">
-            <h3>
-                <i class="fas fa-table"></i>
-                Payslip Records
-            </h3>
-            
+            <h3><i class="fas fa-table"></i> Payslip Records</h3>
+
             <div class="entries-selector">
                 Show
-                <select id="entriesPerPage" class="form-select">
+                <select id="entriesPerPage">
                     <option value="5">5</option>
                     <option value="10" selected>10</option>
                     <option value="25">25</option>
@@ -851,9 +825,9 @@
                 entries
             </div>
         </div>
-        
+
         <div class="table-container">
-            {% if payslips %}
+            
             <table class="dataTable" id="payslipTable">
                 <thead>
                     <tr>
@@ -870,295 +844,194 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for payslip in payslips %}
-                    <tr data-date="{{ payslip.generated_at|date:'Y-m-d' }}">
-                        {% if user_role != 'EMPLOYEE' %}
-                        <td>
-                            <div class="employee-avatar">
-                                <div class="avatar-img">
-                                    {% if payslip.employee.profile_picture %}
-                                    <img src="{{ payslip.employee.profile_picture.url }}" 
-                                         alt="{{ payslip.employee.first_name }}">
-                                    {% else %}
-                                    {{ payslip.employee.first_name|first }}{{ payslip.employee.last_name|first }}
-                                    {% endif %}
-                                </div>
-                                <div class="employee-info">
-                                    <h5>{{ payslip.employee.first_name }} {{ payslip.employee.last_name }}</h5>
-                                    <small>{{ payslip.employee.designation }}</small>
-                                </div>
+                {% for payslip in payslips %}
+                <tr 
+                    data-year="{{ payslip.payroll_run.payroll_year }}"
+                    data-month="{{ payslip.payroll_run.payroll_month|stringformat:'02d' }}"
+                >
+                    {% if user_role != 'EMPLOYEE' %}
+                    <td>
+                        <div class="employee-avatar">
+                            <div class="avatar-img">
+                                {% if payslip.employee.profile_picture %}
+                                <img src="{{ payslip.employee.profile_picture.url }}">
+                                {% else %}
+                                {{ payslip.employee.first_name|first }}{{ payslip.employee.last_name|first }}
+                                {% endif %}
                             </div>
-                        </td>
+                            <div class="employee-info">
+                                <h5>{{ payslip.employee.first_name }} {{ payslip.employee.last_name }}</h5>
+                                <small>{{ payslip.employee.designation }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    {% endif %}
+
+                    <td>{{ payslip.payslip_number }}</td>
+                    <td>{{ payslip.payroll_run.payroll_month }} / {{ payslip.payroll_run.payroll_year }}</td>
+                    <td>₹{{ payslip.basic_salary|floatformat:2 }}</td>
+                    <td class="net-salary">₹{{ payslip.net_salary|floatformat:2 }}</td>
+
+                    <td>
+                        {% if payslip.status == 'generated' %}
+                        <span class="status-badge badge-generated">Generated</span>
+                        {% elif payslip.status == 'approved' %}
+                        <span class="status-badge badge-approved">Approved</span>
+                        {% elif payslip.status == 'paid' %}
+                        <span class="status-badge badge-paid">Paid</span>
                         {% endif %}
-                        
-                        <td>
-                            <span class="salary-amount">
-                                {{ payslip.payslip_number }}
-                            </span>
-                        </td>
-                        
-                        <td>
-                            <span style="font-weight: 600; color: var(--dark);">
-                                {{ payslip.payroll_run.payroll_month }} / {{ payslip.payroll_run.payroll_year }}
-                            </span>
-                        </td>
-                        
-                        <td>
-                            <span class="salary-amount">
-                                ₹{{ payslip.basic_salary|floatformat:2 }}
-                            </span>
-                        </td>
-                        
-                        <td>
-                            <span class="net-salary">
-                                ₹{{ payslip.net_salary|floatformat:2 }}
-                            </span>
-                        </td>
-                        
-                        <td>
-                            {% if payslip.status == 'generated' %}
-                                <span class="status-badge badge-generated">
-                                    <i class="fas fa-clock"></i>
-                                    Generated
-                                </span>
-                            {% elif payslip.status == 'approved' %}
-                                <span class="status-badge badge-approved">
-                                    <i class="fas fa-check-circle"></i>
-                                    Approved
-                                </span>
-                            {% elif payslip.status == 'paid' %}
-                                <span class="status-badge badge-paid">
-                                    <i class="fas fa-rupee-sign"></i>
-                                    Paid
-                                </span>
-                            {% else %}
-                                <span class="status-badge badge-pending">
-                                    <i class="fas fa-exclamation-circle"></i>
-                                    {{ payslip.get_status_display }}
-                                </span>
-                            {% endif %}
-                        </td>
-                        
-                        <td data-date="{{ payslip.generated_at|date:'Y-m-d' }}">
-                            {{ payslip.generated_at|date:"d M, Y" }}
-                            <div style="font-size: 12px; color: var(--gray-500); margin-top: 2px;">
-                                {{ payslip.generated_at|date:"h:i A" }}
-                            </div>
-                        </td>
-                        
-                        <td>
-                            <div class="action-buttons">
-                                <a href="{% url 'view_payslip' payslip.id %}" 
-                                   class="btn-view" 
-                                   title="View Payslip">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a href="{% url 'download_payslip' payslip.id %}" 
-                                   class="btn-download" 
-                                   title="Download PDF">
-                                    <i class="fas fa-download"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
+                    </td>
+
+                    <td>
+                        {{ payslip.generated_at|date:"d M, Y" }}
+                        <div style="font-size:12px;color:#999;">
+                            {{ payslip.generated_at|date:"h:i A" }}
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{% url 'view_payslip' payslip.id %}" class="btn-view">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'download_payslip' payslip.id %}" class="btn-download">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
                 </tbody>
             </table>
-            {% else %}
-            <div class="empty-state">
-                <div class="empty-icon">
-                    <i class="fas fa-file-invoice-dollar"></i>
-                </div>
-                <h4>No Payslips Found</h4>
-                <p>
-                    {% if user_role == 'EMPLOYEE' %}
-                    You don't have any payslips yet. Payslips are generated at the end of each payroll period.
-                    {% else %}
-                    No payslips have been generated yet. Generate payslips from the payroll section.
-                    {% endif %}
-                </p>
-            </div>
-            {% endif %}
+            
         </div>
-        
-        {% if payslips %}
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <div class="empty-icon">
+                <i class="fas fa-file-invoice-dollar"></i>
+            </div>
+            <h4>No payslips found</h4>
+            <p>Try adjusting filters or search criteria.</p>
+        </div>
         <div class="pagination-container">
-            <div class="table-info" id="tableInfo"></div>
+            <div id="tableInfo"></div>
             <ul id="pagination" class="pagination"></ul>
         </div>
-        {% endif %}
     </div>
 </div>
 
-<!-- Include jQuery UI for Datepicker -->
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 
 <script>
-$(function() {
-    // Initialize datepicker
-    $(".datepicker").datepicker({
-        dateFormat: "dd-mm-yy",
-        showButtonPanel: true,
-        changeMonth: true,
-        changeYear: true,
-        yearRange: "c-5:c+5"
-    });
-
-    // Set default dates to current month
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+$(function () {
     
-    // Format date as dd-mm-yy
-    function formatDate(date) {
-        const d = String(date.getDate()).padStart(2, '0');
-        const m = String(date.getMonth() + 1).padStart(2, '0');
-        const y = date.getFullYear();
-        return `${d}-${m}-${y}`;
-    }
-
-    $("#fromDate").val(formatDate(firstDay));
-    $("#toDate").val(formatDate(lastDay));
-
-    // Table functionality
     const table = document.getElementById("payslipTable");
-    const rows = table ? Array.from(table.querySelectorAll("tbody tr")) : [];
+    if (!table) return;
+
+    const rows = Array.from(table.querySelectorAll("tbody tr"));
     const searchInput = document.getElementById("tableSearch");
+    const monthInput = document.getElementById("monthFilter");
+    const entriesSelect = document.getElementById("entriesPerPage");
     const pagination = document.getElementById("pagination");
     const tableInfo = document.getElementById("tableInfo");
-    const entriesSelect = document.getElementById("entriesPerPage");
-    const fromDate = document.getElementById("fromDate");
-    const toDate = document.getElementById("toDate");
-    const filterBtn = document.getElementById("filterDateBtn");
-    const resetBtn = document.getElementById("resetDateBtn");
 
-    let rowsPerPage = entriesSelect ? parseInt(entriesSelect.value) : 10;
+    let rowsPerPage = parseInt(entriesSelect.value);
     let currentPage = 1;
     let filteredRows = [...rows];
 
-    function parseDMY(dateStr) {
-        const [d, m, y] = dateStr.split("-");
-        return new Date(`${y}-${m}-${d}`);
-    }
-
     function applyFilters() {
-        const query = searchInput ? searchInput.value.toLowerCase() : '';
-        const from = fromDate && fromDate.value ? parseDMY(fromDate.value) : null;
-        const to = toDate && toDate.value ? parseDMY(toDate.value) : null;
+        const query = searchInput.value.toLowerCase();
+        const monthVal = monthInput.value;
 
         filteredRows = rows.filter(row => {
             const textMatch = row.textContent.toLowerCase().includes(query);
-            const dateCell = row.querySelector("td[data-date]");
-            if (!dateCell) return textMatch;
-            const rowDate = new Date(dateCell.dataset.date);
-            const inRange = (!from || rowDate >= from) && (!to || rowDate <= to);
-            return textMatch && inRange;
+            if (!monthVal) return textMatch;
+
+            const [y, m] = monthVal.split("-");
+            return textMatch && row.dataset.year === y && row.dataset.month === m;
         });
 
         currentPage = 1;
-        if (rows.length > 0) renderTable();
+        renderTable();
     }
 
+    // function renderTable() {
+    //     rows.forEach(r => r.style.display = "none");
+
+    //     const start = (currentPage - 1) * rowsPerPage;
+    //     const end = start + rowsPerPage;
+
+    //     filteredRows.slice(start, end).forEach(r => r.style.display = "");
+
+    //     renderPagination();
+    //     updateInfo();
+    // }
     function renderTable() {
-        rows.forEach(r => (r.style.display = "none"));
-        const start = (currentPage - 1) * rowsPerPage;
-        const end = start + rowsPerPage;
-        filteredRows.slice(start, end).forEach(r => (r.style.display = ""));
-        renderPagination();
-        updateInfo();
+    rows.forEach(r => r.style.display = "none");
+
+    const start = (currentPage - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+
+    const visibleRows = filteredRows.slice(start, end);
+
+    if (visibleRows.length === 0) {
+        table.style.display = "none";
+        pagination.style.display = "none";
+        document.getElementById("emptyState").style.display = "block";
+    } else {
+        table.style.display = "";
+        pagination.style.display = "";
+        document.getElementById("emptyState").style.display = "none";
+
+        visibleRows.forEach(r => r.style.display = "");
     }
+
+    renderPagination();
+    updateInfo();
+}
+
 
     function renderPagination() {
-        if (!pagination) return;
-        
         pagination.innerHTML = "";
-        const pageCount = Math.ceil(filteredRows.length / rowsPerPage);
-        
-        // Previous button
-        const prevLi = document.createElement("li");
-        prevLi.className = `page-item ${currentPage === 1 ? "disabled" : ""}`;
-        prevLi.innerHTML = `<a class="page-link" href="#" aria-label="Previous"><i class="fas fa-chevron-left"></i></a>`;
-        prevLi.addEventListener("click", e => {
-            e.preventDefault();
-            if (currentPage > 1) {
-                currentPage--;
-                renderTable();
-            }
-        });
-        pagination.appendChild(prevLi);
+        const pages = Math.ceil(filteredRows.length / rowsPerPage);
+        if (pages === 0) return;
 
-        // Page numbers
-        for (let i = 1; i <= pageCount; i++) {
+        for (let i = 1; i <= pages; i++) {
             const li = document.createElement("li");
-            li.className = `page-item ${i === currentPage ? "active" : ""}`;
-            li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
-            li.addEventListener("click", e => {
-                e.preventDefault();
+            li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+            li.innerHTML = `<a class="page-link">${i}</a>`;
+            li.onclick = () => {
                 currentPage = i;
                 renderTable();
-            });
+            };
             pagination.appendChild(li);
         }
-
-        // Next button
-        const nextLi = document.createElement("li");
-        nextLi.className = `page-item ${currentPage === pageCount ? "disabled" : ""}`;
-        nextLi.innerHTML = `<a class="page-link" href="#" aria-label="Next"><i class="fas fa-chevron-right"></i></a>`;
-        nextLi.addEventListener("click", e => {
-            e.preventDefault();
-            if (currentPage < pageCount) {
-                currentPage++;
-                renderTable();
-            }
-        });
-        pagination.appendChild(nextLi);
     }
 
     function updateInfo() {
-        if (!tableInfo) return;
-        
-        const total = filteredRows.length;
-        const start = total > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0;
-        const end = Math.min(currentPage * rowsPerPage, total);
-        
-        if (total > 0) {
-            tableInfo.textContent = `Showing ${start} to ${end} of ${total} payslips`;
-        } else {
+        if (filteredRows.length === 0) {
             tableInfo.textContent = "No payslips found";
+            return;
         }
+        const start = (currentPage - 1) * rowsPerPage + 1;
+        const end = Math.min(currentPage * rowsPerPage, filteredRows.length);
+        tableInfo.textContent = `Showing ${start} to ${end} of ${filteredRows.length} payslips`;
     }
 
-    // Event listeners
-    if (searchInput) {
-        searchInput.addEventListener("keyup", applyFilters);
-    }
-    
-    if (entriesSelect) {
-        entriesSelect.addEventListener("change", () => {
-            rowsPerPage = parseInt(entriesSelect.value);
-            currentPage = 1;
-            if (rows.length > 0) renderTable();
-        });
-    }
-    
-    if (filterBtn) {
-        filterBtn.addEventListener("click", applyFilters);
-    }
-    
-    if (resetBtn) {
-        resetBtn.addEventListener("click", () => {
-            if (fromDate) fromDate.value = "";
-            if (toDate) toDate.value = "";
-            applyFilters();
-        });
-    }
+    searchInput.onkeyup = applyFilters;
+    entriesSelect.onchange = () => {
+        rowsPerPage = parseInt(entriesSelect.value);
+        currentPage = 1;
+        renderTable();
+    };
 
-    // Initialize table if there are rows
-    if (rows.length > 0) {
+    document.getElementById("filterMonthBtn").onclick = applyFilters;
+    document.getElementById("resetDateBtn").onclick = () => {
+        monthInput.value = "";
+        searchInput.value = "";
         applyFilters();
-    }
+    };
+
+    applyFilters();
 });
 </script>
 {% endblock %}
